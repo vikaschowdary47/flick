@@ -1,0 +1,620 @@
+import { useEffect, useRef, useState, type ChangeEvent, type DragEvent } from "react";
+import type { Session } from "@supabase/supabase-js";
+import type { FileCard } from "../../../shared/files";
+import { supabase } from "../supabase";
+import { CloudFile, CloudFileRow, isCloudFile, MAX_FILE_SIZE } from "../types";
+
+const REMOVAL_UNDO_DELAY = 5000;
+
+export interface PendingRemoval {
+  id: string;
+  file: CloudFile;
+}
+
+export function useFiles(session: Session | null) {
+  const [files, setFiles] = useState<CloudFile[]>([]);
+  const [isLoadingFiles, setIsLoadingFiles] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
+  const [isDraggingFiles, setIsDraggingFiles] = useState(false);
+  const [arrivalPulse, setArrivalPulse] = useState(0);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [pendingRemovals, setPendingRemovals] = useState<PendingRemoval[]>([]);
+  const [dismissedFileIds, setDismissedFileIds] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const firstArrivalRef = useRef(false);
+  const dragDepth = useRef(0);
+  const uploadInProgress = useRef(false);
+  const processFileRef = useRef<(file: CloudFileRow) => void>(() => {});
+  const retryDownloadRef = useRef<(file: CloudFile) => void>(() => {});
+  const removalTimersRef = useRef(new Map<string, number>());
+  const filesRef = useRef(files);
+  const dismissedFileIdsRef = useRef(dismissedFileIds);
+  filesRef.current = files;
+  dismissedFileIdsRef.current = dismissedFileIds;
+
+  useEffect(
+    () => () => {
+      for (const timer of removalTimersRef.current.values()) {
+        window.clearTimeout(timer);
+      }
+      removalTimersRef.current.clear();
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (arrivalPulse === 0) {
+      return;
+    }
+    const timeout = window.setTimeout(() => setArrivalPulse(0), 420);
+    return () => window.clearTimeout(timeout);
+  }, [arrivalPulse]);
+
+  useEffect(() => {
+    if (!showConfetti) {
+      return;
+    }
+    const timeout = window.setTimeout(() => setShowConfetti(false), 420);
+    return () => window.clearTimeout(timeout);
+  }, [showConfetti]);
+
+  useEffect(() => {
+    const userId = session?.user.id;
+    dismissedFileIdsRef.current = new Set();
+    setDismissedFileIds(new Set());
+    if (!supabase || !userId) {
+      setFiles([]);
+      setIsLoadingFiles(false);
+      return;
+    }
+    const client = supabase;
+
+    let isMounted = true;
+    const processingFileIds = new Set<string>();
+    let localFilesById = new Map<string, FileCard>();
+    const localFilesPromise = window.flick.getFiles().then((localFiles) => {
+      localFilesById = new Map(localFiles.map((file) => [file.id, file]));
+      return localFilesById;
+    });
+
+    function updateFile(
+      file: CloudFileRow,
+      downloadState: CloudFile["downloadState"],
+      updates: Partial<CloudFile> = {},
+    ): void {
+      if (!isMounted) {
+        return;
+      }
+      setFiles((currentFiles) => {
+        const nextFile = { ...file, ...updates, downloadState };
+        return [
+          nextFile,
+          ...currentFiles.filter((currentFile) => currentFile.id !== file.id),
+        ].sort((left, right) =>
+          right.created_at.localeCompare(left.created_at),
+        );
+      });
+    }
+
+    async function markFileDelivered(file: CloudFileRow): Promise<string> {
+      const deliveredAt = new Date().toISOString();
+      const { data, error } = await client
+        .from("files")
+        .update({ delivered_at: deliveredAt })
+        .eq("id", file.id)
+        .eq("user_id", userId)
+        .is("delivered_at", null)
+        .select("delivered_at")
+        .maybeSingle();
+
+      if (error) {
+        throw error;
+      }
+      if (data?.delivered_at) {
+        return data.delivered_at;
+      }
+
+      const { data: existingFile, error: readError } = await client
+        .from("files")
+        .select("delivered_at")
+        .eq("id", file.id)
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (readError) {
+        throw readError;
+      }
+      if (!existingFile?.delivered_at) {
+        throw new Error("The file was saved locally but delivery was not recorded.");
+      }
+      return existingFile.delivered_at;
+    }
+
+    async function processCloudFile(file: CloudFileRow): Promise<void> {
+      if (processingFileIds.has(file.id)) {
+        return;
+      }
+      processingFileIds.add(file.id);
+      updateFile(
+        file,
+        file.delivered_at ? "delivered" : "downloading",
+        { downloadError: undefined },
+      );
+
+      try {
+        await localFilesPromise;
+        if (!isMounted) {
+          return;
+        }
+
+        const localFile = localFilesById.get(file.id);
+        if (localFile) {
+          updateFile(file, "ready", { localFileId: localFile.id });
+          if (!file.delivered_at) {
+            try {
+              const deliveredAt = await markFileDelivered(file);
+              updateFile(file, "ready", {
+                localFileId: localFile.id,
+                delivered_at: deliveredAt,
+              });
+            } catch (error: unknown) {
+              console.error(
+                `Could not mark "${file.name}" as delivered:`,
+                error,
+              );
+              updateFile(file, "ready", {
+                localFileId: localFile.id,
+                downloadError:
+                  "Saved locally, but delivery status could not be updated.",
+              });
+            }
+          }
+          return;
+        }
+
+        if (file.delivered_at) {
+          updateFile(file, "delivered");
+          return;
+        }
+        if (file.size > MAX_FILE_SIZE) {
+          throw new Error("This file is larger than the 50 MB limit.");
+        }
+
+        const { data: blob, error: downloadError } = await client.storage
+          .from("flick-files")
+          .download(file.storage_path);
+        if (downloadError) {
+          throw downloadError;
+        }
+        if (blob.size !== file.size || blob.size > MAX_FILE_SIZE) {
+          throw new Error("The downloaded file size does not match its record.");
+        }
+
+        const localFileCard = await window.flick.saveReceivedFile(
+          file.name,
+          new Uint8Array(await blob.arrayBuffer()),
+          file.id,
+        );
+        localFilesById.set(localFileCard.id, localFileCard);
+        if (dismissedFileIdsRef.current.has(file.id)) {
+          await window.flick.removeFile(localFileCard.id);
+        }
+        updateFile(file, "ready", { localFileId: localFileCard.id });
+
+        try {
+          const deliveredAt = await markFileDelivered(file);
+          updateFile(file, "ready", {
+            localFileId: localFileCard.id,
+            delivered_at: deliveredAt,
+          });
+        } catch (error: unknown) {
+          console.error(`Could not mark "${file.name}" as delivered:`, error);
+          updateFile(file, "ready", {
+            localFileId: localFileCard.id,
+            downloadError:
+              "Saved locally, but delivery status could not be updated.",
+          });
+        }
+      } catch (error: unknown) {
+        console.error(`Could not download "${file.name}" from Flick:`, error);
+        updateFile(file, "error", {
+          downloadError:
+            error instanceof Error ? error.message : "File download failed.",
+        });
+      } finally {
+        processingFileIds.delete(file.id);
+      }
+    }
+
+    const queueFile = (value: unknown): void => {
+      if (!isCloudFile(value)) {
+        console.error("Flick received an invalid file row.");
+        return;
+      }
+      const file = value;
+      if (file.user_id !== userId) {
+        console.error("Flick received an invalid file row.");
+        return;
+      }
+      void processCloudFile(file);
+    };
+
+    processFileRef.current = queueFile;
+    retryDownloadRef.current = (file) => {
+      processingFileIds.delete(file.id);
+      void processCloudFile(file);
+    };
+
+    let loadingRowsPromise: Promise<void> | null = null;
+    let reloadRowsRequested = false;
+
+    async function loadInitialRows(): Promise<void> {
+      try {
+        const [{ data, error }] = await Promise.all([
+          client
+            .from("files")
+            .select(
+              "id,user_id,name,size,mime_type,storage_path,created_at,delivered_at",
+            )
+            .eq("user_id", userId)
+            .order("created_at", { ascending: false })
+            .returns<CloudFileRow[]>(),
+          localFilesPromise,
+        ]);
+        if (error) {
+          throw error;
+        }
+        if (isMounted) {
+          for (const row of data) {
+            queueFile(row);
+          }
+          setFiles((currentFiles) => {
+            const byId = new Map(currentFiles.map((file) => [file.id, file]));
+            for (const row of data) {
+              if (!byId.has(row.id)) {
+                byId.set(row.id, {
+                  ...row,
+                  downloadState: row.delivered_at ? "delivered" : "downloading",
+                });
+              }
+            }
+            return Array.from(byId.values()).sort((left, right) =>
+              right.created_at.localeCompare(left.created_at),
+            );
+          });
+        }
+      } catch (error: unknown) {
+        console.error("Could not load this user's Flick files:", error);
+        if (isMounted) {
+          setUploadError("Could not load your files. Please try again.");
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingFiles(false);
+        }
+      }
+    }
+
+    function refreshFiles(): void {
+      if (loadingRowsPromise) {
+        reloadRowsRequested = true;
+        return;
+      }
+      loadingRowsPromise = loadInitialRows().finally(() => {
+        loadingRowsPromise = null;
+        if (reloadRowsRequested && isMounted) {
+          reloadRowsRequested = false;
+          refreshFiles();
+        }
+      });
+    }
+
+    const channel = client
+      .channel(`files:${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "files",
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload) => {
+          console.info("New Flick file row:", payload.new);
+          if (isCloudFile(payload.new)) {
+            setArrivalPulse((pulse) => pulse + 1);
+            if (!firstArrivalRef.current) {
+              firstArrivalRef.current = true;
+              setShowConfetti(true);
+            }
+          }
+          queueFile(payload.new);
+        },
+      )
+      .subscribe((status, error) => {
+        if (status === "SUBSCRIBED") {
+          refreshFiles();
+        }
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          console.error("Flick Realtime subscription failed:", error ?? status);
+          refreshFiles();
+        }
+      });
+
+    setFiles([]);
+    setUploadError("");
+    setIsLoadingFiles(true);
+
+    return () => {
+      isMounted = false;
+      processFileRef.current = () => {};
+      retryDownloadRef.current = () => {};
+      void client
+        .removeChannel(channel)
+        .then((status) => {
+          if (status !== "ok") {
+            console.error("Could not remove Flick Realtime channel:", status);
+          }
+        })
+        .catch((error: unknown) => {
+          console.error("Could not remove Flick Realtime channel:", error);
+        });
+    };
+  }, [session?.user.id]);
+
+  async function uploadFiles(selectedFiles: File[]): Promise<void> {
+    if (!supabase || !session) {
+      setUploadError("Sign in before adding files.");
+      return;
+    }
+    if (uploadInProgress.current || selectedFiles.length === 0) {
+      return;
+    }
+
+    uploadInProgress.current = true;
+    setIsUploading(true);
+    setUploadError("");
+    const failures: string[] = [];
+
+    try {
+      for (const file of selectedFiles) {
+        if (file.size > MAX_FILE_SIZE) {
+          failures.push(`${file.name} is larger than the 50 MB limit.`);
+          continue;
+        }
+
+        const safeName = file.name.replace(/[\\/]/g, "_").trim() || "file";
+        const storagePath = `${session.user.id}/${crypto.randomUUID()}/${safeName}`;
+        let uploadExists = false;
+        try {
+          const { error: storageError } = await supabase.storage
+            .from("flick-files")
+            .upload(storagePath, file, {
+              contentType: file.type || "application/octet-stream",
+              upsert: false,
+            });
+
+          if (storageError) {
+            throw storageError;
+          }
+          uploadExists = true;
+
+          const { data, error: rowError } = await supabase
+            .from("files")
+            .insert({
+              user_id: session.user.id,
+              name: safeName,
+              size: file.size,
+              mime_type: file.type || "application/octet-stream",
+              storage_path: storagePath,
+            })
+            .select(
+              "id,user_id,name,size,mime_type,storage_path,created_at,delivered_at",
+            )
+            .single()
+            .returns<CloudFileRow>();
+
+          if (rowError) {
+            throw rowError;
+          }
+
+          uploadExists = false;
+          setFiles((currentFiles) => {
+            const existing = currentFiles.find((file) => file.id === data.id);
+            if (existing) {
+              return currentFiles;
+            }
+            return [
+              {
+                ...data,
+                downloadState: "downloading",
+              },
+              ...currentFiles,
+            ];
+          });
+          processFileRef.current(data);
+        } catch (error: unknown) {
+          console.error(`Could not upload "${file.name}":`, error);
+          if (uploadExists) {
+            try {
+              const { error: cleanupError } = await supabase.storage
+                .from("flick-files")
+                .remove([storagePath]);
+              if (cleanupError) {
+                console.error(
+                  `Could not remove incomplete upload "${storagePath}":`,
+                  cleanupError,
+                );
+              }
+            } catch (cleanupError: unknown) {
+              console.error(
+                `Could not remove incomplete upload "${storagePath}":`,
+                cleanupError,
+              );
+            }
+          }
+          failures.push(
+            `${file.name}: ${
+              error instanceof Error ? error.message : "Upload failed."
+            }`,
+          );
+        }
+      }
+    } finally {
+      uploadInProgress.current = false;
+      setIsUploading(false);
+    }
+
+    if (failures.length > 0) {
+      setUploadError(failures.join(" "));
+    }
+  }
+
+  function handleFileSelection(event: ChangeEvent<HTMLInputElement>) {
+    const selectedFiles = Array.from(event.target.files ?? []);
+    event.target.value = "";
+    void uploadFiles(selectedFiles);
+  }
+
+  function handleDragEnter(event: DragEvent<HTMLElement>): void {
+    if (!event.dataTransfer.types.includes("Files")) {
+      return;
+    }
+    event.preventDefault();
+    dragDepth.current += 1;
+    setIsDraggingFiles(true);
+  }
+
+  function handleDragOver(event: DragEvent<HTMLElement>): void {
+    if (event.dataTransfer.types.includes("Files")) {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "copy";
+    }
+  }
+
+  function handleDragLeave(event: DragEvent<HTMLElement>): void {
+    if (!event.dataTransfer.types.includes("Files")) {
+      return;
+    }
+    dragDepth.current = Math.max(0, dragDepth.current - 1);
+    if (dragDepth.current === 0) {
+      setIsDraggingFiles(false);
+    }
+  }
+
+  function handleDrop(event: DragEvent<HTMLElement>): void {
+    event.preventDefault();
+    dragDepth.current = 0;
+    setIsDraggingFiles(false);
+    void uploadFiles(Array.from(event.dataTransfer.files));
+  }
+
+  function removeFromWidget(file: CloudFile): void {
+    if (removalTimersRef.current.has(file.id)) {
+      return;
+    }
+
+    setPendingRemovals((current) => [...current, { id: file.id, file }]);
+    const timer = window.setTimeout(() => {
+      removalTimersRef.current.delete(file.id);
+      void (async () => {
+        try {
+          const currentFile =
+            filesRef.current.find((item) => item.id === file.id) ?? file;
+          const localFileId =
+            currentFile.localFileId ??
+            (await window.flick.getFiles()).find(
+              (item) => item.id === file.id,
+            )?.id;
+          if (localFileId) {
+            await window.flick.removeFile(localFileId);
+          }
+          dismissedFileIdsRef.current = new Set(
+            dismissedFileIdsRef.current,
+          ).add(file.id);
+          setDismissedFileIds((current) => new Set(current).add(file.id));
+          setFiles((current) => current.filter((item) => item.id !== file.id));
+          setPendingRemovals((current) =>
+            current.filter((item) => item.id !== file.id),
+          );
+        } catch (error: unknown) {
+          console.error(`Could not remove "${file.name}" from Flick:`, error);
+          setPendingRemovals((current) =>
+            current.filter((item) => item.id !== file.id),
+          );
+          setUploadError(
+            error instanceof Error
+              ? `Could not remove "${file.name}" from Flick: ${error.message}`
+              : `Could not remove "${file.name}" from Flick.`,
+          );
+        }
+      })();
+    }, REMOVAL_UNDO_DELAY);
+    removalTimersRef.current.set(file.id, timer);
+  }
+
+  function undoRemove(fileId: string): void {
+    const timer = removalTimersRef.current.get(fileId);
+    if (timer !== undefined) {
+      window.clearTimeout(timer);
+      removalTimersRef.current.delete(fileId);
+    }
+    const removal = pendingRemovals.find((item) => item.id === fileId);
+    setPendingRemovals((current) =>
+      current.filter((item) => item.id !== fileId),
+    );
+    if (removal) {
+      setFiles((current) => {
+        if (current.some((file) => file.id === removal.file.id)) {
+          return current;
+        }
+        return [...current, removal.file].sort((left, right) =>
+          right.created_at.localeCompare(left.created_at),
+        );
+      });
+    }
+  }
+
+  async function previewFile(file: CloudFile): Promise<void> {
+    if (!file.localFileId) {
+      return;
+    }
+    try {
+      await window.flick.previewFile(file.localFileId);
+    } catch (error: unknown) {
+      console.error(`Could not preview "${file.name}":`, error);
+      setUploadError(
+        error instanceof Error
+          ? `Could not preview "${file.name}": ${error.message}`
+          : `Could not preview "${file.name}".`,
+      );
+    }
+  }
+
+  return {
+    arrivalPulse,
+    fileInputRef,
+    files: files.filter(
+      (file) =>
+        !dismissedFileIds.has(file.id) &&
+        !pendingRemovals.some((removal) => removal.id === file.id),
+    ),
+    handleDragEnter,
+    handleDragLeave,
+    handleDragOver,
+    handleDrop,
+    handleFileSelection,
+    isDraggingFiles,
+    isLoadingFiles,
+    isUploading,
+    pendingRemovals,
+    previewFile,
+    removeFromWidget,
+    retryDownload: (file: CloudFile) => retryDownloadRef.current(file),
+    showConfetti,
+    undoRemove,
+    uploadError,
+  };
+}

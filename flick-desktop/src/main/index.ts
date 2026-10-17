@@ -4,6 +4,7 @@ import {
   type IpcMainInvokeEvent,
   ipcMain,
   nativeImage,
+  shell,
   type NativeImage,
 } from "electron";
 import { randomUUID } from "node:crypto";
@@ -24,6 +25,7 @@ import type {
   FileCard,
   ReceivedFileInput,
 } from "../shared/files";
+import { designTokens } from "../design/tokens";
 
 app.setName("Flick");
 
@@ -232,7 +234,8 @@ function isReceivedFileInput(item: unknown): item is ReceivedFileInput {
     "name" in item &&
     "bytes" in item &&
     typeof item.name === "string" &&
-    item.bytes instanceof Uint8Array
+    item.bytes instanceof Uint8Array &&
+    (!("id" in item) || typeof item.id === "string")
   );
 }
 
@@ -254,6 +257,13 @@ async function saveReceivedFile(input: unknown): Promise<FileCard> {
 
   return serializeFileMutation(async () => {
     const fileName = sanitizeReceivedFileName(input.name);
+    const fileId = input.id ?? randomUUID();
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(fileId)) {
+      throw new TypeError("A valid UUID is required for the saved file ID.");
+    }
+    if (files.has(fileId)) {
+      throw new Error(`A local file is already registered with ID "${fileId}".`);
+    }
     const downloadsDirectory = join(app.getPath("userData"), "downloads");
     await mkdir(downloadsDirectory, { recursive: true });
 
@@ -284,7 +294,7 @@ async function saveReceivedFile(input: unknown): Promise<FileCard> {
     try {
       const fileStats = await stat(path);
       const file: RegisteredFile = {
-        id: randomUUID(),
+        id: fileId,
         name: basename(path),
         path,
         size: fileStats.size,
@@ -431,8 +441,8 @@ async function removeFile(fileId: unknown): Promise<boolean> {
 
 function createWindow(): void {
   mainWindow = new BrowserWindow({
-    width: 400,
-    height: 380,
+    width: Number.parseInt(designTokens.layout.widgetWidth, 10),
+    height: Number.parseInt(designTokens.layout.widgetHeight, 10),
     // minWidth: 360,
     // maxWidth: 360,
     // minHeight: 280,
@@ -441,7 +451,7 @@ function createWindow(): void {
     alwaysOnTop: true,
     frame: false,
     resizable: true,
-    backgroundColor: "#0b1020",
+    backgroundColor: designTokens.colors.cream,
     webPreferences: {
       preload: join(currentDirectory, "../preload/index.cjs"),
       contextIsolation: true,
@@ -497,6 +507,28 @@ ipcMain.handle("files:save-received", async (event, input: unknown) => {
 ipcMain.handle("files:remove", async (event, fileId: unknown) => {
   assertMainWindow(event);
   return removeFile(fileId);
+});
+
+ipcMain.handle("files:preview", async (event, fileId: unknown) => {
+  assertMainWindow(event);
+  if (typeof fileId !== "string") {
+    throw new TypeError("A valid file ID is required.");
+  }
+
+  const file = files.get(fileId);
+  if (!file) {
+    throw new Error(`Cannot preview file "${fileId}": it is not available.`);
+  }
+
+  if (process.platform === "darwin") {
+    mainWindow?.previewFile(file.path, file.name);
+    return;
+  }
+
+  const error = await shell.openPath(file.path);
+  if (error) {
+    throw new Error(`Could not open "${file.name}": ${error}`);
+  }
 });
 
 app

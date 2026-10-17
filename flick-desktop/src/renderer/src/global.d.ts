@@ -5,7 +5,12 @@ interface Window {
       listener: (result: import('../../shared/files').DroppedFilesResult) => void,
     ) => () => void
     removeFile: (fileId: string) => Promise<boolean>
-    saveReceivedFile: (name: string, bytes: Uint8Array) => Promise<
+    previewFile: (fileId: string) => Promise<void>
+    saveReceivedFile: (
+      name: string,
+      bytes: Uint8Array,
+      id?: string,
+    ) => Promise<
       import('../../shared/files').FileCard
     >
     startFileDrag: (fileId: string) => void

@@ -12,6 +12,7 @@ export interface DroppedFileInput {
 export interface ReceivedFileInput {
   name: string
   bytes: Uint8Array
+  id?: string
 }
 
 export interface DroppedFilesResult {

@@ -60,8 +60,14 @@ contextBridge.exposeInMainWorld('flick', {
   },
   removeFile: (fileId: string): Promise<boolean> =>
     ipcRenderer.invoke('files:remove', fileId),
-  saveReceivedFile: async (name: string, bytes: Uint8Array): Promise<FileCard> => {
-    const input: ReceivedFileInput = { name, bytes }
+  previewFile: (fileId: string): Promise<void> =>
+    ipcRenderer.invoke('files:preview', fileId),
+  saveReceivedFile: async (
+    name: string,
+    bytes: Uint8Array,
+    id?: string,
+  ): Promise<FileCard> => {
+    const input: ReceivedFileInput = { name, bytes, id }
     const result: unknown = await ipcRenderer.invoke('files:save-received', input)
     if (!isFileCard(result)) {
       throw new Error('Flick returned an invalid saved-file record.')

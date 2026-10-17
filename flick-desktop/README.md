@@ -22,15 +22,19 @@ create production bundles.
 - `src/main/index.ts` runs in Electron's **main process**. It creates the
   always-on-top window. The earlier local demo-file seed and downloads-folder
   scan are disabled; local registry entries from older versions are not shown.
+  Supabase downloads are saved in `userData/downloads/` and registered with
+  their Supabase row ID so the mapping persists across restarts.
 - `src/renderer/src/` runs in the window's **renderer process**. React displays
-  the signed-in user's cloud files and handles file selection, uploads, and
-  Realtime events; it has no direct access to Node.js or Electron APIs.
-- `src/preload/index.ts` is the narrow **IPC bridge**. It exposes only
-  the remaining local-file operations from the earlier prototype through
-  `contextBridge`; the cloud-file UI does not call them.
+  the signed-in user's cloud files, uploads files, downloads undelivered rows,
+  and handles Realtime events; it has no direct access to Node.js or Electron
+  APIs.
+- `src/preload/index.ts` is the narrow **IPC bridge**. It lets the renderer ask
+  the main process to save downloaded bytes locally, then start a native file
+  drag for the registered path using `webContents.startDrag()`.
 - Supabase auth sessions are persisted in the renderer's `localStorage`.
   Supabase Storage uploads and `public.files` metadata are scoped to the signed-in
-  user's ID.
+  user's ID. Rows with `delivered_at` unset are downloaded to the local
+  downloads folder, then marked delivered; the cloud copy is retained.
 
 The preload bundle is CommonJS so it can run with Electron's renderer sandbox
 enabled. `contextIsolation` stays on and `nodeIntegration` stays off.

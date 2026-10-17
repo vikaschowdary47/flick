@@ -1,0 +1,122 @@
+import { useReducedMotion } from "framer-motion";
+import type { ChangeEvent, MouseEvent, RefObject } from "react";
+import type { Session } from "@supabase/supabase-js";
+import type { CloudFile } from "../types";
+import type { PendingRemoval } from "../hooks/useFiles";
+import FileList from "./FileList";
+import Header from "./Header";
+
+interface WidgetProps {
+  accountMenuRef: RefObject<HTMLDivElement | null>;
+  authReady: boolean;
+  fileInputRef: RefObject<HTMLInputElement | null>;
+  files: CloudFile[];
+  handleDragEnter: (event: React.DragEvent<HTMLElement>) => void;
+  handleDragLeave: (event: React.DragEvent<HTMLElement>) => void;
+  handleDragOver: (event: React.DragEvent<HTMLElement>) => void;
+  handleDrop: (event: React.DragEvent<HTMLElement>) => void;
+  handleFileSelection: (event: ChangeEvent<HTMLInputElement>) => void;
+  handleSignOut: () => void;
+  isAccountMenuOpen: boolean;
+  isDraggingFiles: boolean;
+  isLoadingFiles: boolean;
+  isOnline: boolean;
+  isUploading: boolean;
+  pendingRemovals: PendingRemoval[];
+  onOutsideClick: (event: MouseEvent<HTMLElement>) => void;
+  onPreviewFile: (file: CloudFile) => void;
+  onRemoveFile: (file: CloudFile) => void;
+  onRetryDownload: (file: CloudFile) => void;
+  onUndoRemove: (fileId: string) => void;
+  setIsAccountMenuOpen: (isOpen: boolean | ((current: boolean) => boolean)) => void;
+  session: Session;
+  showConfetti: boolean;
+  arrivalPulse: number;
+  uploadError: string;
+}
+
+export default function Widget({
+  accountMenuRef,
+  authReady,
+  fileInputRef,
+  files,
+  handleDragEnter,
+  handleDragLeave,
+  handleDragOver,
+  handleDrop,
+  handleFileSelection,
+  handleSignOut,
+  isAccountMenuOpen,
+  isDraggingFiles,
+  isLoadingFiles,
+  isOnline,
+  isUploading,
+  pendingRemovals,
+  onOutsideClick,
+  onPreviewFile,
+  onRemoveFile,
+  onRetryDownload,
+  onUndoRemove,
+  setIsAccountMenuOpen,
+  session,
+  showConfetti,
+  arrivalPulse,
+  uploadError,
+}: WidgetProps) {
+  const prefersReducedMotion = useReducedMotion();
+
+  return (
+    <main
+      className={`widget${isDraggingFiles ? " drag-active" : ""}`}
+      onClickCapture={onOutsideClick}
+      onDragEnter={handleDragEnter}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      {isDraggingFiles && (
+        <div className="drop-overlay" aria-hidden="true">
+          Drop files to upload to Flick
+        </div>
+      )}
+      {showConfetti && !prefersReducedMotion && (
+        <div className="confetti-burst" aria-hidden="true">
+          {Array.from({ length: 8 }, (_, index) => (
+            <span key={index} />
+          ))}
+        </div>
+      )}
+      <Header
+        accountMenuRef={accountMenuRef}
+        authReady={authReady}
+        isAccountMenuOpen={isAccountMenuOpen}
+        isOnline={isOnline}
+        onSignOut={handleSignOut}
+        setIsAccountMenuOpen={setIsAccountMenuOpen}
+        session={session}
+        arrivalPulse={arrivalPulse}
+      />
+      <section className="content" aria-labelledby="incoming-heading">
+        <FileList
+          files={files}
+          fileInputRef={fileInputRef}
+          isLoadingFiles={isLoadingFiles}
+          isUploading={isUploading}
+          uploadError={uploadError}
+          pendingRemovals={pendingRemovals}
+          onFileSelection={handleFileSelection}
+          onPreview={onPreviewFile}
+          onRemove={onRemoveFile}
+          onRetryDownload={onRetryDownload}
+          onUndoRemove={onUndoRemove}
+        />
+      </section>
+      <footer className="footer">
+        <span className="helper-icon" aria-hidden="true">
+          ↓
+        </span>
+        <span>Drop files here, or flick something over!</span>
+      </footer>
+    </main>
+  );
+}
