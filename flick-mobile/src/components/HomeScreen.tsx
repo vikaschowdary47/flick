@@ -3,13 +3,17 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { tokens } from "../design/tokens";
 import { Header } from "./Header";
 import { PillButton } from "./PillButton";
+import { UploadCard } from "./UploadCard";
+import { useUpload } from "../hooks/useUpload";
 
 type Props = {
-  onFlick: () => void;
+  userId: string;
   onSignOut: () => void;
 };
 
-export function HomeScreen({ onFlick, onSignOut }: Props) {
+export function HomeScreen({ userId, onSignOut }: Props) {
+  const { state: upload, pickAndUpload, reset } = useUpload();
+  const uploading = upload.kind === "uploading";
   return (
     <SafeAreaView style={styles.safe} edges={["top", "left", "right", "bottom"]}>
       <View style={styles.content}>
@@ -17,11 +21,18 @@ export function HomeScreen({ onFlick, onSignOut }: Props) {
         <Text accessibilityRole="header" style={styles.heading}>
           Flick it to all your devices
         </Text>
+        <UploadCard state={upload} onDismiss={reset} />
         <View style={styles.spacer} />
       </View>
 
       <View style={styles.thumbZone}>
-        <PillButton label="Flick it" size="large" onPress={onFlick} />
+        <PillButton
+          label="Flick it"
+          size="large"
+          onPress={pickAndUpload}
+          busy={uploading}
+          accessibilityHint="Pick a file to send to all your devices"
+        />
         <Pressable
           accessibilityRole="button"
           onPress={onSignOut}

@@ -23,7 +23,7 @@ export default function App() {
           <ActivityIndicator color={tokens.colors.navy} />
         </View>
       ) : session ? (
-        <HomeScreen onFlick={() => {}} onSignOut={signOut} />
+        <HomeScreen userId={session.user.id} onSignOut={signOut} />
       ) : (
         <SignInScreen onSignIn={signIn} />
       )}
