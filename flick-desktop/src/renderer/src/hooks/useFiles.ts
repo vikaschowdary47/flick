@@ -336,6 +336,18 @@ export function useFiles(session: Session | null) {
           queueFile(payload.new);
         },
       )
+      // Supabase can't filter DELETE events by column and only sends the
+      // primary key, so match on id; ids that aren't ours are ignored.
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "files" },
+        (payload) => {
+          const deletedId = (payload.old as { id?: unknown }).id;
+          if (typeof deletedId === "string") {
+            void dropDeletedFile(deletedId);
+          }
+        },
+      )
       .subscribe((status, error) => {
         if (status === "SUBSCRIBED") {
           refreshFiles();
@@ -541,6 +553,51 @@ export function useFiles(session: Session | null) {
     void uploadFiles(Array.from(event.dataTransfer.files));
   }
 
+  // Removes the card and this Mac's copy after the row was deleted
+  // (here or on another device).
+  async function dropDeletedFile(fileId: string): Promise<void> {
+    const currentFile = filesRef.current.find((item) => item.id === fileId);
+    setFiles((current) => current.filter((item) => item.id !== fileId));
+    try {
+      const localFileId =
+        currentFile?.localFileId ??
+        (await window.flick.getFiles()).find((item) => item.id === fileId)?.id;
+      if (localFileId) {
+        await window.flick.removeFile(localFileId);
+      }
+    } catch (error: unknown) {
+      console.error(`Could not remove local copy of "${fileId}":`, error);
+    }
+  }
+
+  async function deleteFromSupabase(file: CloudFile): Promise<void> {
+    // Row first: an orphaned storage object is invisible, but a row without
+    // its object would show up everywhere as a broken file.
+    if (!supabase) {
+      throw new Error("Flick isn't connected to Supabase.");
+    }
+    const { data, error } = await supabase
+      .from("files")
+      .delete()
+      .eq("id", file.id)
+      .select("id");
+    if (error) {
+      throw error;
+    }
+    if (!data || data.length === 0) {
+      throw new Error("It may already be gone, or you're signed out.");
+    }
+    const { error: storageError } = await supabase.storage
+      .from("flick-files")
+      .remove([file.storage_path]);
+    if (storageError) {
+      console.error(
+        `Deleted "${file.name}" but could not remove "${file.storage_path}" from storage:`,
+        storageError,
+      );
+    }
+  }
+
   function removeFromWidget(file: CloudFile): void {
     if (removalTimersRef.current.has(file.id)) {
       return;
@@ -551,6 +608,7 @@ export function useFiles(session: Session | null) {
       removalTimersRef.current.delete(file.id);
       void (async () => {
         try {
+          await deleteFromSupabase(file);
           const currentFile =
             filesRef.current.find((item) => item.id === file.id) ?? file;
           const localFileId =
