@@ -2,10 +2,12 @@ import { useCallback, useMemo, useState } from "react";
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { tokens } from "../design/tokens";
+import { useNow } from "../hooks/useNow";
 import { useOpenFile } from "../hooks/useOpenFile";
 import { useRecentFiles } from "../hooks/useRecentFiles";
 import { useRemoveFile } from "../hooks/useRemoveFile";
 import { useUpload } from "../hooks/useUpload";
+import { formatExpiry } from "../lib/format";
 import type { FileRow } from "../lib/types";
 import { FileActions } from "./FileActions";
 import { FileCard } from "./FileCard";
@@ -22,6 +24,7 @@ export function HomeScreen({ userId, onSignOut }: Props) {
   const recent = useRecentFiles(userId);
   const { state: upload, pickAndUpload, reset } = useUpload(recent.refresh);
   const opener = useOpenFile();
+  const now = useNow();
   const remover = useRemoveFile(recent.refresh);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -57,7 +60,11 @@ export function HomeScreen({ userId, onSignOut }: Props) {
             size={item.size}
             mimeType={item.mime_type}
             tone={opening ? "sending" : "plain"}
-            status={opening ? "Opening…" : item.delivered_at ? "Landed" : "Waiting for your devices"}
+            status={
+              opening
+                ? "Opening…"
+                : `${item.delivered_at ? "Landed" : "Waiting for your devices"} · ${formatExpiry(item.created_at, now)}`
+            }
           >
             {selected && !opening && (
               <FileActions
@@ -73,14 +80,14 @@ export function HomeScreen({ userId, onSignOut }: Props) {
         </Pressable>
       );
     },
-    [selectedId, opener.open, opener.openingId, remover.remove],
+    [selectedId, now, opener.open, opener.openingId, remover.remove],
   );
 
   return (
     <SafeAreaView style={styles.safe} edges={["top", "left", "right", "bottom"]}>
       <FlatList
         data={visibleFiles}
-        extraData={selectedId}
+        extraData={[selectedId, now]}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
         contentContainerStyle={styles.content}
