@@ -2,6 +2,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { designTokens } from "../../../design/tokens";
 import {
   CloudFile,
+  formatExpiry,
   formatFileSize,
   getFileTileLabel,
   getFileVisualType,
@@ -10,6 +11,7 @@ import {
 interface FileCardProps {
   file: CloudFile;
   index: number;
+  now: number;
   onPreview: (file: CloudFile) => void;
   onStartDrag: (file: CloudFile) => void;
   onRemove: (file: CloudFile) => void;
@@ -19,6 +21,7 @@ interface FileCardProps {
 export default function FileCard({
   file,
   index,
+  now,
   onPreview,
   onStartDrag,
   onRemove,
@@ -165,6 +168,10 @@ export default function FileCard({
               )}
               {stateLabel}
             </span>
+            <span className="meta-divider" aria-hidden="true">
+              ·
+            </span>
+            <span className="file-expiry">{formatExpiry(file.created_at, now)}</span>
           </span>
         </span>
         {isReady && <span className="drag-me-pill">drag me ↗</span>}

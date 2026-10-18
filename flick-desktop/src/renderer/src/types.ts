@@ -81,3 +81,17 @@ export function getFileTileLabel(file: CloudFile): string {
   const extension = file.name.split(".").pop()?.toUpperCase() ?? "";
   return extension.length > 0 && extension.length <= 4 ? extension : "FILE";
 }
+
+// Files are deleted server-side 24 hours after upload (expire-files function).
+export const FILE_LIFETIME_MS = 24 * 60 * 60 * 1000;
+
+export function formatExpiry(createdAt: string, now: number): string {
+  const remaining = new Date(createdAt).getTime() + FILE_LIFETIME_MS - now;
+  if (!Number.isFinite(remaining) || remaining <= 0) {
+    return "Expiring…";
+  }
+  const minutes = Math.ceil(remaining / 60_000);
+  return minutes < 60
+    ? `Expires in ${minutes}m`
+    : `Expires in ${Math.floor(minutes / 60)}h`;
+}

@@ -3,6 +3,7 @@ import type { ChangeEvent, RefObject } from "react";
 import FileCard from "./FileCard";
 import { CloudFile } from "../types";
 import type { PendingRemoval } from "../hooks/useFiles";
+import { useNow } from "../hooks/useNow";
 
 interface FileListProps {
   files: CloudFile[];
@@ -33,6 +34,8 @@ export default function FileList({
   onRetryDownload,
   onUndoRemove,
 }: FileListProps) {
+  const now = useNow();
+
   function handleChooseFiles(): void {
     fileInputRef.current?.click();
   }
@@ -78,6 +81,7 @@ export default function FileList({
               <FileCard
                 file={file}
                 index={index}
+                now={now}
                 key={file.id}
                 onPreview={onPreview}
                 onStartDrag={onStartDrag}
