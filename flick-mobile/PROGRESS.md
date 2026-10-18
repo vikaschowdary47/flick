@@ -4,7 +4,7 @@
 
 | Step | What | Commit |
 |---|---|---|
-| 1 | Expo SDK 58 TypeScript project (strict), tokens, Nunito 600/800, Supabase client, `useSession` (session kept in AsyncStorage) | `79feede` |
+| 1 | Expo SDK 57 TypeScript project (strict), tokens, Nunito 600/800, Supabase client, `useSession` (session kept in AsyncStorage) | `79feede` |
 | 2 | Sign-in screen (email/password pills, coral button) and home screen (logo, wordmark, status pill, coral "Flick it" pill in the thumb zone) | `178e2d1` |
 | 3 | Upload flow: document picker → 50 MB check → upload bytes to `flick-files/<user_id>/<uuid>-<filename>` → insert row in `files`. Card states: uploading (mint, "On its way…"), "Got it!" (lilac), error (coral outline) | `01f0f71` |
 | 4 | "RECENTLY SENT": your latest 20 rows from `files` as sticker cards. Pull to refresh, and live updates over Realtime | (latest commit) |
@@ -40,7 +40,7 @@ Checks: `npx tsc --noEmit` passes, `npx expo export --platform ios` bundles, and
 
 ## Run it on your iPhone with Expo Go
 
-1. Install **Expo Go** from the App Store. It must support **SDK 58**; update it if it says the project is incompatible.
+1. Install **Expo Go** from the App Store. It must support **SDK 57**; update it if it says the project is incompatible.
 2. Check that `flick-mobile/.env.local` has your real `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
 3. In a terminal:
    ```
