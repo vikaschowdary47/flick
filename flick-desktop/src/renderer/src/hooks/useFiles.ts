@@ -26,6 +26,9 @@ export function useFiles(session: Session | null) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const firstArrivalRef = useRef(false);
   const dragDepth = useRef(0);
+  // True while a card is being dragged out of the widget, so its own drop
+  // zone doesn't treat that file as a new upload (which made duplicates).
+  const outgoingDragRef = useRef(false);
   const uploadInProgress = useRef(false);
   const processFileRef = useRef<(file: CloudFileRow) => void>(() => {});
   const retryDownloadRef = useRef<(file: CloudFile) => void>(() => {});
@@ -478,8 +481,25 @@ export function useFiles(session: Session | null) {
     void uploadFiles(selectedFiles);
   }
 
+  function startFileDrag(file: CloudFile): void {
+    if (!file.localFileId) {
+      return;
+    }
+    outgoingDragRef.current = true;
+    // A native drag swallows mouse events until it ends; the first plain
+    // mouse move afterwards means the drag is over.
+    const clear = (event: MouseEvent) => {
+      if (event.buttons === 0) {
+        outgoingDragRef.current = false;
+        window.removeEventListener("mousemove", clear);
+      }
+    };
+    window.addEventListener("mousemove", clear);
+    window.flick.startFileDrag(file.localFileId);
+  }
+
   function handleDragEnter(event: DragEvent<HTMLElement>): void {
-    if (!event.dataTransfer.types.includes("Files")) {
+    if (outgoingDragRef.current || !event.dataTransfer.types.includes("Files")) {
       return;
     }
     event.preventDefault();
@@ -488,6 +508,12 @@ export function useFiles(session: Session | null) {
   }
 
   function handleDragOver(event: DragEvent<HTMLElement>): void {
+    if (outgoingDragRef.current) {
+      // Show "not allowed" instead of "copy" over our own window.
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "none";
+      return;
+    }
     if (event.dataTransfer.types.includes("Files")) {
       event.preventDefault();
       event.dataTransfer.dropEffect = "copy";
@@ -495,7 +521,7 @@ export function useFiles(session: Session | null) {
   }
 
   function handleDragLeave(event: DragEvent<HTMLElement>): void {
-    if (!event.dataTransfer.types.includes("Files")) {
+    if (outgoingDragRef.current || !event.dataTransfer.types.includes("Files")) {
       return;
     }
     dragDepth.current = Math.max(0, dragDepth.current - 1);
@@ -508,6 +534,10 @@ export function useFiles(session: Session | null) {
     event.preventDefault();
     dragDepth.current = 0;
     setIsDraggingFiles(false);
+    if (outgoingDragRef.current) {
+      outgoingDragRef.current = false;
+      return;
+    }
     void uploadFiles(Array.from(event.dataTransfer.files));
   }
 
@@ -614,6 +644,7 @@ export function useFiles(session: Session | null) {
     removeFromWidget,
     retryDownload: (file: CloudFile) => retryDownloadRef.current(file),
     showConfetti,
+    startFileDrag,
     undoRemove,
     uploadError,
   };

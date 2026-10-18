@@ -11,6 +11,7 @@ interface FileCardProps {
   file: CloudFile;
   index: number;
   onPreview: (file: CloudFile) => void;
+  onStartDrag: (file: CloudFile) => void;
   onRemove: (file: CloudFile) => void;
   onRetry: (file: CloudFile) => void;
 }
@@ -19,6 +20,7 @@ export default function FileCard({
   file,
   index,
   onPreview,
+  onStartDrag,
   onRemove,
   onRetry,
 }: FileCardProps) {
@@ -114,7 +116,7 @@ export default function FileCard({
         }
         onMouseDown={(event) => {
           if (event.button === 0 && file.localFileId) {
-            window.flick.startFileDrag(file.localFileId);
+            onStartDrag(file);
           }
         }}
       >

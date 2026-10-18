@@ -13,6 +13,7 @@ interface FileListProps {
   pendingRemovals: PendingRemoval[];
   onFileSelection: (event: ChangeEvent<HTMLInputElement>) => void;
   onPreview: (file: CloudFile) => void;
+  onStartDrag: (file: CloudFile) => void;
   onRemove: (file: CloudFile) => void;
   onRetryDownload: (file: CloudFile) => void;
   onUndoRemove: (fileId: string) => void;
@@ -27,6 +28,7 @@ export default function FileList({
   pendingRemovals,
   onFileSelection,
   onPreview,
+  onStartDrag,
   onRemove,
   onRetryDownload,
   onUndoRemove,
@@ -78,6 +80,7 @@ export default function FileList({
                 index={index}
                 key={file.id}
                 onPreview={onPreview}
+                onStartDrag={onStartDrag}
                 onRemove={onRemove}
                 onRetry={onRetryDownload}
               />

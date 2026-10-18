@@ -58,6 +58,7 @@ export default function App() {
       pendingRemovals={fileState.pendingRemovals}
       onOutsideClick={auth.handleOutsideClick}
       onPreviewFile={fileState.previewFile}
+      onStartFileDrag={fileState.startFileDrag}
       onRemoveFile={fileState.removeFromWidget}
       onRetryDownload={fileState.retryDownload}
       onUndoRemove={fileState.undoRemove}

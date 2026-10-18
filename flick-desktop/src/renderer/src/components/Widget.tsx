@@ -25,6 +25,7 @@ interface WidgetProps {
   pendingRemovals: PendingRemoval[];
   onOutsideClick: (event: MouseEvent<HTMLElement>) => void;
   onPreviewFile: (file: CloudFile) => void;
+  onStartFileDrag: (file: CloudFile) => void;
   onRemoveFile: (file: CloudFile) => void;
   onRetryDownload: (file: CloudFile) => void;
   onUndoRemove: (fileId: string) => void;
@@ -54,6 +55,7 @@ export default function Widget({
   pendingRemovals,
   onOutsideClick,
   onPreviewFile,
+  onStartFileDrag,
   onRemoveFile,
   onRetryDownload,
   onUndoRemove,
@@ -106,6 +108,7 @@ export default function Widget({
           pendingRemovals={pendingRemovals}
           onFileSelection={handleFileSelection}
           onPreview={onPreviewFile}
+          onStartDrag={onStartFileDrag}
           onRemove={onRemoveFile}
           onRetryDownload={onRetryDownload}
           onUndoRemove={onUndoRemove}
