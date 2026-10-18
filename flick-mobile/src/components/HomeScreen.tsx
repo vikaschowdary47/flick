@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { tokens } from "../design/tokens";
+import { useOpenFile } from "../hooks/useOpenFile";
 import { useRecentFiles } from "../hooks/useRecentFiles";
 import { useUpload } from "../hooks/useUpload";
 import type { FileRow } from "../lib/types";
@@ -18,6 +19,7 @@ type Props = {
 export function HomeScreen({ userId, onSignOut }: Props) {
   const recent = useRecentFiles(userId);
   const { state: upload, pickAndUpload, reset } = useUpload(recent.refresh);
+  const opener = useOpenFile();
   const [refreshing, setRefreshing] = useState(false);
 
   const onRefresh = useCallback(async () => {
@@ -28,18 +30,33 @@ export function HomeScreen({ userId, onSignOut }: Props) {
 
   const renderItem = useCallback(
     ({ item, index }: { item: FileRow; index: number }) => (
-      <View style={index % 2 === 0 ? styles.tiltLeft : styles.tiltRight}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityHint="Opens a preview of this file"
+        onPress={() => opener.open(item)}
+        disabled={opener.openingId !== null}
+        style={({ pressed }) => [
+          index % 2 === 0 ? styles.tiltLeft : styles.tiltRight,
+          pressed && styles.pressedCard,
+        ]}
+      >
         <FileCard
           name={item.name}
           size={item.size}
           mimeType={item.mime_type}
-          tone="plain"
-          status={item.delivered_at ? "Landed" : "Waiting for your devices"}
+          tone={opener.openingId === item.id ? "sending" : "plain"}
+          status={
+            opener.openingId === item.id
+              ? "Opening…"
+              : item.delivered_at
+                ? "Landed"
+                : "Waiting for your devices"
+          }
           badge={item.delivered_at ? "Got it!" : undefined}
         />
-      </View>
+      </Pressable>
     ),
-    [],
+    [opener.open, opener.openingId],
   );
 
   return (
@@ -63,6 +80,11 @@ export function HomeScreen({ userId, onSignOut }: Props) {
             <Text accessibilityRole="header" style={styles.eyebrow}>
               RECENTLY SENT
             </Text>
+            {opener.error && (
+              <Text accessibilityRole="alert" style={styles.openError}>
+                {opener.error}
+              </Text>
+            )}
           </View>
         }
         ListEmptyComponent={
@@ -131,6 +153,14 @@ const styles = StyleSheet.create({
   },
   tiltRight: {
     transform: [{ rotate: `${tokens.motion.cardTiltMaxDeg / 2}deg` }],
+  },
+  pressedCard: {
+    opacity: 0.85,
+  },
+  openError: {
+    color: tokens.colors.text,
+    fontFamily: tokens.fonts.semibold,
+    fontSize: tokens.fontSizes.meta,
   },
   empty: {
     color: tokens.colors.muted,
