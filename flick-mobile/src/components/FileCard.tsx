@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { tokens } from "../design/tokens";
 import { formatBytes } from "../lib/format";
@@ -17,7 +18,7 @@ type Props = {
   mimeType: string | null;
   tone: CardTone;
   status: string;
-  badge?: string;
+  children?: ReactNode; // trailing actions
 };
 
 export function tileColor(mimeType: string | null, name: string): string {
@@ -34,7 +35,7 @@ function extension(name: string): string {
   return dot > 0 ? name.slice(dot + 1, dot + 5).toUpperCase() : "FILE";
 }
 
-export function FileCard({ name, size, mimeType, tone, status, badge }: Props) {
+export function FileCard({ name, size, mimeType, tone, status, children }: Props) {
   return (
     <View
       accessible
@@ -57,11 +58,7 @@ export function FileCard({ name, size, mimeType, tone, status, badge }: Props) {
         </Text>
       </View>
       {tone === "sending" && <ActivityIndicator color={tokens.colors.navy} />}
-      {badge && (
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>{badge}</Text>
-        </View>
-      )}
+      {children}
     </View>
   );
 }
@@ -106,19 +103,6 @@ const styles = StyleSheet.create({
   meta: {
     color: tokens.colors.muted,
     fontFamily: tokens.fonts.semibold,
-    fontSize: tokens.fontSizes.meta,
-  },
-  badge: {
-    paddingHorizontal: tokens.spacing.sm,
-    paddingVertical: tokens.spacing.xs,
-    borderRadius: tokens.radii.pill,
-    backgroundColor: tokens.colors.mint,
-    borderWidth: tokens.borderWidth.outline,
-    borderColor: tokens.colors.outline,
-  },
-  badgeText: {
-    color: tokens.colors.text,
-    fontFamily: tokens.fonts.extrabold,
     fontSize: tokens.fontSizes.meta,
   },
 });

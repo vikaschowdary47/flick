@@ -102,6 +102,7 @@ const layout = {
   inputHeight: 52,
   signInMark: 56,
   statusDot: 8,
+  iconSize: 20,
 } as const;
 
 const spacing = {

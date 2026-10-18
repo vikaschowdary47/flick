@@ -19,7 +19,7 @@ export function UploadCard({ state, onDismiss }: Props) {
   const file = state.file!;
   const tone = state.kind === "uploading" ? "sending" : state.kind === "done" ? "done" : "error";
   const status =
-    state.kind === "uploading" ? "On its way…" : state.kind === "done" ? "Flicked to your devices" : state.message;
+    state.kind === "uploading" ? "On its way…" : state.kind === "done" ? "Got it! Flicked to your devices" : state.message;
 
   return (
     <View accessibilityLiveRegion="polite" style={styles.wrap}>
@@ -29,7 +29,6 @@ export function UploadCard({ state, onDismiss }: Props) {
         mimeType={file.mimeType}
         tone={tone}
         status={status}
-        badge={state.kind === "done" ? "Got it!" : undefined}
       />
       {state.kind !== "uploading" && (
         <Pressable accessibilityRole="button" onPress={onDismiss} style={styles.dismiss}>

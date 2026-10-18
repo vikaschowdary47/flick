@@ -1,11 +1,13 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { tokens } from "../design/tokens";
+import { useDismissedFiles } from "../hooks/useDismissedFiles";
 import { useOpenFile } from "../hooks/useOpenFile";
 import { useRecentFiles } from "../hooks/useRecentFiles";
 import { useUpload } from "../hooks/useUpload";
 import type { FileRow } from "../lib/types";
+import { FileActions } from "./FileActions";
 import { FileCard } from "./FileCard";
 import { Header } from "./Header";
 import { PillButton } from "./PillButton";
@@ -20,6 +22,8 @@ export function HomeScreen({ userId, onSignOut }: Props) {
   const recent = useRecentFiles(userId);
   const { state: upload, pickAndUpload, reset } = useUpload(recent.refresh);
   const opener = useOpenFile();
+  const dismissed = useDismissedFiles(userId);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
   const onRefresh = useCallback(async () => {
@@ -28,41 +32,55 @@ export function HomeScreen({ userId, onSignOut }: Props) {
     setRefreshing(false);
   }, [recent.refresh]);
 
+  const visibleFiles = useMemo(
+    () => recent.files.filter((file) => !dismissed.isHidden(file.id)),
+    [recent.files, dismissed.isHidden],
+  );
+
   const renderItem = useCallback(
-    ({ item, index }: { item: FileRow; index: number }) => (
-      <Pressable
-        accessibilityRole="button"
-        accessibilityHint="Opens a preview of this file"
-        onPress={() => opener.open(item)}
-        disabled={opener.openingId !== null}
-        style={({ pressed }) => [
-          index % 2 === 0 ? styles.tiltLeft : styles.tiltRight,
-          pressed && styles.pressedCard,
-        ]}
-      >
-        <FileCard
-          name={item.name}
-          size={item.size}
-          mimeType={item.mime_type}
-          tone={opener.openingId === item.id ? "sending" : "plain"}
-          status={
-            opener.openingId === item.id
-              ? "Opening…"
-              : item.delivered_at
-                ? "Landed"
-                : "Waiting for your devices"
-          }
-          badge={item.delivered_at ? "Got it!" : undefined}
-        />
-      </Pressable>
-    ),
-    [opener.open, opener.openingId],
+    ({ item, index }: { item: FileRow; index: number }) => {
+      const selected = selectedId === item.id;
+      const opening = opener.openingId === item.id;
+      return (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ selected }}
+          accessibilityHint={selected ? "Hides file actions" : "Shows preview and remove"}
+          onPress={() => setSelectedId(selected ? null : item.id)}
+          style={[
+            index % 2 === 0 ? styles.tiltLeft : styles.tiltRight,
+            selected && styles.selectedCard,
+          ]}
+        >
+          <FileCard
+            name={item.name}
+            size={item.size}
+            mimeType={item.mime_type}
+            tone={opening ? "sending" : "plain"}
+            status={opening ? "Opening…" : item.delivered_at ? "Landed" : "Waiting for your devices"}
+          >
+            {selected && !opening && (
+              <FileActions
+                fileName={item.name}
+                onPreview={() => opener.open(item)}
+                onRemove={() => {
+                  setSelectedId(null);
+                  dismissed.dismiss(item);
+                }}
+              />
+            )}
+          </FileCard>
+        </Pressable>
+      );
+    },
+    [selectedId, opener.open, opener.openingId, dismissed.dismiss],
   );
 
   return (
     <SafeAreaView style={styles.safe} edges={["top", "left", "right", "bottom"]}>
       <FlatList
-        data={recent.files}
+        data={visibleFiles}
+        extraData={selectedId}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
         contentContainerStyle={styles.content}
@@ -95,6 +113,16 @@ export function HomeScreen({ userId, onSignOut }: Props) {
       />
 
       <View style={styles.thumbZone}>
+        {dismissed.pending && (
+          <View accessibilityLiveRegion="polite" style={styles.undoBar}>
+            <Text style={styles.undoText} numberOfLines={1} ellipsizeMode="middle">
+              Removed {dismissed.pending.name}
+            </Text>
+            <Pressable accessibilityRole="button" onPress={dismissed.undo} style={styles.undoButton}>
+              <Text style={styles.undoLabel}>Undo</Text>
+            </Pressable>
+          </View>
+        )}
         <PillButton
           label="Flick it"
           size="large"
@@ -154,8 +182,34 @@ const styles = StyleSheet.create({
   tiltRight: {
     transform: [{ rotate: `${tokens.motion.cardTiltMaxDeg / 2}deg` }],
   },
-  pressedCard: {
-    opacity: 0.85,
+  selectedCard: {
+    transform: [{ rotate: "0deg" }, { translateY: -tokens.spacing.xs }],
+  },
+  undoBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: tokens.spacing.sm,
+    paddingLeft: tokens.spacing.lg,
+    paddingRight: tokens.spacing.xs,
+    marginBottom: tokens.spacing.sm,
+    borderRadius: tokens.radii.pill,
+    backgroundColor: tokens.colors.navy,
+  },
+  undoText: {
+    flex: 1,
+    color: tokens.colors.cream,
+    fontFamily: tokens.fonts.semibold,
+    fontSize: tokens.fontSizes.meta,
+  },
+  undoButton: {
+    minHeight: tokens.layout.minTouchTarget,
+    paddingHorizontal: tokens.spacing.md,
+    justifyContent: "center",
+  },
+  undoLabel: {
+    color: tokens.colors.yellow,
+    fontFamily: tokens.fonts.extrabold,
+    fontSize: tokens.fontSizes.body,
   },
   openError: {
     color: tokens.colors.text,
