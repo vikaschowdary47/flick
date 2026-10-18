@@ -30,6 +30,56 @@ Checks: `npx tsc --noEmit` passes, `npx expo export --platform ios` bundles, and
 - **The status pill always says "Connected" when signed in.** I didn't build an offline check because it needs another package (`@react-native-community/netinfo`).
 - Error messages are friendly versions of what Supabase returns: wrong password, network drop, expired session, file too big.
 
+## Since then
+
+- Tap a recent card to show **preview** (eye) and **remove** (×), matching the desktop. Preview opens a 5-minute signed link in an in-app Safari sheet.
+- × deletes the row and the stored file for every device after a 5-second Undo (desktop too). Both apps listen for DELETE events.
+- Desktop: dragging a card out no longer re-uploads it (duplicates bug).
+- Desktop: removing a file also deletes its downloaded copy, but only inside `userData/downloads`.
+- **24-hour expiry.** Both apps show "Expires in Xh" ("Xm" under an hour) on every card, updated once a minute. A server-side Edge Function deletes expired files, and the apps drop the card through their existing delete handling.
+
+## 24-hour expiry: what you need to do in Supabase
+
+Nothing has been deployed or run against your project. The files are:
+- `supabase/functions/expire-files/index.ts`: the Edge Function. It finds rows older than 24 h, deletes their objects from `flick-files` with the Storage API, then deletes the rows. Tables and policies are unchanged.
+- `supabase/sql/schedule-expire-files.sql`: schedules the function hourly with pg_cron + pg_net.
+
+The function uses the service-role key, which Supabase injects automatically and which stays on Supabase's servers. It is not in either app. Calls are protected by a shared secret header (`x-cron-secret`), so nobody else can trigger it.
+
+Steps (from the repo root, `~/Desktop/flick`):
+
+1. Install the Supabase CLI: `brew install supabase/tap/supabase`
+2. Log in and link the project (your project ref is in the dashboard URL, `https://supabase.com/dashboard/project/<PROJECT_REF>`):
+   ```
+   supabase login
+   supabase init          # only if asked; creates supabase/config.toml, keep the existing functions folder
+   supabase link --project-ref <PROJECT_REF>
+   ```
+3. Create a random secret and store it for the function:
+   ```
+   openssl rand -hex 32          # copy the output
+   supabase secrets set CRON_SECRET=<paste-it>
+   ```
+4. Deploy the function without JWT checks (it checks the secret header instead):
+   ```
+   supabase functions deploy expire-files --no-verify-jwt
+   ```
+5. Test it once by hand. This deletes anything already older than 24 h:
+   ```
+   curl -i -X POST "https://<PROJECT_REF>.supabase.co/functions/v1/expire-files" \
+     -H "x-cron-secret: <paste-it>"
+   ```
+   You should get `200` and JSON like `{"deletedRows":0,"deletedObjects":0,"errors":[]}`. A request without the header must return `401`.
+6. Schedule it: open `supabase/sql/schedule-expire-files.sql`, replace `<PROJECT_REF>` and `<CRON_SECRET>`, then paste it into **Dashboard → SQL Editor** and run it.
+7. Check it after the next full hour:
+   ```sql
+   select * from cron.job_run_details order by start_time desc limit 5;
+   select status_code, content from net._http_response order by created desc limit 5;
+   ```
+   Logs are also in **Dashboard → Edge Functions → expire-files → Logs**.
+
+If you change the secret later, update both `supabase secrets set CRON_SECRET=...` and the Vault entry (`flick_expire_files_secret`).
+
 ## Not done / next
 
 - Step 5 polish: Reanimated springs, haptics, reduced motion. Cards already have a small static tilt.
