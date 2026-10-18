@@ -17,7 +17,7 @@ import {
   unlink,
   writeFile,
 } from "node:fs/promises";
-import { basename, extname, join } from "node:path";
+import { basename, extname, isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import type {
   DroppedFileInput,
@@ -413,6 +413,23 @@ async function addDroppedFiles(input: unknown): Promise<DroppedFilesResult> {
   });
 }
 
+// Only files Flick downloaded itself may be deleted from disk. Files the user
+// dropped in from elsewhere (Finder, other apps) are never touched.
+async function deleteDownloadedCopy(path: string): Promise<void> {
+  const downloadsDirectory = resolve(app.getPath("userData"), "downloads");
+  const relativePath = relative(downloadsDirectory, resolve(path));
+  if (!relativePath || relativePath.startsWith("..") || isAbsolute(relativePath)) {
+    return;
+  }
+  try {
+    await unlink(resolve(path));
+  } catch (error: unknown) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+      console.error(`Could not delete downloaded copy "${path}":`, error);
+    }
+  }
+}
+
 async function removeFile(fileId: unknown): Promise<boolean> {
   if (typeof fileId !== "string") {
     throw new TypeError("A valid file ID is required.");
@@ -435,6 +452,7 @@ async function removeFile(fileId: unknown): Promise<boolean> {
     files = nextFiles;
     fileIdsByPath = nextPaths;
     ignoredPaths = nextIgnoredPaths;
+    await deleteDownloadedCopy(file.path);
     return true;
   });
 }
