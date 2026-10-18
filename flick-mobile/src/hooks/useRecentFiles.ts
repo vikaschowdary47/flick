@@ -27,7 +27,7 @@ export function useRecentFiles(userId: string) {
   useEffect(() => {
     refresh();
 
-    // Live updates: new rows, and delivered_at set by the laptop ("Got it!").
+    // Live updates: new rows, delivered_at set by the laptop, and deletes.
     const channel = supabase
       .channel(`files-mobile-${userId}`)
       .on(
@@ -37,6 +37,11 @@ export function useRecentFiles(userId: string) {
           refresh();
         },
       )
+      // DELETE events can't be filtered by user_id and only carry the id;
+      // a refetch is cheap and RLS keeps it to our own rows.
+      .on("postgres_changes", { event: "DELETE", schema: "public", table: "files" }, () => {
+        refresh();
+      })
       .subscribe();
 
     return () => {

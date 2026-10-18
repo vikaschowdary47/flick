@@ -21,7 +21,7 @@ export function FileActions({ fileName, onPreview, onRemove }: Props) {
       </Pressable>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`Remove ${fileName} from this list`}
+        accessibilityLabel={`Remove ${fileName} from all devices`}
         onPress={onRemove}
         style={({ pressed }) => [styles.button, pressed ? tokens.shadows.stickerPressed : tokens.shadows.sticker]}
       >

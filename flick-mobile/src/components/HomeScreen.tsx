@@ -2,9 +2,9 @@ import { useCallback, useMemo, useState } from "react";
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { tokens } from "../design/tokens";
-import { useDismissedFiles } from "../hooks/useDismissedFiles";
 import { useOpenFile } from "../hooks/useOpenFile";
 import { useRecentFiles } from "../hooks/useRecentFiles";
+import { useRemoveFile } from "../hooks/useRemoveFile";
 import { useUpload } from "../hooks/useUpload";
 import type { FileRow } from "../lib/types";
 import { FileActions } from "./FileActions";
@@ -22,7 +22,7 @@ export function HomeScreen({ userId, onSignOut }: Props) {
   const recent = useRecentFiles(userId);
   const { state: upload, pickAndUpload, reset } = useUpload(recent.refresh);
   const opener = useOpenFile();
-  const dismissed = useDismissedFiles(userId);
+  const remover = useRemoveFile(recent.refresh);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -33,8 +33,8 @@ export function HomeScreen({ userId, onSignOut }: Props) {
   }, [recent.refresh]);
 
   const visibleFiles = useMemo(
-    () => recent.files.filter((file) => !dismissed.isHidden(file.id)),
-    [recent.files, dismissed.isHidden],
+    () => recent.files.filter((file) => !remover.isHidden(file.id)),
+    [recent.files, remover.isHidden],
   );
 
   const renderItem = useCallback(
@@ -65,7 +65,7 @@ export function HomeScreen({ userId, onSignOut }: Props) {
                 onPreview={() => opener.open(item)}
                 onRemove={() => {
                   setSelectedId(null);
-                  dismissed.dismiss(item);
+                  remover.remove(item);
                 }}
               />
             )}
@@ -73,7 +73,7 @@ export function HomeScreen({ userId, onSignOut }: Props) {
         </Pressable>
       );
     },
-    [selectedId, opener.open, opener.openingId, dismissed.dismiss],
+    [selectedId, opener.open, opener.openingId, remover.remove],
   );
 
   return (
@@ -98,9 +98,9 @@ export function HomeScreen({ userId, onSignOut }: Props) {
             <Text accessibilityRole="header" style={styles.eyebrow}>
               RECENTLY SENT
             </Text>
-            {opener.error && (
+            {(remover.error ?? opener.error) && (
               <Text accessibilityRole="alert" style={styles.openError}>
-                {opener.error}
+                {remover.error ?? opener.error}
               </Text>
             )}
           </View>
@@ -113,12 +113,12 @@ export function HomeScreen({ userId, onSignOut }: Props) {
       />
 
       <View style={styles.thumbZone}>
-        {dismissed.pending && (
+        {remover.pending && (
           <View accessibilityLiveRegion="polite" style={styles.undoBar}>
             <Text style={styles.undoText} numberOfLines={1} ellipsizeMode="middle">
-              Removed {dismissed.pending.name}
+              Removed {remover.pending.name}
             </Text>
-            <Pressable accessibilityRole="button" onPress={dismissed.undo} style={styles.undoButton}>
+            <Pressable accessibilityRole="button" onPress={remover.undo} style={styles.undoButton}>
               <Text style={styles.undoLabel}>Undo</Text>
             </Pressable>
           </View>
