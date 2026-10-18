@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from "react";
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { tokens } from "../design/tokens";
+import { useConnectionStatus } from "../hooks/useConnectionStatus";
 import { useNow } from "../hooks/useNow";
 import { useOpenFile } from "../hooks/useOpenFile";
 import { useRecentFiles } from "../hooks/useRecentFiles";
@@ -22,6 +23,10 @@ type Props = {
 
 export function HomeScreen({ userId, onSignOut }: Props) {
   const recent = useRecentFiles(userId);
+  const connection = useConnectionStatus({
+    realtimeStatus: recent.realtimeStatus,
+    onReconnect: recent.reconnect,
+  });
   const { state: upload, pickAndUpload, reset } = useUpload(recent.refresh);
   const opener = useOpenFile();
   const now = useNow();
@@ -97,7 +102,7 @@ export function HomeScreen({ userId, onSignOut }: Props) {
         }
         ListHeaderComponent={
           <View style={styles.top}>
-            <Header status="connected" />
+            <Header status={connection.status} />
             <Text accessibilityRole="header" style={styles.heading}>
               Flick it to all your devices
             </Text>
