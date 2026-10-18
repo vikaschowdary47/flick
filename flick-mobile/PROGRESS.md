@@ -32,7 +32,7 @@ Checks: `npx tsc --noEmit` passes, `npx expo export --platform ios` bundles, and
 
 ## Since then
 
-- Tap a recent card to show **preview** (eye) and **remove** (×), matching the desktop. Preview opens a 5-minute signed link in an in-app Safari sheet.
+- Tap a recent card to show **preview** (eye) and **remove** (×), matching the desktop. Preview downloads the file and opens the iOS share sheet (Quick Look preview plus "Open in…" apps), like Files or Dropbox.
 - × deletes the row and the stored file for every device after a 5-second Undo (desktop too). Both apps listen for DELETE events.
 - Desktop: dragging a card out no longer re-uploads it (duplicates bug).
 - Desktop: removing a file also deletes its downloaded copy, but only inside `userData/downloads`.

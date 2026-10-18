@@ -25,7 +25,7 @@ For mobile-only detail (decisions, Expo Go steps) see [flick-mobile/PROGRESS.md]
 - **Upload** (`useUpload`): document picker, then the 50 MB check, then the upload to `flick-files/<user_id>/<uuid>-<name>` (as an ArrayBuffer), then the row insert in `files`. Card states: "On its way…", "Got it!", error. If the insert fails, the uploaded object is deleted.
 - **Recently sent** (`useRecentFiles`): your latest 20 rows as tilted sticker cards, with pull to refresh and live Realtime updates for inserts, updates (`delivered_at`) and deletes.
 - **Card actions:** tap a card to show **preview** (eye) and **remove** (×), using the desktop's icons (`react-native-svg`).
-  - Preview (`useOpenFile`): a 5-minute signed URL opened in an in-app Safari sheet.
+  - Preview (`useOpenFile`): downloads the file to the phone's cache, then opens the iOS share sheet (`expo-sharing`). It shows a Quick Look preview at the top, and the user picks the app (Files, Photos, Mail, AirDrop…). The cached copy is deleted when the sheet closes.
   - Remove (`useRemoveFile`): 5-second Undo, then the row is deleted, then the stored file.
 - The "Got it!" badge was removed from the cards.
 - **Expiry label:** "Expires in Xh" or "Xm" on each recent card, updated every minute (`useNow`, `formatExpiry`).
@@ -84,13 +84,6 @@ The widget already existed before this work. These are the changes:
 ### Desktop: can't drag and drop files from VS Code
 - **Why:** VS Code's explorer doesn't hand over real files when you drag. It sends a list of `file://` links (`text/uri-list`) and its own data types instead. The widget only accepts drags that contain `Files`, so it ignores them.
 - **Fix idea:** also accept `text/uri-list` drops. Send the `file://` paths to the main process, which reads them from disk and uploads them like a normal drop. Only accept local `file://` links, and keep the existing 50 MB check.
-
-### Mobile: opening a file uses Safari instead of the user's apps
-- **Now:** "Preview" opens a signed link in an in-app Safari sheet.
-- **What other apps do** (Files, Dropbox, Google Drive, WhatsApp, Slack): download the file to the phone first, then
-  1. show it in **Quick Look**, the built-in iOS preview for PDFs, images, video, Office and iWork files, text and more, with a share button, or
-  2. open the **share sheet / "Open in…"** so the user picks the app: Files, Photos, Pages, Adobe, Mail, AirDrop, and so on. iOS remembers the apps they use often.
-- **Fix idea:** download the file with `expo-file-system`, then call `expo-sharing`'s `shareAsync(uri, { mimeType, UTI })`. On iOS that opens the share sheet with a Quick Look preview at the top, so you get both options at once, and it works in Expo Go. Delete the downloaded copy afterwards. A Quick Look-only screen would need a native module, so that waits for the development build.
 
 ## Not done yet
 
