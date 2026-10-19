@@ -1,63 +1,91 @@
-# Flick
+# Flick Mobile
 
 ## What Flick is
-A cross-platform file sharing app. On the phone, you tap Share → "Send to Laptop" (or an upload button). The file instantly appears in a small always-on-top desktop widget as a thumbnail card. You can drag the card straight onto the desktop or into any other app (Finder, Slack, WhatsApp Desktop, email, etc.).
 
-Why: AirDrop only works Apple to Apple, and Quick Share is mostly Android and Windows. Flick should work between iPhone, Android, Mac, and Windows.
+A cross-platform file sharing app. On the phone you pick a file (later: Share → "Send to Laptop"), and it instantly appears in the Flick desktop widget on your laptop, where it can be dragged into any other app. Files are shared across ALL of the user's devices. There is no device picker anywhere in the UI.
 
-## Current focus: DESKTOP APP FIRST
-We are building the desktop app (`flick-desktop`) first. The mobile app (`flick-mobile`) comes later. Do not start on mobile until the desktop widget works.
-
-Project folders (already created, separate folders, not a monorepo):
-- `flick-desktop/` — Electron + React desktop widget (this is where we work now)
-- `flick-mobile/` — React Native app (later)
-
-Not included yet: VS Code extension, AI features, Android/Windows builds, direct Wi-Fi transfer, premium plan.
+This folder is the phone app (`flick-mobile`). The desktop app lives in a separate folder (`flick-desktop`, Electron + React) and is built separately.
 
 ## Developer context
+
 - Solo developer. Knows React, React Native, JavaScript, and Python.
-- Prefer TypeScript/JavaScript everywhere.
-- Explain the Electron-specific parts (main process vs renderer process, IPC bridge, `startDrag`) clearly, since those are new.
+- Explain native/platform-specific parts (Expo config, share extension, dev builds) clearly, since those are newer.
 
 ## Tech stack
-- **Desktop:** Electron + React, Mac first. Small always-on-top window.
-- **Backend:** Supabase (Auth, Storage, Realtime). No custom server.
-- **Mobile (later):** React Native, iPhone first, with an iOS share extension for "Send to Laptop".
 
-## How it works
-1. Phone uploads a file to Supabase Storage and inserts a row in a `files` table (id, user_id, name, size, mime_type, storage_path, created_at, delivered_at).
-2. Desktop subscribes to the `files` table via Supabase Realtime for the signed-in user.
-3. On a new row, the desktop downloads the file to a temp folder immediately, then shows a card in the widget.
-4. Dragging a card calls Electron's `webContents.startDrag()` with the local temp file path. A card can only be dragged out once the file is on disk.
-5. After delivery, set `delivered_at` and delete the cloud copy. Cloud storage is temporary.
+- Expo (React Native) with TypeScript
+- Supabase: Auth, Storage, Realtime (same project as the desktop app)
+- `@supabase/supabase-js`, `@react-native-async-storage/async-storage` (persist the login session), `expo-document-picker`
+- Fonts: Nunito (weights 600 and 800) via `@expo-google-fonts/nunito` and `expo-font`
+- Animation (later): React Native Reanimated, using the spring values in tokens
 
-## Desktop build order (do one step at a time, test before moving on)
-1. Electron + React window: small, always-on-top, one hardcoded file card.
-2. Drag-out: make that card draggable into Finder, Slack, and other apps using `startDrag()`. Prove this feels native before anything else.
-3. Supabase project: auth, `files` table, private storage bucket, row-level security so users only see their own files.
-4. Connect desktop to Realtime: auto-download new files and show cards.
-5. A simple test upload page or script to send files in (stand-in for the phone app).
-6. Polish: multiple cards, remove card, file type icons or thumbnails, clear temp files, menu bar/tray behavior.
+## Environment
 
-## Mobile build order (later, in `flick-mobile`)
-1. Sign in and pick-and-upload screen.
-2. iOS share extension ("Send to Laptop" in the share sheet).
-3. Receive files from the desktop (desktop to phone).
+- `.env` holds `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Provide `.env.example` with empty values; `.env` is gitignored.
+- NEVER use a secret or service_role key in the app. Only the publishable key. Row-level security protects the data.
 
-## Limits and costs to design around
-- Supabase free tier: 1 GB storage, 5 GB egress, 50 MB max upload per file.
-- Egress (downloads) is the main cost, so delete files after delivery.
-- Later ideas: same-Wi-Fi direct transfer (free, no size limit) and a premium plan for large cloud transfers.
+## Supabase setup (already created, do not change the schema)
+
+- Table `public.files`: id, user_id, name, size (max 52428800 bytes = 50 MB), mime_type, storage_path (unique), created_at, delivered_at.
+- Private storage bucket: `flick-files`.
+- RLS: users can only read, insert, update, and delete their own rows and their own folder in the bucket.
+- Storage path rule: `<user_id>/<uuid>-<filename>`. The first folder MUST equal the signed-in user's id, or the upload is rejected.
+- The desktop app listens for new rows in `files` via Realtime, so inserting a row is what makes a file appear on the laptop.
+
+## Upload flow
+
+1. User taps "Flick it" and picks a file with the document picker.
+2. Reject files over 50 MB with a friendly message.
+3. Upload to bucket `flick-files` at `<user_id>/<uuid>-<filename>`. React Native can't upload a plain File object, so read the file as an ArrayBuffer (via `expo-file-system`) before uploading.
+4. Insert a row in `files` (name, size, mime_type, storage_path, user_id).
+5. Show states: uploading, "Got it!", error.
+
+## Design
+
+Follow DESIGN.md in this folder (playful look: cream, coral, yellow, mint, lilac, sticker cards, Nunito).
+
+- All colors, radii, font names, sizes, shadow, and spring values live in `src/design/tokens.ts`. Never hard-code values.
+- Text on coral is navy, not white.
+- Touch targets at least 44px. Respect safe areas. Haptic tap on send and receive (later).
+- Mobile screen: wordmark and status pill, heading "Flick it to all your devices", selected file as a sticker card, "RECENTLY SENT" list with "Got it!" badges, and a large coral "Flick it" pill button in the thumb zone.
+
+## Build order (one step at a time, stop and let me check after each)
+
+1. Expo project, tokens, Nunito, Supabase client, `useSession` hook.
+2. Sign-in screen and home screen (header, status pill, "Flick it" button), no uploads yet.
+3. Upload flow (above) and card states.
+4. "Recently sent" list from the `files` table.
+5. Polish: sticker-card tilt, springy animations, haptics, reduced-motion support.
+6. Later: iOS share extension ("Send to Laptop"), which needs a development build (not Expo Go).
+7. Later: photos via `expo-image-picker`; receiving files sent from the laptop.
+
+## Out of scope for now
+
+- Share extension, Android build, AI features, VS Code integration, premium plan, direct Wi-Fi transfer, App Store submission.
 
 ## Conventions
-- TypeScript preferred, strict mode on.
-- Never commit secrets. Use `.env` files and provide a `.env.example`.
-- Small, focused commits.
-- Handle failures gracefully: large files, flaky connections, duplicate uploads, expired sessions.
 
-## Commands (fill in as the project is created)
-- Desktop dev: `cd flick-desktop && npm run dev`
-- Lint/typecheck: `npm run lint && npm run typecheck`
+- TypeScript strict mode.
+- Structure: `src/components`, `src/hooks` (for example `useSession`, `useUpload`), `src/design/tokens.ts`, `src/lib/supabase.ts`. App.tsx only chooses between sign-in and home.
+- Keep Supabase logic in hooks, never inside visual components.
+- Small, focused commits.
+- Handle failures gracefully: large files, flaky connections, expired sessions.
+
+## Working style (to save usage limits)
+
+- One small task per prompt. Only touch the files named in the prompt.
+- For risky steps, show a short plan first and wait for my OK.
+- Do not scan the whole project unless asked.
+
+## Commands
+
+- Start: `npx expo start` (scan the QR code with Expo Go on the iPhone, same Wi-Fi)
+- Typecheck: `npx tsc --noEmit`
 
 ## First task
-In `flick-desktop`, set up an Electron + React (TypeScript) app with a small always-on-top window showing one hardcoded file card that can be dragged out into Finder using `startDrag()`. Explain the main process vs renderer process split and the IPC bridge as you go.
+
+Do build step 1 only: create the Expo TypeScript project in this folder, create `src/design/tokens.ts` from DESIGN.md, install the packages above, set up the Supabase client and `useSession` hook. Show me the tokens file first, then stop.
+
+Removing a file with × deletes it everywhere (Supabase row, stored file, and this device’s downloaded copy), after a 5-second Undo. Never delete anything outside userData/downloads
+
+Files expire and are deleted everywhere (Supabase row and stored file, plus each device’s downloaded copy) 24 hours after upload. This is a deliberate MVP choice, to be revisited after user feedback.
