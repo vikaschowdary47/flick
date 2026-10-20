@@ -1,8 +1,8 @@
-import {
-  Nunito_600SemiBold,
-  Nunito_800ExtraBold,
-  useFonts,
-} from "@expo-google-fonts/nunito";
+// Only the two weights the app uses. Importing from the package root would
+// bundle all 16 Nunito files (~2 MB).
+import { Nunito_600SemiBold } from "@expo-google-fonts/nunito/600SemiBold";
+import { Nunito_800ExtraBold } from "@expo-google-fonts/nunito/800ExtraBold";
+import { useFonts } from "expo-font";
 import { StatusBar } from "expo-status-bar";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
