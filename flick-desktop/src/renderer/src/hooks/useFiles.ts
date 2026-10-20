@@ -495,11 +495,20 @@ export function useFiles(session: Session | null) {
               );
             }
           }
-          failures.push(
-            `${file.name}: ${
-              error instanceof Error ? error.message : "Upload failed."
-            }`,
-          );
+          const message =
+            error instanceof Error
+              ? error.message
+              : typeof error === "object" && error !== null && "message" in error
+                ? String(error.message)
+                : "Upload failed.";
+          // Free-plan limit hit (enforced by the database trigger).
+          if (message.includes("FLICK_LIMIT_STORAGE")) {
+            failures.push(
+              "Storage full (500 MB). Remove a few old files to make room.",
+            );
+            break;
+          }
+          failures.push(`${file.name}: ${message}`);
         }
       }
     } finally {

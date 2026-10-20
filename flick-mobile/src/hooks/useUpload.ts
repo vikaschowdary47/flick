@@ -4,10 +4,12 @@ import * as DocumentPicker from "expo-document-picker";
 import { File } from "expo-file-system";
 import { FILES_BUCKET, MAX_FILE_BYTES, supabase } from "../lib/supabase";
 import { formatBytes, safeStorageName } from "../lib/format";
+import { limitFromError, type LimitKind } from "../lib/limits";
 import type { PickedFile, UploadState } from "../lib/types";
 
 export function useUpload(onUploaded?: () => void) {
   const [state, setState] = useState<UploadState>({ kind: "idle" });
+  const [limitHit, setLimitHit] = useState<LimitKind | null>(null);
   const busy = useRef(false);
 
   const pickAndUpload = useCallback(async () => {
@@ -74,6 +76,13 @@ export function useUpload(onUploaded?: () => void) {
       setState({ kind: "done", file: picked });
       onUploaded?.();
     } catch (error) {
+      // Over the free storage limit (enforced by the database): show the limit screen.
+      const limit = limitFromError(error);
+      if (limit) {
+        setState({ kind: "idle" });
+        setLimitHit(limit);
+        return;
+      }
       setState({ kind: "error", file: picked, message: friendlyUploadError(error) });
     } finally {
       busy.current = false;
@@ -82,7 +91,9 @@ export function useUpload(onUploaded?: () => void) {
 
   const reset = useCallback(() => setState({ kind: "idle" }), []);
 
-  return { state, pickAndUpload, reset };
+  const clearLimit = useCallback(() => setLimitHit(null), []);
+
+  return { state, pickAndUpload, reset, limitHit, clearLimit };
 }
 
 function friendlyUploadError(error: unknown): string {

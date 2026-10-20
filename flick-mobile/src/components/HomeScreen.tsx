@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme, useThemedStyles } from "../design/ThemeProvider";
@@ -16,6 +16,7 @@ import type { FileRow } from "../lib/types";
 import { FileCard, PinBadge } from "./FileCard";
 import { FileMenu, type FileMenuItem } from "./FileMenu";
 import { Header } from "./Header";
+import { LimitScreen } from "./LimitScreen";
 import { EyeIcon, PinIcon, TrashIcon } from "./Icons";
 import { PillButton } from "./PillButton";
 import { SettingsSheet } from "./SettingsSheet";
@@ -23,10 +24,11 @@ import { UploadCard } from "./UploadCard";
 
 type Props = {
   userId: string;
+  email: string | null;
   onSignOut: () => void;
 };
 
-export function HomeScreen({ userId, onSignOut }: Props) {
+export function HomeScreen({ userId, email, onSignOut }: Props) {
   const { palette } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const recent = useRecentFiles(userId);
@@ -34,7 +36,8 @@ export function HomeScreen({ userId, onSignOut }: Props) {
     realtimeStatus: recent.realtimeStatus,
     onReconnect: recent.reconnect,
   });
-  const { state: upload, pickAndUpload, reset } = useUpload(recent.refresh);
+  const { state: upload, pickAndUpload, reset, limitHit: uploadLimit, clearLimit } = useUpload(recent.refresh);
+  const listRef = useRef<FlatList<FileRow>>(null);
   const opener = useOpenFile();
   const now = useNow();
   const remover = useRemoveFile(recent.refresh);
@@ -118,6 +121,7 @@ export function HomeScreen({ userId, onSignOut }: Props) {
   return (
     <SafeAreaView style={styles.safe} edges={["top", "left", "right", "bottom"]}>
       <FlatList
+        ref={listRef}
         data={visibleFiles}
         extraData={[menu, now]}
         keyExtractor={(item) => item.id}
@@ -193,6 +197,16 @@ export function HomeScreen({ userId, onSignOut }: Props) {
         anchorY={menu?.anchorY ?? 0}
         items={menuItems}
         onClose={() => setMenu(null)}
+      />
+      <LimitScreen
+        limit={uploadLimit ?? pinner.limitHit}
+        email={email}
+        // Back to their files, so they can delete or unpin old ones.
+        onFreeUpSpace={() => listRef.current?.scrollToOffset({ offset: 0, animated: true })}
+        onClose={() => {
+          clearLimit();
+          pinner.clearLimit();
+        }}
       />
       <SettingsSheet visible={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </SafeAreaView>

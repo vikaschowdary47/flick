@@ -36,7 +36,7 @@ function Root() {
           <ActivityIndicator color={palette.text} />
         </View>
       ) : session ? (
-        <HomeScreen userId={session.user.id} onSignOut={signOut} />
+        <HomeScreen userId={session.user.id} email={session.user.email ?? null} onSignOut={signOut} />
       ) : (
         <SignInScreen onSignIn={signIn} />
       )}
