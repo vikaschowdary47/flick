@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Switch } from "react-native";
-import { CLIPBOARD_ENABLED } from "../lib/config";
 import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme, useThemedStyles } from "../design/ThemeProvider";
@@ -19,6 +18,7 @@ type Props = {
   onRenameDevice: (name: string) => Promise<string | null>;
   usage: Usage | null;
   protectUris?: string[]; // a file open right now survives Clear cache
+  showClipboardSetting: boolean; // the clipboard feature flag
   clipboardSharing: boolean;
   onClipboardSharingChange: (on: boolean) => void;
 };
@@ -34,7 +34,7 @@ const THEMES: { value: ThemeName; label: string }[] = [
   { value: "classy", label: "Classy" },
 ];
 
-export function SettingsSheet({ visible, onClose, deviceName, onRenameDevice, usage, protectUris = [], clipboardSharing, onClipboardSharingChange }: Props) {
+export function SettingsSheet({ visible, onClose, deviceName, onRenameDevice, usage, protectUris = [], showClipboardSetting, clipboardSharing, onClipboardSharingChange }: Props) {
   const { appearance, setAppearance, themeName, setThemeName } = useTheme();
   const styles = useThemedStyles(makeStyles);
 
@@ -126,7 +126,7 @@ export function SettingsSheet({ visible, onClose, deviceName, onRenameDevice, us
             </Pressable>
           </View>
         </View>
-        {CLIPBOARD_ENABLED && (
+        {showClipboardSetting && (
           <View style={styles.group}>
             <Text style={styles.eyebrow}>CLIPBOARD SHARING</Text>
             <View style={styles.cacheRow}>

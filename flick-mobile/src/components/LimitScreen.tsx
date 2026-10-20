@@ -6,7 +6,7 @@ import type { Palette } from "../design/theme";
 import { tokens } from "../design/tokens";
 import type { DeviceRow } from "../hooks/useDevice";
 import { useWaitlist } from "../hooks/useWaitlist";
-import { PAYMENTS_ENABLED } from "../lib/config";
+import { useFeatureFlags } from "../hooks/useFeatureFlags";
 import type { LimitKind, Usage } from "../lib/limits";
 import { LogoMark } from "./LogoMark";
 import { PillButton } from "./PillButton";
@@ -62,8 +62,8 @@ function copy(limit: LimitKind, usage: Usage | null): { title: string; body: str
 }
 
 // Shared limit screen for pins, storage and devices. The secondary action is
-// the Pro waitlist while PAYMENTS_ENABLED is false; flipping it swaps in an
-// upgrade button (no payment code exists yet).
+// the Pro waitlist while the "payments" feature flag is off; turning it on
+// swaps in an upgrade button (no payment code exists yet).
 export function LimitScreen({
   limit,
   usage,
@@ -76,6 +76,7 @@ export function LimitScreen({
 }: Props) {
   const styles = useThemedStyles(makeStyles);
   const waitlist = useWaitlist(email);
+  const { payments: paymentsEnabled } = useFeatureFlags();
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [removeError, setRemoveError] = useState<string | null>(null);
   if (!limit) return null;
@@ -153,7 +154,7 @@ export function LimitScreen({
               }}
             />
           )}
-          {PAYMENTS_ENABLED ? (
+          {paymentsEnabled ? (
             // Later: the real upgrade flow goes here.
             <PillButton label="Upgrade" variant="secondary" onPress={close} />
           ) : waitlist.state === "joined" ? (
@@ -168,7 +169,7 @@ export function LimitScreen({
               onPress={() => void waitlist.join(limit)}
             />
           )}
-          {!PAYMENTS_ENABLED && (
+          {!paymentsEnabled && (
             <Text style={styles.note}>
               {waitlist.state === "error"
                 ? "Couldn't save that. Check your connection and try again."

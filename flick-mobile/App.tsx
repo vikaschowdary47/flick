@@ -10,6 +10,7 @@ import { HomeScreen } from "./src/components/HomeScreen";
 import { SignInScreen } from "./src/components/SignInScreen";
 import { ThemeProvider, useTheme, useThemedStyles } from "./src/design/ThemeProvider";
 import type { Palette } from "./src/design/theme";
+import { FeatureFlagsProvider } from "./src/hooks/useFeatureFlags";
 import { useSession } from "./src/hooks/useSession";
 
 export default function App() {
@@ -36,7 +37,9 @@ function Root() {
           <ActivityIndicator color={palette.text} />
         </View>
       ) : session ? (
-        <HomeScreen userId={session.user.id} email={session.user.email ?? null} onSignOut={signOut} />
+        <FeatureFlagsProvider userId={session.user.id}>
+          <HomeScreen userId={session.user.id} email={session.user.email ?? null} onSignOut={signOut} />
+        </FeatureFlagsProvider>
       ) : (
         <SignInScreen onSignIn={signIn} onSignInWithGoogle={signInWithGoogle} />
       )}

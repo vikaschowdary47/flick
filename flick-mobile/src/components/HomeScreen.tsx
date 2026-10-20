@@ -57,9 +57,9 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
   const [refreshing, setRefreshing] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [sourceOpen, setSourceOpen] = useState(false);
-  // Clips: hidden, not fetched and not subscribed unless the developer flag
-  // and this device's Settings → Clipboard sharing are both on.
-  const clipboardSetting = useClipboardSetting();
+  // Clips: hidden, not fetched and not subscribed unless the clipboard
+  // feature flag and the user's Clipboard sharing setting are both on.
+  const clipboardSetting = useClipboardSetting(userId);
   const clipsOn = clipboardSetting.clipsActive;
   const clips = useClips(userId, device.deviceId, clipsOn);
   const [tab, setTab] = useState<HomeTab>("files");
@@ -306,6 +306,7 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
         onRenameDevice={device.rename}
         usage={usage.usage}
         protectUris={viewerUri ? [viewerUri] : []}
+        showClipboardSetting={clipboardSetting.showSetting}
         clipboardSharing={clipboardSetting.sharingOn}
         onClipboardSharingChange={clipboardSetting.setSharing}
       />
