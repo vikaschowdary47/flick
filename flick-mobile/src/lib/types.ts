@@ -7,6 +7,8 @@ export type FileRow = {
   storage_path: string;
   created_at: string;
   delivered_at: string | null;
+  pinned: boolean;
+  pinned_at: string | null;
 };
 
 export type PickedFile = {

@@ -7,15 +7,16 @@ import { tokens } from "../design/tokens";
 import { useConnectionStatus } from "../hooks/useConnectionStatus";
 import { useNow } from "../hooks/useNow";
 import { useOpenFile } from "../hooks/useOpenFile";
+import { usePinFile } from "../hooks/usePinFile";
 import { useRecentFiles } from "../hooks/useRecentFiles";
 import { useRemoveFile } from "../hooks/useRemoveFile";
 import { useUpload } from "../hooks/useUpload";
 import { formatExpiry } from "../lib/format";
 import type { FileRow } from "../lib/types";
-import { FileCard } from "./FileCard";
+import { FileCard, PinBadge } from "./FileCard";
 import { FileMenu, type FileMenuItem } from "./FileMenu";
 import { Header } from "./Header";
-import { EyeIcon, TrashIcon } from "./Icons";
+import { EyeIcon, PinIcon, TrashIcon } from "./Icons";
 import { PillButton } from "./PillButton";
 import { SettingsSheet } from "./SettingsSheet";
 import { UploadCard } from "./UploadCard";
@@ -37,6 +38,7 @@ export function HomeScreen({ userId, onSignOut }: Props) {
   const opener = useOpenFile();
   const now = useNow();
   const remover = useRemoveFile(recent.refresh);
+  const pinner = usePinFile(recent.refresh);
   // The card whose menu is open, and where it was touched.
   const [menu, setMenu] = useState<{ file: FileRow; anchorY: number } | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -63,7 +65,7 @@ export function HomeScreen({ userId, onSignOut }: Props) {
       return (
         <Pressable
           accessibilityRole="button"
-          accessibilityHint="Opens Preview and Delete"
+          accessibilityHint="Opens Preview, Pin and Delete"
           onPress={(event) => showMenu(event.nativeEvent.pageY)}
           onLongPress={(event) => showMenu(event.nativeEvent.pageY)}
           style={[index % 2 === 0 ? styles.tiltLeft : styles.tiltRight, open && styles.selectedCard]}
@@ -73,6 +75,7 @@ export function HomeScreen({ userId, onSignOut }: Props) {
             size={item.size}
             mimeType={item.mime_type}
             tone={opening ? "sending" : "plain"}
+            badge={item.pinned ? <PinBadge /> : undefined}
             status={
               opening
                 ? "Opening…"
@@ -93,6 +96,13 @@ export function HomeScreen({ userId, onSignOut }: Props) {
           icon: <EyeIcon />,
           fill: "preview",
           onPress: () => opener.open(menu.file),
+        },
+        {
+          key: "pin",
+          label: menu.file.pinned ? "Unpin" : "Pin",
+          icon: <PinIcon />,
+          fill: "pin",
+          onPress: () => void pinner.togglePin(menu.file),
         },
         {
           key: "delete",
@@ -127,9 +137,9 @@ export function HomeScreen({ userId, onSignOut }: Props) {
             <Text accessibilityRole="header" style={styles.eyebrow}>
               RECENTLY SENT
             </Text>
-            {(remover.error ?? opener.error) && (
+            {(remover.error ?? pinner.error ?? opener.error) && (
               <Text accessibilityRole="alert" style={styles.openError}>
-                {remover.error ?? opener.error}
+                {remover.error ?? pinner.error ?? opener.error}
               </Text>
             )}
           </View>

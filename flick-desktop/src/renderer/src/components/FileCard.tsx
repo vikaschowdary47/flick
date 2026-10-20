@@ -135,7 +135,16 @@ export default function FileCard({
           )}
         </span>
         <span className="file-details">
-          <span className="file-name">{file.name}</span>
+          <span className="file-name">
+            {file.pinned && (
+              <span className="pin-badge" title="Pinned" aria-label="Pinned">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M9 4h6l-1 6 3 3H7l3-3-1-6ZM12 13v7" />
+                </svg>
+              </span>
+            )}
+            {file.name}
+          </span>
           <span className="file-meta">
             {formatFileSize(file.size)}
             <span className="meta-divider" aria-hidden="true">

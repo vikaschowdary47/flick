@@ -7,12 +7,20 @@ export interface CloudFileRow {
   storage_path: string;
   created_at: string;
   delivered_at: string | null;
+  pinned?: boolean;
+  pinned_at?: string | null;
 }
 
 export interface CloudFile extends CloudFileRow {
   downloadState: "downloading" | "ready" | "error" | "delivered";
   localFileId?: string;
   downloadError?: string;
+}
+
+// Pinned files first, then newest.
+export function compareFiles(left: CloudFileRow, right: CloudFileRow): number {
+  const pinned = Number(Boolean(right.pinned)) - Number(Boolean(left.pinned));
+  return pinned !== 0 ? pinned : right.created_at.localeCompare(left.created_at);
 }
 
 export const MAX_FILE_SIZE = 50 * 1024 * 1024;

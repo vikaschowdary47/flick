@@ -4,6 +4,7 @@ import { useTheme, useThemedStyles } from "../design/ThemeProvider";
 import type { Palette } from "../design/theme";
 import { tokens } from "../design/tokens";
 import { formatBytes } from "../lib/format";
+import { PinIcon } from "./Icons";
 
 export type CardTone = "sending" | "done" | "error" | "plain";
 
@@ -76,6 +77,16 @@ export function FileCard({ name, size, mimeType, tone, status, badge, children }
   );
 }
 
+// Small yellow sticker shown next to a pinned file's name.
+export function PinBadge() {
+  const styles = useThemedStyles(makeStyles);
+  return (
+    <View accessibilityLabel="Pinned" style={styles.pinBadge}>
+      <PinIcon size={tokens.fontSizes.meta} />
+    </View>
+  );
+}
+
 const makeStyles = (c: Palette) =>
   StyleSheet.create({
     card: {
@@ -128,5 +139,12 @@ const makeStyles = (c: Palette) =>
     },
     onColor: {
       color: c.onColor,
+    },
+    pinBadge: {
+      padding: tokens.spacing.xs / 2,
+      borderRadius: tokens.radii.pill,
+      borderWidth: tokens.borderWidth.outline,
+      borderColor: c.outline,
+      backgroundColor: c.pinBadge,
     },
   });

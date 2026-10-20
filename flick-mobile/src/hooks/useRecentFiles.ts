@@ -18,7 +18,9 @@ export function useRecentFiles(userId: string) {
   const refresh = useCallback(async () => {
     const { data, error: queryError } = await supabase
       .from("files")
-      .select("id, user_id, name, size, mime_type, storage_path, created_at, delivered_at")
+      .select("id, user_id, name, size, mime_type, storage_path, created_at, delivered_at, pinned, pinned_at")
+      // Pinned files first, then newest.
+      .order("pinned", { ascending: false })
       .order("created_at", { ascending: false })
       .limit(LIMIT);
     setLoading(false);
@@ -34,7 +36,7 @@ export function useRecentFiles(userId: string) {
     let active = true; // ignore late callbacks from a channel we've removed
     refresh();
 
-    // Live updates: new rows, delivered_at set by the laptop, and deletes.
+    // Live updates: new rows, delivered_at set by the laptop, pins, and deletes.
     const channel = supabase
       .channel(`files-mobile-${userId}`)
       .on(

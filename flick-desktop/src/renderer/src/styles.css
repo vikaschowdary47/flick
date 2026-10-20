@@ -1110,3 +1110,25 @@ input:focus-visible {
     transition-duration: 0.01ms !important;
   }
 }
+
+.pin-badge {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  margin-right: 6px;
+  vertical-align: -3px;
+  border: 2px solid var(--flick-navy);
+  border-radius: 999px;
+  background: var(--flick-yellow);
+}
+
+.pin-badge svg {
+  width: 11px;
+  height: 11px;
+  fill: none;
+  stroke: var(--flick-navy);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}

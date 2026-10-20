@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ChangeEvent, type DragEvent } from "r
 import type { Session } from "@supabase/supabase-js";
 import type { FileCard } from "../../../shared/files";
 import { supabase } from "../supabase";
-import { CloudFile, CloudFileRow, isCloudFile, MAX_FILE_SIZE } from "../types";
+import { CloudFile, CloudFileRow, compareFiles, isCloudFile, MAX_FILE_SIZE } from "../types";
 
 const REMOVAL_UNDO_DELAY = 5000;
 
@@ -96,9 +96,7 @@ export function useFiles(session: Session | null) {
         return [
           nextFile,
           ...currentFiles.filter((currentFile) => currentFile.id !== file.id),
-        ].sort((left, right) =>
-          right.created_at.localeCompare(left.created_at),
-        );
+        ].sort(compareFiles);
       });
     }
 
@@ -259,7 +257,7 @@ export function useFiles(session: Session | null) {
           client
             .from("files")
             .select(
-              "id,user_id,name,size,mime_type,storage_path,created_at,delivered_at",
+              "id,user_id,name,size,mime_type,storage_path,created_at,delivered_at,pinned,pinned_at",
             )
             .eq("user_id", userId)
             .order("created_at", { ascending: false })
@@ -283,9 +281,7 @@ export function useFiles(session: Session | null) {
                 });
               }
             }
-            return Array.from(byId.values()).sort((left, right) =>
-              right.created_at.localeCompare(left.created_at),
-            );
+            return Array.from(byId.values()).sort(compareFiles);
           });
         }
       } catch (error: unknown) {
@@ -334,6 +330,35 @@ export function useFiles(session: Session | null) {
             }
           }
           queueFile(payload.new);
+        },
+      )
+      // Pins set on the phone: update the card in place and re-sort.
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "files",
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload) => {
+          const row = payload.new as Partial<CloudFileRow>;
+          if (typeof row.id !== "string") {
+            return;
+          }
+          setFiles((current) =>
+            current
+              .map((file) =>
+                file.id === row.id
+                  ? {
+                      ...file,
+                      pinned: Boolean(row.pinned),
+                      pinned_at: row.pinned_at ?? null,
+                    }
+                  : file,
+              )
+              .sort(compareFiles),
+          );
         },
       )
       // Supabase can't filter DELETE events by column and only sends the
@@ -426,7 +451,7 @@ export function useFiles(session: Session | null) {
               storage_path: storagePath,
             })
             .select(
-              "id,user_id,name,size,mime_type,storage_path,created_at,delivered_at",
+              "id,user_id,name,size,mime_type,storage_path,created_at,delivered_at,pinned,pinned_at",
             )
             .single()
             .returns<CloudFileRow>();
@@ -658,9 +683,7 @@ export function useFiles(session: Session | null) {
         if (current.some((file) => file.id === removal.file.id)) {
           return current;
         }
-        return [...current, removal.file].sort((left, right) =>
-          right.created_at.localeCompare(left.created_at),
-        );
+        return [...current, removal.file].sort(compareFiles);
       });
     }
   }
