@@ -20,6 +20,7 @@ import { LimitScreen } from "./LimitScreen";
 import { EyeIcon, PinIcon, TrashIcon } from "./Icons";
 import { PillButton } from "./PillButton";
 import { SettingsSheet } from "./SettingsSheet";
+import { SourceSheet } from "./SourceSheet";
 import { UploadCard } from "./UploadCard";
 
 type Props = {
@@ -46,6 +47,7 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
   const [menu, setMenu] = useState<{ file: FileRow; anchorY: number } | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [sourceOpen, setSourceOpen] = useState(false);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -169,9 +171,9 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
         <PillButton
           label="Flick it"
           size="large"
-          onPress={pickAndUpload}
+          onPress={() => setSourceOpen(true)}
           busy={upload.kind === "uploading"}
-          accessibilityHint="Pick a file to send to all your devices"
+          accessibilityHint="Choose photos, a file, or take a photo to send to all your devices"
         />
         <View style={styles.footerLinks}>
           <Pressable
@@ -207,6 +209,11 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
           clearLimit();
           pinner.clearLimit();
         }}
+      />
+      <SourceSheet
+        visible={sourceOpen}
+        onPick={(source) => void pickAndUpload(source)}
+        onClose={() => setSourceOpen(false)}
       />
       <SettingsSheet visible={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </SafeAreaView>

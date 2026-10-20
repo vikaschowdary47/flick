@@ -25,7 +25,15 @@
       "expo-font",
       "expo-status-bar",
       "expo-sharing",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Flick opens your photos so you can send the ones you pick to your other devices.",
+          "cameraPermission": "Flick uses the camera when you tap Take photo, so you can send the picture to your other devices.",
+          "microphonePermission": false
+        }
+      ]
     ],
     "scheme": "flick"
   }
