@@ -20,6 +20,7 @@ export default function App() {
         handleDragOver={fileState.handleDragOver}
         handleDrop={fileState.handleDrop}
         handleSignIn={auth.handleSignIn}
+        handleGoogleSignIn={auth.handleGoogleSignIn}
         handleSignOut={auth.handleSignOut}
         isAccountMenuOpen={auth.isAccountMenuOpen}
         isDraggingFiles={fileState.isDraggingFiles}

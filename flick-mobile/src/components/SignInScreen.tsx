@@ -16,9 +16,10 @@ import { PillButton } from "./PillButton";
 
 type Props = {
   onSignIn: (email: string, password: string) => Promise<string | null>;
+  onSignInWithGoogle: () => Promise<string | null>;
 };
 
-export function SignInScreen({ onSignIn }: Props) {
+export function SignInScreen({ onSignIn, onSignInWithGoogle }: Props) {
   const { palette } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const [email, setEmail] = useState("");
@@ -33,6 +34,14 @@ export function SignInScreen({ onSignIn }: Props) {
     setBusy(true);
     setError(null);
     const message = await onSignIn(email, password);
+    setBusy(false);
+    if (message) setError(message);
+  }
+
+  async function google() {
+    setBusy(true);
+    setError(null);
+    const message = await onSignInWithGoogle();
     setBusy(false);
     if (message) setError(message);
   }
@@ -88,6 +97,16 @@ export function SignInScreen({ onSignIn }: Props) {
             busy={busy}
             disabled={!canSubmit}
           />
+          <Text style={styles.or}>or</Text>
+          <PillButton
+            label="Continue with Google"
+            variant="secondary"
+            onPress={google}
+            disabled={busy}
+          />
+          {/* TODO(apple-sign-in): "Continue with Apple" button goes here once the
+              Apple developer account is set up (required by App Store review
+              when Google sign-in is offered). */}
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -134,6 +153,12 @@ const makeStyles = (c: Palette) =>
       color: c.text,
       fontFamily: tokens.fonts.semibold,
       fontSize: tokens.fontSizes.body,
+    },
+    or: {
+      color: c.textMuted,
+      fontFamily: tokens.fonts.semibold,
+      fontSize: tokens.fontSizes.meta,
+      textAlign: "center",
     },
     error: {
       color: c.text,

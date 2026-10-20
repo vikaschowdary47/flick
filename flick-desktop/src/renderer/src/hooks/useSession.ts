@@ -105,6 +105,43 @@ export function useSession() {
     }
   }
 
+  // Google via Supabase OAuth with PKCE: the system browser signs in and
+  // redirects to a loopback listener in the main process with ?code=….
+  async function handleGoogleSignIn(): Promise<void> {
+    if (!supabase) {
+      return;
+    }
+    setIsSigningIn(true);
+    setAuthError("");
+    try {
+      const redirectTo = await window.flick.startAuthLoopback();
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo, skipBrowserRedirect: true },
+      });
+      if (error || !data.url) {
+        throw error ?? new Error("Could not start Google sign-in.");
+      }
+      const code = await window.flick.waitForAuthCode(data.url);
+      const { error: exchangeError } =
+        await supabase.auth.exchangeCodeForSession(code);
+      if (exchangeError) {
+        throw exchangeError;
+      }
+    } catch (error: unknown) {
+      console.error("Could not sign in with Google:", error);
+      setAuthError(
+        error instanceof Error ? error.message : "Could not sign in with Google.",
+      );
+    } finally {
+      setIsSigningIn(false);
+    }
+  }
+
+  // TODO(apple-sign-in): add handleAppleSignIn once the Apple developer account
+  // exists (provider "apple" through the same loopback flow), and enable the
+  // Apple provider in Supabase.
+
   async function handleSignOut(): Promise<void> {
     setIsAccountMenuOpen(false);
     if (!supabase) {
@@ -141,6 +178,7 @@ export function useSession() {
     authError,
     authReady,
     email,
+    handleGoogleSignIn,
     handleSignIn,
     handleSignOut,
     handleOutsideClick,

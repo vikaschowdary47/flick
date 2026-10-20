@@ -1132,3 +1132,14 @@ input:focus-visible {
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+
+.sign-in-or {
+  margin: 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--flick-muted);
+}
+
+.sign-in-button.sign-in-button-secondary {
+  background: var(--flick-white);
+}

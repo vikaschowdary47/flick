@@ -13,6 +13,7 @@ interface SignInProps {
   handleDragOver: (event: React.DragEvent<HTMLElement>) => void;
   handleDrop: (event: React.DragEvent<HTMLElement>) => void;
   handleSignIn: (event: FormEvent<HTMLFormElement>) => void;
+  handleGoogleSignIn: () => void;
   handleSignOut: () => void;
   isAccountMenuOpen: boolean;
   isDraggingFiles: boolean;
@@ -39,6 +40,7 @@ export default function SignIn({
   handleDragOver,
   handleDrop,
   handleSignIn,
+  handleGoogleSignIn,
   handleSignOut,
   isAccountMenuOpen,
   isDraggingFiles,
@@ -138,6 +140,16 @@ export default function SignIn({
               >
                 {isSigningIn ? "Signing in…" : "Sign in"}
               </button>
+              <p className="sign-in-or">or</p>
+              <button
+                className="sign-in-button sign-in-button-secondary"
+                type="button"
+                disabled={isSigningIn}
+                onClick={handleGoogleSignIn}
+              >
+                Continue with Google
+              </button>
+              {/* TODO(apple-sign-in): "Continue with Apple" button goes here. */}
               {authError && (
                 <p className="auth-error" role="alert">
                   {authError}

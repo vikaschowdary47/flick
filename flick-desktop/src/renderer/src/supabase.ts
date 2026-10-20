@@ -9,6 +9,7 @@ export const supabase =
         auth: {
           autoRefreshToken: true,
           detectSessionInUrl: false,
+          flowType: "pkce",
           persistSession: true,
           storage: window.localStorage,
         },

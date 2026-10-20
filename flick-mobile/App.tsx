@@ -24,7 +24,7 @@ export default function App() {
 
 function Root() {
   const [fontsLoaded] = useFonts({ Nunito_600SemiBold, Nunito_800ExtraBold });
-  const { session, loading, signIn, signOut } = useSession();
+  const { session, loading, signIn, signInWithGoogle, signOut } = useSession();
   const { palette, scheme } = useTheme();
   const styles = useThemedStyles(makeStyles);
 
@@ -38,7 +38,7 @@ function Root() {
       ) : session ? (
         <HomeScreen userId={session.user.id} email={session.user.email ?? null} onSignOut={signOut} />
       ) : (
-        <SignInScreen onSignIn={signIn} />
+        <SignInScreen onSignIn={signIn} onSignInWithGoogle={signInWithGoogle} />
       )}
     </>
   );

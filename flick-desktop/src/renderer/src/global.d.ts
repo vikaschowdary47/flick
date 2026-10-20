@@ -14,5 +14,7 @@ interface Window {
       import('../../shared/files').FileCard
     >
     startFileDrag: (fileId: string) => void
+    startAuthLoopback: () => Promise<string>
+    waitForAuthCode: (authUrl: string) => Promise<string>
   }
 }

@@ -8,6 +8,7 @@ import {
   type NativeImage,
 } from "electron";
 import { randomUUID } from "node:crypto";
+import { createServer, type Server } from "node:http";
 import {
   mkdir,
   readFile,
@@ -488,6 +489,81 @@ function createWindow(): void {
     mainWindow = null;
   });
 }
+
+// Google sign-in (OAuth with PKCE) uses a loopback redirect: a tiny HTTP
+// server on 127.0.0.1 receives ?code=… from the system browser and hands it to
+// the renderer, which exchanges it with Supabase. Only one flow at a time.
+const LOOPBACK_TIMEOUT_MS = 5 * 60 * 1000;
+let loopback: { server: Server; code: Promise<string> } | null = null;
+
+function closeLoopback(): void {
+  loopback?.server.close();
+  loopback = null;
+}
+
+function startLoopback(): Promise<string> {
+  closeLoopback();
+  return new Promise((resolveStart, rejectStart) => {
+    let settle: { resolve: (code: string) => void; reject: (error: Error) => void };
+    const code = new Promise<string>((resolve, reject) => {
+      settle = { resolve, reject };
+    });
+    code.catch(() => {}); // handled by whoever awaits it
+    const server = createServer((request, response) => {
+      const url = new URL(request.url ?? "/", "http://127.0.0.1");
+      if (url.pathname !== "/auth/callback") {
+        response.writeHead(404).end();
+        return;
+      }
+      const received = url.searchParams.get("code");
+      const failure = url.searchParams.get("error_description");
+      response.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+      response.end(
+        `<!doctype html><meta charset="utf-8"><title>Flick</title><body style="font-family:system-ui;background:${designTokens.colors.cream};color:${designTokens.colors.navy};display:grid;place-items:center;height:100vh;margin:0"><h2>${received ? "You're signed in. You can close this tab." : "Sign-in didn't finish. You can close this tab and try again."}</h2></body>`,
+      );
+      if (received) {
+        settle.resolve(received);
+      } else {
+        settle.reject(new Error(failure ?? "Google sign-in was cancelled."));
+      }
+      setTimeout(closeLoopback, 1000);
+    });
+    server.on("error", rejectStart);
+    server.listen(0, "127.0.0.1", () => {
+      const address = server.address();
+      if (!address || typeof address === "string") {
+        rejectStart(new Error("Could not start the sign-in listener."));
+        return;
+      }
+      setTimeout(() => {
+        if (loopback?.server === server) {
+          settle.reject(new Error("Google sign-in timed out."));
+          closeLoopback();
+        }
+      }, LOOPBACK_TIMEOUT_MS);
+      loopback = { server, code };
+      resolveStart(`http://127.0.0.1:${address.port}/auth/callback`);
+    });
+  });
+}
+
+ipcMain.handle("auth:loopback-start", async (event) => {
+  assertMainWindow(event);
+  return startLoopback();
+});
+
+ipcMain.handle("auth:loopback-wait", async (event, authUrl: unknown) => {
+  assertMainWindow(event);
+  if (typeof authUrl !== "string" || !authUrl.startsWith("https://")) {
+    throw new TypeError("A valid sign-in URL is required.");
+  }
+  const current = loopback;
+  if (!current) {
+    throw new Error("Sign-in listener isn't running.");
+  }
+  await shell.openExternal(authUrl);
+  return current.code;
+});
 
 ipcMain.on("file:start-drag", (event, fileId: unknown) => {
   if (typeof fileId !== "string") {
