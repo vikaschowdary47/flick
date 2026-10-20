@@ -29,6 +29,7 @@ import type {
   ReceivedFileInput,
 } from "../shared/files";
 import { designTokens } from "../design/tokens";
+import { setupClips } from "./clips";
 import {
   attachWindow,
   noteArrival,
@@ -683,6 +684,7 @@ app
     }
     createWindow();
     setupTray(() => mainWindow);
+    setupClips(() => mainWindow, showPopover);
 
     app.on("activate", () => {
       if (BrowserWindow.getAllWindows().length === 0) {

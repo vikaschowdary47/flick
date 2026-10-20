@@ -1,6 +1,6 @@
 import type { Usage } from "../limits";
 import { useReducedMotion } from "framer-motion";
-import type { ChangeEvent, MouseEvent, RefObject } from "react";
+import { useState, type ChangeEvent, type MouseEvent, type ReactNode, type RefObject } from "react";
 import type { Session } from "@supabase/supabase-js";
 import type { CloudFile } from "../types";
 import type { PendingRemoval } from "../hooks/useFiles";
@@ -41,6 +41,12 @@ interface WidgetProps {
   showConfetti: boolean;
   arrivalPulse: number;
   uploadError: string;
+  // Clips tab content; null when clips are off (flag or setting).
+  clipsPanel: ReactNode | null;
+  clipsDot: boolean;
+  onOpenClips: () => void;
+  clipboardSharing: boolean | null; // null hides the setting (flag off)
+  onClipboardSharingChange: (on: boolean) => void;
 }
 
 export default function Widget({
@@ -77,8 +83,15 @@ export default function Widget({
   showConfetti,
   arrivalPulse,
   uploadError,
+  clipsPanel,
+  clipsDot,
+  onOpenClips,
+  clipboardSharing,
+  onClipboardSharingChange,
 }: WidgetProps) {
   const prefersReducedMotion = useReducedMotion();
+  const [tab, setTab] = useState<"files" | "clips">("files");
+  const activeTab = clipsPanel ? tab : "files";
 
   return (
     <main
@@ -110,11 +123,43 @@ export default function Widget({
         deviceName={deviceName}
         onRenameDevice={onRenameDevice}
         usage={usage}
+        clipboardSharing={clipboardSharing}
+        onClipboardSharingChange={onClipboardSharingChange}
         setIsAccountMenuOpen={setIsAccountMenuOpen}
         session={session}
         arrivalPulse={arrivalPulse}
       />
       <section className="content" aria-labelledby="incoming-heading">
+        {clipsPanel && (
+          <div className="home-tabs" role="tablist">
+            <button
+              type="button"
+              role="tab"
+              className="home-tab"
+              aria-selected={activeTab === "files"}
+              onClick={() => setTab("files")}
+            >
+              Files
+            </button>
+            <button
+              type="button"
+              role="tab"
+              className="home-tab"
+              aria-selected={activeTab === "clips"}
+              aria-label={clipsDot && activeTab !== "clips" ? "Clips, new" : "Clips"}
+              onClick={() => {
+                setTab("clips");
+                onOpenClips();
+              }}
+            >
+              Clips
+              {clipsDot && activeTab !== "clips" && (
+                <span className="home-tab-dot" aria-hidden="true" />
+              )}
+            </button>
+          </div>
+        )}
+        {activeTab === "clips" ? clipsPanel : (
         <FileList
           files={files}
           fileInputRef={fileInputRef}
@@ -132,6 +177,7 @@ export default function Widget({
           onRetryDownload={onRetryDownload}
           onUndoRemove={onUndoRemove}
         />
+        )}
       </section>
       <footer className="footer">
         <span className="helper-icon" aria-hidden="true">

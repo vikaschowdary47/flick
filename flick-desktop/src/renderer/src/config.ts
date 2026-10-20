@@ -2,3 +2,8 @@
 // No payment SDK is installed yet. Flipping this to true makes the limit
 // screen show an upgrade button (see LimitScreen) instead of the waitlist.
 export const PAYMENTS_ENABLED = false;
+
+// Developer flag for clips (text and links). When false, nothing about clips
+// is shown, fetched, subscribed to or bound to a shortcut. When true, each
+// device still needs Clipboard sharing turned on (account menu / tray menu).
+export const CLIPBOARD_ENABLED = false;

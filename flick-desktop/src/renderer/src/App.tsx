@@ -1,6 +1,11 @@
 import SignIn from "./components/SignIn";
+import ClipsPanel from "./components/ClipsPanel";
 import LimitScreen from "./components/LimitScreen";
 import Widget from "./components/Widget";
+import { useEffect, useState } from "react";
+import { CLIPBOARD_ENABLED } from "./config";
+import { useClips } from "./hooks/useClips";
+import { useClipboardSetting } from "./hooks/useClipboardSetting";
 import { useDevice } from "./hooks/useDevice";
 import { useFiles } from "./hooks/useFiles";
 import { useUsage } from "./hooks/useUsage";
@@ -14,6 +19,25 @@ export default function App() {
   const activeLimit = fileState.limitHit ?? (device.limitHit ? "devices" : null);
   // Limits and usage come from the server; refresh when they're about to show.
   const usage = useUsage(auth.isAccountMenuOpen || activeLimit !== null);
+  // Clips: nothing is fetched, subscribed or bound unless the developer flag
+  // and this device's Clipboard sharing setting are both on.
+  const clipboardSetting = useClipboardSetting();
+  const clips = useClips(auth.session, device.deviceId, clipboardSetting.clipsActive);
+  const [sendStatus, setSendStatus] = useState("");
+  const sendClip = clips.send;
+  useEffect(() => {
+    if (!clipboardSetting.clipsActive) {
+      return;
+    }
+    // Option/Alt+Shift+C or the tray menu: main read the clipboard on request.
+    return window.flick.onSendClipboardText((text) => {
+      if (!text.trim()) {
+        setSendStatus("Your clipboard is empty.");
+        return;
+      }
+      void sendClip(text).then((error) => setSendStatus(error ?? "Sent to your devices."));
+    });
+  }, [clipboardSetting.clipsActive, sendClip]);
 
   if (!auth.session) {
     return (
@@ -82,6 +106,23 @@ export default function App() {
       arrivalPulse={fileState.arrivalPulse}
       uploadError={fileState.uploadError}
       usage={usage.usage}
+      clipsPanel={
+        clipboardSetting.clipsActive ? (
+          <ClipsPanel
+            clips={clips.clips}
+            error={clips.error}
+            deviceId={device.deviceId}
+            deviceNames={device.deviceNames}
+            onSend={clips.send}
+            onDelete={(id) => void clips.remove(id)}
+            sendStatus={sendStatus}
+          />
+        ) : null
+      }
+      clipsDot={clips.hasNew}
+      onOpenClips={clips.clearNew}
+      clipboardSharing={CLIPBOARD_ENABLED ? clipboardSetting.sharingOn : null}
+      onClipboardSharingChange={clipboardSetting.setSharing}
     />
     <LimitScreen
       limit={activeLimit}

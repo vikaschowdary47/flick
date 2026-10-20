@@ -17,6 +17,8 @@ interface HeaderProps {
   deviceName?: string | null;
   onRenameDevice?: (name: string) => Promise<string | null>;
   usage?: Usage | null;
+  clipboardSharing?: boolean | null; // null/undefined hides it (flag off)
+  onClipboardSharingChange?: (on: boolean) => void;
 }
 
 export default function Header({
@@ -31,6 +33,8 @@ export default function Header({
   deviceName = null,
   onRenameDevice,
   usage = null,
+  clipboardSharing = null,
+  onClipboardSharingChange,
 }: HeaderProps) {
   const prefersReducedMotion = useReducedMotion();
   const [draftName, setDraftName] = useState(deviceName ?? "");
@@ -122,6 +126,21 @@ export default function Header({
                       {usage.maxStorageMb} MB, {usage.devicesUsed} of{" "}
                       {usage.maxDevices} devices
                     </span>
+                  )}
+                  {clipboardSharing !== null && onClipboardSharingChange && (
+                    <label className="clipboard-setting">
+                      <input
+                        type="checkbox"
+                        checked={clipboardSharing}
+                        onChange={(event) => onClipboardSharingChange(event.target.checked)}
+                      />
+                      <span>
+                        <strong>Clipboard sharing</strong>
+                        <br />
+                        Share text and links between your devices. Flick only reads your
+                        clipboard when you tap Send clipboard.
+                      </span>
+                    </label>
                   )}
                   {onRenameDevice && (
                     <form

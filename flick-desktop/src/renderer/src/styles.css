@@ -1360,3 +1360,124 @@ input:focus-visible {
   font-size: 12px;
   line-height: 1.35;
 }
+
+/* Files | Clips tabs and clip cards (sticker look, same as file cards). */
+.home-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.home-tab {
+  display: inline-flex;
+  flex: 1;
+  min-height: 32px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1.5px solid var(--flick-navy);
+  border-radius: 999px;
+  background: var(--flick-white);
+  color: var(--flick-navy);
+  cursor: pointer;
+  font: inherit;
+  font-weight: var(--flick-font-weight-extrabold);
+}
+
+.home-tab[aria-selected="true"] {
+  background: var(--flick-coral);
+}
+
+.home-tab-dot {
+  width: 8px;
+  height: 8px;
+  border: 1px solid var(--flick-navy);
+  border-radius: 50%;
+  background: var(--flick-coral);
+}
+
+.clip-send {
+  align-self: stretch;
+  margin-bottom: 8px;
+}
+
+.clips-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 2px 4px 6px 2px;
+}
+
+.clip-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border: 1.5px solid var(--flick-navy);
+  border-radius: var(--flick-radius-card);
+  background: var(--flick-lilac);
+  box-shadow: var(--flick-card-shadow);
+  color: var(--flick-navy);
+}
+
+.clip-card-link {
+  background: var(--flick-mint);
+}
+
+.clip-main {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.clip-content {
+  display: -webkit-box;
+  overflow: hidden;
+  font-weight: var(--flick-font-weight-extrabold);
+  line-height: 1.25;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow-wrap: anywhere;
+}
+
+.clip-meta {
+  overflow: hidden;
+  font-size: 12px;
+  opacity: 0.75;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.clip-copy {
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1.5px solid var(--flick-navy);
+  border-radius: 999px;
+  background: var(--flick-cream);
+  color: var(--flick-navy);
+  cursor: pointer;
+  font: inherit;
+  font-weight: var(--flick-font-weight-extrabold);
+}
+
+.clipboard-setting {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: var(--flick-muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.clipboard-setting input {
+  margin-top: 2px;
+}
