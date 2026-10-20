@@ -61,6 +61,7 @@ export default function App() {
       onPreviewFile={fileState.previewFile}
       onStartFileDrag={fileState.startFileDrag}
       onRemoveFile={fileState.removeFromWidget}
+      onTogglePin={fileState.togglePin}
       onRetryDownload={fileState.retryDownload}
       onUndoRemove={fileState.undoRemove}
       setIsAccountMenuOpen={auth.setIsAccountMenuOpen}

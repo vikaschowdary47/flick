@@ -697,6 +697,41 @@ export function useFiles(session: Session | null) {
     }
   }
 
+  // Pin or unpin. The database trigger sets pinned_at and enforces the free
+  // limit of 3 pins; the card moves right away and rolls back on failure.
+  async function togglePin(file: CloudFile): Promise<void> {
+    if (!supabase) {
+      return;
+    }
+    const pinned = !file.pinned;
+    const apply = (value: boolean, pinnedAt: string | null) =>
+      setFiles((current) =>
+        current
+          .map((item) =>
+            item.id === file.id ? { ...item, pinned: value, pinned_at: pinnedAt } : item,
+          )
+          .sort(compareFiles),
+      );
+    setUploadError("");
+    apply(pinned, pinned ? new Date().toISOString() : null);
+    const { data, error } = await supabase
+      .from("files")
+      .update({ pinned })
+      .eq("id", file.id)
+      .select("pinned,pinned_at")
+      .maybeSingle();
+    if (error || !data) {
+      apply(Boolean(file.pinned), file.pinned_at ?? null);
+      setUploadError(
+        error?.message.includes("FLICK_LIMIT_PINS")
+          ? "You've used 3 of 3 pins. Unpin a file to pin another."
+          : `Could not ${pinned ? "pin" : "unpin"} "${file.name}".`,
+      );
+      return;
+    }
+    apply(Boolean(data.pinned), data.pinned_at ?? null);
+  }
+
   async function previewFile(file: CloudFile): Promise<void> {
     if (!file.localFileId) {
       return;
@@ -735,6 +770,7 @@ export function useFiles(session: Session | null) {
     retryDownload: (file: CloudFile) => retryDownloadRef.current(file),
     showConfetti,
     startFileDrag,
+    togglePin,
     undoRemove,
     uploadError,
   };

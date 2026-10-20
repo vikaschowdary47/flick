@@ -16,6 +16,7 @@ interface FileListProps {
   onPreview: (file: CloudFile) => void;
   onStartDrag: (file: CloudFile) => void;
   onRemove: (file: CloudFile) => void;
+  onTogglePin: (file: CloudFile) => void;
   onRetryDownload: (file: CloudFile) => void;
   onUndoRemove: (fileId: string) => void;
 }
@@ -31,6 +32,7 @@ export default function FileList({
   onPreview,
   onStartDrag,
   onRemove,
+  onTogglePin,
   onRetryDownload,
   onUndoRemove,
 }: FileListProps) {
@@ -86,6 +88,7 @@ export default function FileList({
                 onPreview={onPreview}
                 onStartDrag={onStartDrag}
                 onRemove={onRemove}
+                onTogglePin={onTogglePin}
                 onRetry={onRetryDownload}
               />
             ))}

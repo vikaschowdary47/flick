@@ -1,4 +1,6 @@
 import { motion, useReducedMotion } from "framer-motion";
+import { useRef, useState } from "react";
+import FileMenu from "./FileMenu";
 import { designTokens } from "../../../design/tokens";
 import {
   CloudFile,
@@ -15,6 +17,7 @@ interface FileCardProps {
   onPreview: (file: CloudFile) => void;
   onStartDrag: (file: CloudFile) => void;
   onRemove: (file: CloudFile) => void;
+  onTogglePin: (file: CloudFile) => void;
   onRetry: (file: CloudFile) => void;
 }
 
@@ -25,8 +28,12 @@ export default function FileCard({
   onPreview,
   onStartDrag,
   onRemove,
+  onTogglePin,
   onRetry,
 }: FileCardProps) {
+  // Where the ⋯ menu is open (window coordinates), or null when closed.
+  const [menuAt, setMenuAt] = useState<{ x: number; y: number } | null>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
   const prefersReducedMotion = useReducedMotion();
   const visualType = getFileVisualType(file);
   const isReady = file.downloadState === "ready" && Boolean(file.localFileId);
@@ -43,7 +50,18 @@ export default function FileCard({
 
   return (
     <motion.article
-      className={`file-card file-card-${visualType} file-card-${file.downloadState}`}
+      className={`file-card file-card-${visualType} file-card-${file.downloadState}${menuAt ? " file-card-menu-open" : ""}`}
+      onContextMenu={(event) => {
+        // Right-click, or the context-menu key / Shift+F10 on a focused card.
+        event.preventDefault();
+        const fromKeyboard = event.clientX === 0 && event.clientY === 0;
+        const rect = (menuButtonRef.current ?? event.currentTarget).getBoundingClientRect();
+        setMenuAt(
+          fromKeyboard
+            ? { x: rect.right, y: rect.bottom + 6 }
+            : { x: event.clientX, y: event.clientY },
+        );
+      }}
       key={file.id}
       title={file.downloadError}
       layout={!prefersReducedMotion}
@@ -186,51 +204,46 @@ export default function FileCard({
         {isReady && <span className="drag-me-pill">drag me ↗</span>}
       </button>
       <div className="file-card-actions">
-        <span className="file-action-wrap" data-tooltip="Preview">
-          <button
-            className="file-action-button"
-            type="button"
-            aria-label={`Preview ${file.name}`}
-            title="Preview"
-            disabled={!isReady}
-            onPointerDown={(event) => event.stopPropagation()}
-            onMouseDown={(event) => event.stopPropagation()}
-            onClick={(event) => {
-              event.stopPropagation();
-              onPreview(file);
-            }}
-          >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M2.5 12s3.4-6 9.5-6 9.5 6 9.5 6-3.4 6-9.5 6-9.5-6-9.5-6Z" />
-              <circle cx="12" cy="12" r="2.7" />
-            </svg>
-          </button>
-          <span className="file-action-tooltip" aria-hidden="true">
-            Preview
-          </span>
-        </span>
-        <span className="file-action-wrap" data-tooltip="Remove from Flick">
-          <button
-            className="file-action-button"
-            type="button"
-            aria-label={`Remove ${file.name} from Flick`}
-            title="Remove from Flick"
-            onPointerDown={(event) => event.stopPropagation()}
-            onMouseDown={(event) => event.stopPropagation()}
-            onClick={(event) => {
-              event.stopPropagation();
-              onRemove(file);
-            }}
-          >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="m6 6 12 12M18 6 6 18" />
-            </svg>
-          </button>
-          <span className="file-action-tooltip" aria-hidden="true">
-            Remove from Flick
-          </span>
-        </span>
+        <button
+          ref={menuButtonRef}
+          className="file-action-button file-menu-button"
+          type="button"
+          aria-label={`More actions for ${file.name}`}
+          aria-haspopup="menu"
+          aria-expanded={menuAt !== null}
+          title="More"
+          onPointerDown={(event) => event.stopPropagation()}
+          onMouseDown={(event) => event.stopPropagation()}
+          onClick={(event) => {
+            event.stopPropagation();
+            if (menuAt) {
+              setMenuAt(null);
+              return;
+            }
+            const rect = event.currentTarget.getBoundingClientRect();
+            setMenuAt({ x: rect.right, y: rect.bottom + 6 });
+          }}
+        >
+          <span aria-hidden="true">⋯</span>
+        </button>
       </div>
+      {menuAt && (
+        <FileMenu
+          at={menuAt}
+          fileName={file.name}
+          canPreview={isReady}
+          pinned={Boolean(file.pinned)}
+          onPreview={() => onPreview(file)}
+          onTogglePin={() => onTogglePin(file)}
+          onDelete={() => onRemove(file)}
+          onClose={(restoreFocus) => {
+            setMenuAt(null);
+            if (restoreFocus) {
+              menuButtonRef.current?.focus();
+            }
+          }}
+        />
+      )}
       {(file.downloadState === "error" || file.downloadError) && (
         <button
           className="retry-download-button"

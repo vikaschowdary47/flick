@@ -27,6 +27,7 @@ interface WidgetProps {
   onPreviewFile: (file: CloudFile) => void;
   onStartFileDrag: (file: CloudFile) => void;
   onRemoveFile: (file: CloudFile) => void;
+  onTogglePin: (file: CloudFile) => void;
   onRetryDownload: (file: CloudFile) => void;
   onUndoRemove: (fileId: string) => void;
   setIsAccountMenuOpen: (isOpen: boolean | ((current: boolean) => boolean)) => void;
@@ -57,6 +58,7 @@ export default function Widget({
   onPreviewFile,
   onStartFileDrag,
   onRemoveFile,
+  onTogglePin,
   onRetryDownload,
   onUndoRemove,
   setIsAccountMenuOpen,
@@ -110,6 +112,7 @@ export default function Widget({
           onPreview={onPreviewFile}
           onStartDrag={onStartFileDrag}
           onRemove={onRemoveFile}
+          onTogglePin={onTogglePin}
           onRetryDownload={onRetryDownload}
           onUndoRemove={onUndoRemove}
         />
