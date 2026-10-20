@@ -59,6 +59,7 @@
         --device: #1b2140;
         --edge: #2c3361;
         --line: #d6c7ab;
+        --ink: #1b2140;
         --font: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
       }
       @media (prefers-color-scheme: dark) {
@@ -70,6 +71,7 @@
           --device: #080b1b;
           --edge: #3a4278;
           --line: #3a4278;
+          --ink: #fff8ee;
           color-scheme: dark;
         }
       }
@@ -81,6 +83,7 @@
         --device: #080b1b;
         --edge: #3a4278;
         --line: #3a4278;
+        --ink: #fff8ee;
         color-scheme: dark;
       }
       body {
@@ -475,7 +478,7 @@
       .lscreen.mac {
         background: linear-gradient(135deg, var(--lilac), var(--mint));
       }
-      .lscreen.win {
+      .lscreen.pc {
         background: linear-gradient(135deg, var(--mint), var(--yellow));
       }
       .base {
@@ -778,7 +781,571 @@
         background: var(--yellow);
         box-shadow: 0 0 0 2.5px var(--coral);
       }
+      /* ---------- page polish: backdrop, hero, sections ---------- */
+      body {
+        background: radial-gradient(
+            60rem 34rem at 92% -8%,
+            color-mix(in srgb, var(--lilac) 45%, transparent),
+            transparent 70%
+          ),
+          radial-gradient(
+            48rem 30rem at -10% 18%,
+            color-mix(in srgb, var(--yellow) 38%, transparent),
+            transparent 70%
+          ),
+          radial-gradient(
+            40rem 28rem at 50% 110%,
+            color-mix(in srgb, var(--mint) 30%, transparent),
+            transparent 70%
+          ),
+          var(--bg);
+        background-attachment: fixed;
+      }
+      .page {
+        gap: 22px;
+      }
+      .top {
+        padding-bottom: 6px;
+      }
+      .brand {
+        font-size: 24px;
+        letter-spacing: -0.02em;
+      }
+      .mark {
+        width: 34px;
+        height: 34px;
+        box-shadow: 0 3px 0 var(--ink);
+        border: 2px solid var(--ink);
+      }
+      .tag {
+        border: 2px solid var(--ink);
+        box-shadow: 0 3px 0 var(--ink);
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+      }
+      .tag .live {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #2fbf8f;
+        box-shadow: 0 0 0 3px color-mix(in srgb, #2fbf8f 30%, transparent);
+      }
+      .hero {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        padding: 14px 0 6px;
+      }
+      .eyebrow {
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        color: var(--fg2);
+      }
+      h1 {
+        font-size: clamp(34px, 6.4vw, 68px);
+        line-height: 1;
+        letter-spacing: -0.035em;
+        max-width: 15ch;
+      }
+      .hl {
+        position: relative;
+        white-space: nowrap;
+        z-index: 0;
+      }
+      .hl::after {
+        content: "";
+        position: absolute;
+        left: -0.08em;
+        right: -0.08em;
+        bottom: 0.06em;
+        height: 0.36em;
+        border-radius: 0.2em;
+        background: var(--coral);
+        opacity: 0.55;
+        z-index: -1;
+        transform: rotate(-1deg);
+      }
+      .sub {
+        font-size: clamp(16px, 1.9vw, 19px);
+        max-width: 56ch;
+      }
+      .hero-pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 4px;
+      }
+      .sticker {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 7px 14px;
+        border-radius: 999px;
+        border: 2px solid var(--ink);
+        box-shadow: 0 3px 0 var(--ink);
+        color: var(--navy);
+        font-size: 14px;
+        font-weight: 800;
+      }
+      .sticker:nth-child(1) {
+        background: var(--mint);
+        transform: rotate(-1.5deg);
+      }
+      .sticker:nth-child(2) {
+        background: var(--yellow);
+        transform: rotate(1deg);
+      }
+      .sticker:nth-child(3) {
+        background: var(--lilac);
+        transform: rotate(-0.5deg);
+      }
+      .stage-wrap {
+        border: 2px solid var(--ink);
+        box-shadow: 0 8px 0 var(--ink);
+        margin-top: 8px;
+      }
+      .bar {
+        border: 2px solid var(--ink);
+        box-shadow: 0 4px 0 var(--ink);
+        color: var(--navy);
+        background: var(--cream);
+      }
+      .bar #cap {
+        color: var(--navy);
+      }
+      .note {
+        font-size: 13px;
+      }
+
+      section.block {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        margin-top: 44px;
+      }
+      h2 {
+        margin: 0;
+        font-size: clamp(26px, 4vw, 40px);
+        font-weight: 800;
+        line-height: 1.05;
+        letter-spacing: -0.03em;
+        text-wrap: balance;
+        max-width: 22ch;
+      }
+      .lede {
+        margin: 0;
+        font-size: 16px;
+        line-height: 1.5;
+        color: var(--fg2);
+        max-width: 60ch;
+      }
+      .quirks {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+        gap: 18px;
+        margin-top: 6px;
+      }
+      .quirk {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 22px 22px 24px;
+        border-radius: 22px;
+        border: 2px solid var(--ink);
+        box-shadow: 0 5px 0 var(--ink);
+        color: var(--navy);
+        transform: rotate(var(--t, 0deg));
+        transition:
+          transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+          box-shadow 0.25s;
+      }
+      .quirk:hover {
+        transform: rotate(0deg) translateY(-4px);
+        box-shadow: 0 9px 0 var(--ink);
+      }
+      .quirk .ic {
+        width: 46px;
+        height: 46px;
+        border-radius: 14px;
+        display: grid;
+        place-items: center;
+        background: var(--cream);
+        border: 2px solid var(--navy);
+        margin-bottom: 6px;
+      }
+      .quirk .ic svg {
+        width: 24px;
+        height: 24px;
+        fill: none;
+        stroke: var(--navy);
+        stroke-width: 2.2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .quirk h3 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 800;
+        letter-spacing: -0.01em;
+      }
+      .quirk p {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 600;
+        line-height: 1.45;
+        opacity: 0.86;
+      }
+      .quirk .vs {
+        margin-top: auto;
+        padding-top: 10px;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        opacity: 0.7;
+      }
+      .q-coral {
+        background: var(--coral);
+        --t: -1.2deg;
+      }
+      .q-yellow {
+        background: var(--yellow);
+        --t: 0.8deg;
+      }
+      .q-mint {
+        background: var(--mint);
+        --t: -0.6deg;
+      }
+      .q-lilac {
+        background: var(--lilac);
+        --t: 1deg;
+      }
+      .q-cream {
+        background: var(--cream);
+        --t: -0.8deg;
+      }
+
+      .steps {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr));
+        gap: 14px;
+        counter-reset: step;
+      }
+      .step {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        padding: 18px;
+        border-radius: 20px;
+        border: 2px dashed var(--line);
+      }
+      .step .n {
+        flex: none;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: var(--coral);
+        color: var(--navy);
+        border: 2px solid var(--ink);
+        box-shadow: 0 3px 0 var(--ink);
+        font-weight: 800;
+        font-size: 17px;
+      }
+      .step b {
+        display: block;
+        font-size: 18px;
+        font-weight: 800;
+        margin-bottom: 3px;
+      }
+      .step span {
+        font-size: 15px;
+        line-height: 1.45;
+        color: var(--fg2);
+        font-weight: 600;
+      }
+
+      .road {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+        gap: 18px;
+      }
+      .lane {
+        padding: 22px;
+        border-radius: 22px;
+        border: 2px solid var(--ink);
+        box-shadow: 0 5px 0 var(--ink);
+        background: var(--cream);
+        color: var(--navy);
+      }
+      .lane h3 {
+        margin: 0 0 12px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 18px;
+        font-weight: 800;
+      }
+      .lane h3 em {
+        font-style: normal;
+        font-size: 12px;
+        letter-spacing: 0.06em;
+        padding: 4px 10px;
+        border-radius: 999px;
+        border: 2px solid var(--navy);
+      }
+      .lane.now h3 em {
+        background: var(--mint);
+      }
+      .lane.next h3 em {
+        background: var(--yellow);
+      }
+      .lane ul {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+      }
+      .lane li {
+        display: flex;
+        gap: 10px;
+        font-size: 15px;
+        font-weight: 600;
+        line-height: 1.4;
+      }
+      .lane li::before {
+        content: "";
+        flex: none;
+        width: 10px;
+        height: 10px;
+        margin-top: 6px;
+        border-radius: 3px;
+        border: 2px solid var(--navy);
+      }
+      .lane.now li::before {
+        background: var(--mint);
+      }
+      .lane.next li::before {
+        background: var(--yellow);
+      }
+
+      .closer {
+        margin-top: 52px;
+        padding: clamp(26px, 5vw, 48px);
+        border-radius: 28px;
+        border: 2px solid var(--ink);
+        box-shadow: 0 8px 0 var(--ink);
+        background: var(--coral);
+        color: var(--navy);
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+      }
+      .closer h2 {
+        max-width: 20ch;
+      }
+      .closer p {
+        margin: 0;
+        font-size: 17px;
+        font-weight: 600;
+        line-height: 1.5;
+        max-width: 54ch;
+      }
+      .foot {
+        margin-top: 18px;
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+        font-size: 13px;
+        color: var(--fg2);
+        font-weight: 600;
+      }
+
+      /* ---------- BUILT / PLANNED labels ---------- */
+      .st {
+        display: inline-block;
+        flex: none;
+        font-style: normal;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        line-height: 1;
+        padding: 4px 8px;
+        border-radius: 999px;
+        border: 2px solid var(--navy);
+        color: var(--navy);
+        vertical-align: middle;
+      }
+      .st.b {
+        background: var(--mint);
+      }
+      .st.p {
+        background: var(--cream);
+        border-style: dashed;
+      }
+      .quirk .st {
+        align-self: flex-start;
+      }
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        align-items: center;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--fg2);
+      }
+
+      /* ---------- pitch sections ---------- */
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+        gap: 16px;
+      }
+      .card2 {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 20px;
+        border-radius: 20px;
+        border: 2px solid var(--ink);
+        box-shadow: 0 4px 0 var(--ink);
+        background: var(--cream);
+        color: var(--navy);
+      }
+      .card2.c-coral {
+        background: var(--coral);
+      }
+      .card2.c-yellow {
+        background: var(--yellow);
+      }
+      .card2.c-mint {
+        background: var(--mint);
+      }
+      .card2.c-lilac {
+        background: var(--lilac);
+      }
+      .card2 h3 {
+        margin: 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 10px;
+        font-size: 18px;
+        font-weight: 800;
+        line-height: 1.25;
+      }
+      .card2 p,
+      .card2 li {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 600;
+        line-height: 1.45;
+      }
+      .card2 ul {
+        margin: 0;
+        padding-left: 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .card2 .price {
+        margin-top: auto;
+        padding-top: 6px;
+        font-size: 14px;
+        font-weight: 800;
+      }
+      .ph {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-weight: 800;
+        background: color-mix(in srgb, var(--yellow) 60%, transparent);
+        border-radius: 4px;
+        padding: 0 3px;
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+        gap: 14px;
+      }
+      .stat {
+        padding: 18px;
+        border-radius: 18px;
+        border: 2px dashed var(--line);
+      }
+      .stat b {
+        display: block;
+        font-size: 30px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+      .stat span {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--fg2);
+      }
+      .gtm {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        counter-reset: g;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr));
+        gap: 14px;
+      }
+      .gtm li {
+        counter-increment: g;
+        padding: 18px;
+        border-radius: 20px;
+        border: 2px dashed var(--line);
+        font-size: 15px;
+        font-weight: 600;
+        line-height: 1.45;
+        color: var(--fg2);
+      }
+      .gtm li::before {
+        content: counter(g);
+        display: grid;
+        place-items: center;
+        width: 34px;
+        height: 34px;
+        margin-bottom: 10px;
+        border-radius: 50%;
+        background: var(--yellow);
+        color: var(--navy);
+        border: 2px solid var(--ink);
+        box-shadow: 0 3px 0 var(--ink);
+        font-weight: 800;
+      }
+      .gtm b {
+        display: block;
+        color: var(--fg);
+        font-size: 17px;
+        font-weight: 800;
+        margin-bottom: 2px;
+      }
+      .lane.later h3 em {
+        background: var(--lilac);
+      }
+      .lane.later li::before {
+        background: var(--lilac);
+      }
+      .lane h3 small {
+        margin-left: auto;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
       @media (prefers-reduced-motion: reduce) {
+        .quirk {
+          transition: none;
+        }
         .ring {
           animation: none;
         }
@@ -799,13 +1366,27 @@
               <path d="M5 19 19 5M9 5h10v10" /></svg></span
           >flick
         </div>
-        <!-- <span class="tag">Concept animation</span> -->
+        <span class="tag"
+          ><i class="live" aria-hidden="true"></i>Working today on iPhone +
+          Mac</span
+        >
       </header>
-      <h1>Flick it once. It lands on every device.</h1>
-      <p class="sub">
-        Send a file from an iPhone or an Android phone and it shows up in the
-        Flick widget on a Mac and a Windows laptop, ready to drag into any app.
-      </p>
+
+      <section class="hero">
+        <span class="eyebrow">THE FASTEST WAY FROM PHONE TO LAPTOP</span>
+        <h1>Flick it once. <span class="hl">It lands everywhere.</span></h1>
+        <p class="sub">
+          Pick a file on your phone and it pops up on every laptop you own,
+          inside a tiny floating widget, ready to drag straight into Slack,
+          Mail, Figma or any folder. No device picker. No cables. No inbox full
+          of files you emailed to yourself.
+        </p>
+        <div class="hero-pills">
+          <span class="sticker">No device picker</span>
+          <span class="sticker">Drag into any app</span>
+          <span class="sticker">Gone in 24 hours</span>
+        </div>
+      </section>
 
       <div class="stage-wrap" id="wrap">
         <div
@@ -932,7 +1513,7 @@
           <!-- Windows -->
           <div class="laptop" style="left: 520px; top: 312px">
             <div class="lid">
-              <div class="lscreen win">
+              <div class="lscreen pc">
                 <div
                   class="win"
                   style="left: 16px; top: 14px; width: 216px; height: 182px"
@@ -980,9 +1561,426 @@
         </div>
       </div>
       <p class="note">
-        This is a concept animation. Only the iPhone and Mac apps exist today.
-        The Android and Windows apps are planned.
+        Concept animation. The iPhone and Mac apps are built and working today;
+        Android and Windows are on the roadmap below.
       </p>
+
+      <section class="block" aria-labelledby="quirks-h">
+        <span class="eyebrow">WHAT MAKES IT DIFFERENT</span>
+        <h2 id="quirks-h">Small quirks that make Flick feel like magic.</h2>
+        <p class="lede">
+          Moving a file from your phone to your laptop is still weirdly hard.
+          Flick removes every step that doesn't need to be there.
+        </p>
+        <div class="legend" aria-label="Legend">
+          <span><em class="st b">BUILT</em> working today on iPhone + Mac</span>
+          <span><em class="st p">PLANNED</em> not built yet</span>
+        </div>
+        <div class="quirks">
+          <article class="quirk q-coral">
+            <span class="ic"
+              ><svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="5" cy="12" r="2.2" />
+                <circle cx="19" cy="6" r="2.2" />
+                <circle cx="19" cy="18" r="2.2" />
+                <path d="M7 11l10-4M7 13l10 4" /></svg
+            ></span>
+            <em class="st b">BUILT</em>
+            <h3>No device picker. Ever.</h3>
+            <p>
+              Other tools ask "send to which device?" Flick doesn't ask. One tap
+              and the file reaches every device you're signed in on, at the same
+              moment.
+            </p>
+            <span class="vs">ONE TAP → ALL DEVICES</span>
+          </article>
+          <article class="quirk q-yellow">
+            <span class="ic"
+              ><svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="3" y="4" width="18" height="13" rx="2.5" />
+                <rect x="12" y="7" width="6" height="7" rx="1.5" />
+                <path d="M8 21h8" /></svg
+            ></span>
+            <em class="st b">BUILT</em>
+            <h3>A widget that floats.</h3>
+            <p>
+              On the laptop, files land in a small always-on-top widget. Drag a
+              card straight into any app. No digging through Downloads.
+            </p>
+            <span class="vs">DRAG ↗ DROP ANYWHERE</span>
+          </article>
+          <article class="quirk q-mint">
+            <span class="ic"
+              ><svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="13" r="8" />
+                <path d="M12 9v4l2.5 2M9 2h6" /></svg
+            ></span>
+            <em class="st b">BUILT</em>
+            <h3>Gone in 24 hours.</h3>
+            <p>
+              Every file deletes itself a day after it's sent: from the cloud
+              and from every device. Flick is a hand-off, not one more drive to
+              clean up.
+            </p>
+            <span class="vs">ZERO CLUTTER BY DEFAULT</span>
+          </article>
+          <article class="quirk q-lilac">
+            <span class="ic"
+              ><svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 12.5l4.5 4.5L20 6" /></svg
+            ></span>
+            <em class="st b">BUILT</em>
+            <h3>"Got it!" receipts.</h3>
+            <p>
+              Your phone tells you when the laptop actually has the file, not
+              just that the upload finished. You never have to go and check.
+            </p>
+            <span class="vs">REAL DELIVERY, NOT "SENT"</span>
+          </article>
+          <article class="quirk q-cream">
+            <span class="ic"
+              ><svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="5" y="10" width="14" height="10" rx="2.5" />
+                <path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg
+            ></span>
+            <em class="st b">BUILT</em>
+            <h3>Private by design.</h3>
+            <p>
+              Each person's files sit in their own locked folder, protected by
+              rules in the database itself, not just in the app. Remove a file
+              once and it's gone everywhere.
+            </p>
+            <span class="vs">YOUR FILES, ONLY YOURS</span>
+          </article>
+          <article class="quirk q-yellow" style="--t: -1deg">
+            <span class="ic"
+              ><svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M12 3l1.8 4.6L18.5 9l-4.7 1.5L12 15l-1.8-4.5L5.5 9l4.7-1.4z"
+                />
+                <path d="M19 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z" /></svg
+            ></span>
+            <em class="st p">PLANNED</em>
+            <h3>Delightful on purpose.</h3>
+            <p>
+              Sticker cards are in the app today. Springy motion, haptics, a
+              tiny wiggle when a file arrives and confetti for your first one
+              are next. Calm, but never boring.
+            </p>
+            <span class="vs">A UTILITY PEOPLE SMILE AT</span>
+          </article>
+        </div>
+      </section>
+
+      <section class="block" aria-labelledby="how-h">
+        <span class="eyebrow">HOW IT WORKS</span>
+        <h2 id="how-h">Three steps. About three seconds.</h2>
+        <div class="steps">
+          <div class="step">
+            <span class="n">1</span>
+            <div>
+              <b>Pick <em class="st b">BUILT</em></b
+              ><span
+                >Tap "Flick it" on your phone and choose any file up to 50
+                MB.</span
+              >
+            </div>
+          </div>
+          <div class="step">
+            <span class="n">2</span>
+            <div>
+              <b>Flick <em class="st b">BUILT</em></b
+              ><span
+                >It appears in the widget on every laptop you're signed in on,
+                live.</span
+              >
+            </div>
+          </div>
+          <div class="step">
+            <span class="n">3</span>
+            <div>
+              <b>Drag <em class="st b">BUILT</em></b
+              ><span
+                >Drag the card into any app or folder. A day later, it cleans
+                itself up.</span
+              >
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="block" aria-labelledby="why-h">
+        <span class="eyebrow">PROBLEM AND WHY NOW</span>
+        <h2 id="why-h">
+          Phone-to-computer is still the slowest hop in your day.
+        </h2>
+        <div class="cards">
+          <div class="card2 c-yellow">
+            <h3>Moving one file takes too many steps</h3>
+            <p>
+              Email it to yourself, AirDrop only between Apple devices, cables,
+              cloud drives you then have to dig through. Getting a photo or PDF
+              from your phone to your laptop is still slow.
+            </p>
+          </div>
+          <div class="card2 c-lilac">
+            <h3>Teams hand off files through the wrong tools</h3>
+            <p>
+              Work files end up in personal apps, email threads and chat
+              messages. They get lost, live on forever, and nobody controls
+              where they went.
+            </p>
+          </div>
+          <div class="card2 c-mint">
+            <h3>Why now</h3>
+            <p>
+              Most people work across a phone and a laptop that run different
+              systems, and their files are mostly made on the phone. A
+              lightweight, cross-platform hand-off fills the gap.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="block" aria-labelledby="ways-h">
+        <span class="eyebrow">MORE WAYS TO SEND</span>
+        <h2 id="ways-h">Next: send to anyone, from anywhere.</h2>
+        <p class="lede">
+          None of these are built yet. They are the next things on the roadmap.
+        </p>
+        <div class="cards">
+          <div class="card2">
+            <h3>"Receive file" with a QR code <em class="st p">PLANNED</em></h3>
+            <p>
+              Show a QR code and someone nearby can send you a file. They need
+              no account and no phone number.
+            </p>
+          </div>
+          <div class="card2">
+            <h3>Guest links that expire <em class="st p">PLANNED</em></h3>
+            <p>
+              Share a link with someone outside Flick. It stops working after a
+              set time.
+            </p>
+          </div>
+          <div class="card2">
+            <h3>
+              "Flick it" in the share sheet and right-click menu
+              <em class="st p">PLANNED</em>
+            </h3>
+            <p>
+              Send from the phone's share sheet in any app, or right-click a
+              file on the laptop.
+            </p>
+          </div>
+          <div class="card2">
+            <h3>
+              Send a Flick link via Gmail or Outlook
+              <em class="st p">PLANNED</em>
+            </h3>
+            <p>
+              Attach a Flick link instead of a heavy attachment, right from your
+              email.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="block" aria-labelledby="priv-h">
+        <span class="eyebrow">PRIVACY</span>
+        <h2 id="priv-h">Built to leave nothing behind.</h2>
+        <div class="cards">
+          <div class="card2 c-mint">
+            <h3>Automatic 24-hour expiry <em class="st b">BUILT</em></h3>
+            <p>
+              Every file is deleted from the cloud and from every device 24
+              hours after upload.
+            </p>
+          </div>
+          <div class="card2">
+            <h3>End-to-end encryption <em class="st p">PLANNED</em></h3>
+            <p>Files encrypted on your device, so even we cannot read them.</p>
+          </div>
+          <div class="card2">
+            <h3>Storage limits per user <em class="st p">PLANNED</em></h3>
+            <p>
+              Clear per-user limits to keep usage fair and costs predictable.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="block" aria-labelledby="who-h">
+        <span class="eyebrow">WHO IT IS FOR</span>
+        <h2 id="who-h">Free for people. Paid for teams.</h2>
+        <p class="lede">
+          Pricing is <span class="ph">not set</span> and is still being tested.
+          Paid plans are not built yet.
+        </p>
+        <div class="cards">
+          <div class="card2 c-yellow">
+            <h3>Personal</h3>
+            <ul>
+              <li>
+                Free: phone to laptop, all your devices
+                <em class="st b">BUILT</em>
+              </li>
+              <li>
+                Pro upgrade: more pins, more storage, longer retention
+                <em class="st p">PLANNED</em>
+              </li>
+            </ul>
+            <!-- <span class="price">Pro: <span class="ph">[PRICE]</span></span> -->
+          </div>
+          <div class="card2 c-lilac">
+            <h3>Teams <em class="st p">PLANNED</em></h3>
+            <ul>
+              <li>Per-seat plan with admin controls</li>
+              <li>Retention rules</li>
+              <li>Integrations: Google Drive, OneDrive, Slack and Teams</li>
+            </ul>
+            <!-- <span class="price">Per seat: <span class="ph">[PRICE]</span></span> -->
+          </div>
+        </div>
+      </section>
+
+      <section class="block" aria-labelledby="moat-h">
+        <span class="eyebrow">MOAT</span>
+        <h2 id="moat-h">Why Flick gets harder to replace over time.</h2>
+        <div class="cards">
+          <div class="card2 c-coral">
+            <h3>Every receiver sees Flick</h3>
+            <p>
+              Guest links show "Sent with Flick", so each file sent is also an
+              introduction. <em class="st p">PLANNED</em>
+            </p>
+          </div>
+          <div class="card2 c-yellow">
+            <h3>Team switching costs</h3>
+            <p>
+              Workspaces, admin settings and integrations make Flick part of how
+              a team works. <em class="st p">PLANNED</em>
+            </p>
+          </div>
+          <div class="card2 c-mint">
+            <h3>Trust through privacy</h3>
+            <p>
+              End-to-end encryption and automatic expiry make Flick safe for
+              work files. <em class="st b">24H EXPIRY BUILT</em>
+              <em class="st p">E2E PLANNED</em>
+            </p>
+          </div>
+          <div class="card2 c-lilac">
+            <h3>Works across ecosystems</h3>
+            <p>
+              iPhone, Android, Mac and Windows, not just one vendor's devices.
+              <em class="st b">IPHONE + MAC BUILT</em>
+              <em class="st p">ANDROID + WINDOWS PLANNED</em>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="block" aria-labelledby="gtm-h">
+        <span class="eyebrow">GO-TO-MARKET</span>
+        <h2 id="gtm-h">Start with people, grow into teams.</h2>
+        <ol class="gtm">
+          <li><b>Free beta</b>Open beta for individuals, free to use.</li>
+          <li>
+            <b>Communities</b>Share Flick where people already talk about tools
+            and workflows.
+          </li>
+          <li>
+            <b>Bottom-up into small teams</b>Pilots with small teams in one
+            niche.
+          </li>
+        </ol>
+      </section>
+
+      <!-- <section class="block" aria-labelledby="trac-h">
+        <span class="eyebrow">TRACTION</span>
+        <h2 id="trac-h">Where the numbers stand.</h2>
+        <div class="stats">
+          <div class="stat">
+            <b class="ph">[N]</b><span>weekly active users</span>
+          </div>
+          <div class="stat">
+            <b class="ph">[N]</b><span>week-over-week retention</span>
+          </div>
+          <div class="stat"><b class="ph">[N]</b><span>pilot teams</span></div>
+          <div class="stat">
+            <b class="ph">[N]</b><span>waitlist signups</span>
+          </div>
+        </div>
+      </section> -->
+
+      <section class="block" aria-labelledby="founder-h">
+        <span class="eyebrow">FOUNDER</span>
+        <h2 id="founder-h">Who is building it.</h2>
+        <div class="card2 c-yellow" style="max-width: 620px">
+          <h3><span class="ph">Vikas</span></h3>
+          <p>
+            Fullstack developer with 3+ years of experience. MS in Computer
+            Science with research in web application security. Built the iPhone
+            app and Mac widget solo.
+          </p>
+        </div>
+      </section>
+
+      <section class="block" aria-labelledby="road-h">
+        <span class="eyebrow">ROADMAP</span>
+        <h2 id="road-h">Working today. Bigger tomorrow.</h2>
+        <div class="road">
+          <div class="lane now">
+            <h3>Built today <em>BUILT</em></h3>
+            <ul>
+              <li>
+                iPhone app: sign in, flick any file up to 50 MB, recently sent
+                list
+              </li>
+              <li>Mac widget: live arrivals, drag into any app, preview</li>
+              <li>Delivery receipts and remove-everywhere with undo</li>
+              <li>Automatic 24-hour expiry across cloud and devices</li>
+            </ul>
+          </div>
+          <div class="lane next">
+            <h3>Next <em>PLANNED</em><small>about 1-2 months</small></h3>
+            <ul>
+              <li>QR code send and receive</li>
+              <li>Guest links</li>
+              <li>Google sign-in</li>
+              <li>Dark mode and a second theme</li>
+              <li>"Flick it" in the share sheet</li>
+              <li>Android app</li>
+            </ul>
+          </div>
+          <div class="lane later">
+            <h3>Later <em>PLANNED</em></h3>
+            <ul>
+              <li>End-to-end encryption</li>
+              <li>Team workspaces and admin</li>
+              <li>Google Drive, OneDrive, Slack and Outlook integrations</li>
+              <li>Windows app</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="closer" aria-labelledby="close-h">
+        <span class="eyebrow" style="color: var(--navy)">THE PITCH</span>
+        <h2 id="close-h">
+          Everyone moves files between their phone and laptop. Nobody enjoys it.
+        </h2>
+        <p>
+          Flick turns a chore people repeat every day into one tap and a drag.
+          It works across devices and leaves nothing behind.
+        </p>
+      </section>
+
+      <footer class="foot">
+        <span>flick · files that land everywhere</span>
+        <span>Concept demo · iPhone + Mac working today</span>
+      </footer>
     </main>
 
     <script>
@@ -1158,7 +2156,7 @@
             f.name +
             "</b><i>" +
             f.size +
-            "</i></span><em>Got it!</em>";
+            "</i></span><em>24h left</em>";
           list.prepend(el);
           while (list.children.length > 3) {
             list.lastChild.remove();
