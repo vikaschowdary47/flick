@@ -54,11 +54,17 @@ export function useUpload(onUploaded?: () => void) {
         return;
       }
 
-      // Photos can come back as ph:// / assets-library:// or iCloud-backed
-      // URIs that can't be read directly. Copy to our own cache file first,
-      // then read its bytes (never fetch(uri).blob(), which RN can't upload).
-      cached = copyToCache(asset.uri, picked.name);
-      const bytes = await cached.arrayBuffer();
+      // The document picker (copyToCacheDirectory) already gives a readable
+      // file:// copy, so read that. Only content:// URIs (Android providers)
+      // are copied to our cache first. Never fetch(uri).blob().
+      let source: File;
+      if (asset.uri.startsWith("content://")) {
+        cached = await copyToCache(asset.uri, picked.name);
+        source = cached;
+      } else {
+        source = new File(asset.uri);
+      }
+      const bytes = await source.arrayBuffer();
       if (bytes.byteLength === 0) throw new Error("empty file");
       if (!picked.size) picked = { ...picked, size: bytes.byteLength };
       if (bytes.byteLength > MAX_FILE_BYTES) throw new Error("payload too large");
@@ -144,13 +150,13 @@ function withExtension(name: string, mimeType: string): string {
   return extension ? `${name}.${extension}` : name;
 }
 
-// Works for file:// (iOS, and Android with copyToCacheDirectory) and
-// content:// (Android SAF/photo providers): we always upload from our own file:// copy.
-function copyToCache(uri: string, name: string): File {
+// For content:// URIs (Android SAF/photo providers): copy into our cache.
+// copy() can return a promise on Android, so await it before reading.
+async function copyToCache(uri: string, name: string): Promise<File> {
   const folder = new Directory(Paths.cache, "flick-upload", Crypto.randomUUID());
   folder.create({ intermediates: true, idempotent: true });
   const destination = new File(folder, safeStorageName(name));
-  new File(uri).copy(destination);
+  await Promise.resolve(new File(uri).copy(destination));
   return destination;
 }
 
