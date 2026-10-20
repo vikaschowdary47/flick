@@ -8,6 +8,7 @@ import { Directory, File, Paths } from "expo-file-system";
 import { FILES_BUCKET, MAX_FILE_BYTES, supabase } from "../lib/supabase";
 import { formatBytes, safeStorageName } from "../lib/format";
 import { limitFromError, type LimitKind } from "../lib/limits";
+import { MIME_BY_EXTENSION, resolveMimeType } from "../lib/mime";
 import type { PickedFile, UploadState } from "../lib/types";
 
 // One picked item, before it's read and uploaded.
@@ -249,28 +250,6 @@ function normalizeName(name: string): string {
   const trimmed = name.trim() || "file";
   const dot = trimmed.lastIndexOf(".");
   return dot > 0 ? trimmed.slice(0, dot) + trimmed.slice(dot).toLowerCase() : trimmed;
-}
-
-const MIME_BY_EXTENSION: Record<string, string> = {
-  jpg: "image/jpeg",
-  jpeg: "image/jpeg",
-  png: "image/png",
-  heic: "image/heic",
-  heif: "image/heif",
-  gif: "image/gif",
-  webp: "image/webp",
-  pdf: "application/pdf",
-  html: "text/html",
-  txt: "text/plain",
-  mov: "video/quicktime",
-  mp4: "video/mp4",
-};
-
-// Use the picker's type unless it's missing or generic, then fall back to the extension.
-function resolveMimeType(mimeType: string | null | undefined, name: string): string {
-  if (mimeType && mimeType !== "application/octet-stream") return mimeType.toLowerCase();
-  const extension = name.slice(name.lastIndexOf(".") + 1).toLowerCase();
-  return MIME_BY_EXTENSION[extension] ?? "application/octet-stream";
 }
 
 function withExtension(name: string, mimeType: string): string {

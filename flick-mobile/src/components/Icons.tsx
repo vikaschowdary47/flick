@@ -47,3 +47,12 @@ export function PinIcon({ size = tokens.layout.iconSize, color }: Props) {
     </Svg>
   );
 }
+
+export function ShareIcon({ size = tokens.layout.iconSize, color }: Props) {
+  const ink = useInk(color);
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={ink} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M12 3v12M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6" />
+    </Svg>
+  );
+}

@@ -9,7 +9,7 @@ export type FileMenuItem = {
   key: string;
   label: string;
   icon: ReactNode;
-  fill: "preview" | "pin" | "danger";
+  fill: "preview" | "share" | "pin" | "danger";
   onPress: () => void;
 };
 
@@ -104,6 +104,9 @@ const makeStyles = (c: Palette) =>
     },
     preview: {
       backgroundColor: c.documentTile,
+    },
+    share: {
+      backgroundColor: c.archiveTile,
     },
     pin: {
       backgroundColor: c.pinBadge,

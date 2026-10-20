@@ -18,7 +18,7 @@ import { FileCard, PinBadge } from "./FileCard";
 import { FileMenu, type FileMenuItem } from "./FileMenu";
 import { Header } from "./Header";
 import { LimitScreen } from "./LimitScreen";
-import { EyeIcon, PinIcon, TrashIcon } from "./Icons";
+import { EyeIcon, PinIcon, ShareIcon, TrashIcon } from "./Icons";
 import { PillButton } from "./PillButton";
 import { SettingsSheet } from "./SettingsSheet";
 import { SourceSheet } from "./SourceSheet";
@@ -72,7 +72,7 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
       return (
         <Pressable
           accessibilityRole="button"
-          accessibilityHint="Opens Preview, Pin and Delete"
+          accessibilityHint="Opens Preview, Share, Pin and Delete"
           onPress={(event) => showMenu(event.nativeEvent.pageY)}
           onLongPress={(event) => showMenu(event.nativeEvent.pageY)}
           style={[index % 2 === 0 ? styles.tiltLeft : styles.tiltRight, open && styles.selectedCard]}
@@ -86,7 +86,7 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
             singleLineMeta
             status={
               opening
-                ? "Opening…"
+                ? "Downloading…"
                 : [
                     formatSender(item.device_id, device.deviceId, device.names),
                     item.delivered_at ? "Landed" : "Waiting for your devices",
@@ -110,6 +110,13 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
           icon: <EyeIcon />,
           fill: "preview",
           onPress: () => opener.open(menu.file),
+        },
+        {
+          key: "share",
+          label: "Share",
+          icon: <ShareIcon />,
+          fill: "share",
+          onPress: () => opener.share(menu.file),
         },
         {
           key: "pin",
