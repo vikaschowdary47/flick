@@ -1,11 +1,18 @@
-import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { useEffect, useState } from "react";
+import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme, useThemedStyles } from "../design/ThemeProvider";
 import type { AppearancePreference, Palette, ThemeName } from "../design/theme";
 import { tokens } from "../design/tokens";
+import { DEVICE_NAME_MAX } from "../hooks/useDevice";
 import { PillButton } from "./PillButton";
 
-type Props = { visible: boolean; onClose: () => void };
+type Props = {
+  visible: boolean;
+  onClose: () => void;
+  deviceName: string | null;
+  onRenameDevice: (name: string) => Promise<string | null>;
+};
 
 const APPEARANCES: { value: AppearancePreference; label: string }[] = [
   { value: "system", label: "System" },
@@ -18,21 +25,70 @@ const THEMES: { value: ThemeName; label: string }[] = [
   { value: "classy", label: "Classy" },
 ];
 
-export function SettingsSheet({ visible, onClose }: Props) {
+export function SettingsSheet({ visible, onClose, deviceName, onRenameDevice }: Props) {
   const { appearance, setAppearance, themeName, setThemeName } = useTheme();
   const styles = useThemedStyles(makeStyles);
 
+  const { palette } = useTheme();
+  const [draft, setDraft] = useState(deviceName ?? "");
+  const [nameError, setNameError] = useState<string | null>(null);
+
+  // Show the current name each time the sheet opens (or once it loads).
+  useEffect(() => {
+    if (visible) {
+      setDraft(deviceName ?? "");
+      setNameError(null);
+    }
+  }, [visible, deviceName]);
+
+  async function saveName(): Promise<boolean> {
+    if (draft.trim() === (deviceName ?? "")) return true;
+    const error = await onRenameDevice(draft);
+    setNameError(error);
+    return error === null;
+  }
+
+  // Stay open if the name couldn't be saved, so the message is seen.
+  async function close() {
+    if (await saveName()) onClose();
+  }
+
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <Pressable accessibilityLabel="Close settings" style={styles.scrim} onPress={onClose} />
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={() => void close()}>
+      <Pressable accessibilityLabel="Close settings" style={styles.scrim} onPress={() => void close()} />
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined}>
       <SafeAreaView edges={["bottom"]} style={styles.sheet}>
         <Text accessibilityRole="header" style={styles.heading}>
           Settings
         </Text>
         <Segmented label="Appearance" options={APPEARANCES} value={appearance} onChange={setAppearance} />
         <Segmented label="Theme" options={THEMES} value={themeName} onChange={setThemeName} />
-        <PillButton label="Done" onPress={onClose} variant="secondary" />
+        <View style={styles.group}>
+          <Text style={styles.eyebrow}>THIS DEVICE</Text>
+          <TextInput
+            style={styles.input}
+            value={draft}
+            onChangeText={setDraft}
+            onEndEditing={() => void saveName()}
+            onSubmitEditing={() => void saveName()}
+            maxLength={DEVICE_NAME_MAX}
+            placeholder="Name"
+            placeholderTextColor={palette.textMuted}
+            returnKeyType="done"
+            autoCorrect={false}
+            editable={deviceName !== null}
+            accessibilityLabel="Name"
+            accessibilityHint="Shown as “from” on files sent from this device"
+          />
+          {nameError && (
+            <Text accessibilityRole="alert" style={styles.nameError}>
+              {nameError}
+            </Text>
+          )}
+        </View>
+        <PillButton label="Done" onPress={() => void close()} variant="secondary" />
       </SafeAreaView>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -97,6 +153,22 @@ const makeStyles = (c: Palette) =>
       fontFamily: tokens.fonts.extrabold,
       fontSize: tokens.fontSizes.eyebrow,
       letterSpacing: tokens.letterSpacing.eyebrow,
+    },
+    input: {
+      minHeight: tokens.layout.inputHeight,
+      paddingHorizontal: tokens.spacing.lg,
+      borderRadius: tokens.radii.pill,
+      borderWidth: tokens.borderWidth.outline,
+      borderColor: c.outline,
+      backgroundColor: c.card,
+      color: c.text,
+      fontFamily: tokens.fonts.semibold,
+      fontSize: tokens.fontSizes.body,
+    },
+    nameError: {
+      color: c.text,
+      fontFamily: tokens.fonts.semibold,
+      fontSize: tokens.fontSizes.meta,
     },
     segments: {
       flexDirection: "row",

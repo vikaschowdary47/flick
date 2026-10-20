@@ -20,10 +20,12 @@ type Candidate = {
 
 export type UploadSource = "photos" | "files" | "camera";
 
-export function useUpload(onUploaded?: () => void) {
+export function useUpload(onUploaded?: () => void, deviceId?: string | null) {
   const [state, setState] = useState<UploadState>({ kind: "idle" });
   const [limitHit, setLimitHit] = useState<LimitKind | null>(null);
   const busy = useRef(false);
+  const deviceIdRef = useRef(deviceId ?? null);
+  deviceIdRef.current = deviceId ?? null;
 
   // Uploads one file: copy to our cache, read bytes, upload with an explicit
   // contentType, then insert the row (which is what the laptop listens for).
@@ -62,6 +64,7 @@ export function useUpload(onUploaded?: () => void) {
         size: picked.size,
         mime_type: picked.mimeType,
         storage_path: storagePath,
+        device_id: deviceIdRef.current, // the sender, for "from <device>"
       });
       if (insertError) {
         await supabase.storage.from(FILES_BUCKET).remove([storagePath]);

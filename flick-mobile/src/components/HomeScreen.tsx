@@ -5,13 +5,14 @@ import { useTheme, useThemedStyles } from "../design/ThemeProvider";
 import type { Palette } from "../design/theme";
 import { tokens } from "../design/tokens";
 import { useConnectionStatus } from "../hooks/useConnectionStatus";
+import { useDevice } from "../hooks/useDevice";
 import { useNow } from "../hooks/useNow";
 import { useOpenFile } from "../hooks/useOpenFile";
 import { usePinFile } from "../hooks/usePinFile";
 import { useRecentFiles } from "../hooks/useRecentFiles";
 import { useRemoveFile } from "../hooks/useRemoveFile";
 import { useUpload } from "../hooks/useUpload";
-import { formatExpiry } from "../lib/format";
+import { formatExpiry, formatSender } from "../lib/format";
 import type { FileRow } from "../lib/types";
 import { FileCard, PinBadge } from "./FileCard";
 import { FileMenu, type FileMenuItem } from "./FileMenu";
@@ -33,11 +34,12 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
   const { palette } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const recent = useRecentFiles(userId);
+  const device = useDevice(userId);
   const connection = useConnectionStatus({
     realtimeStatus: recent.realtimeStatus,
     onReconnect: recent.reconnect,
   });
-  const { state: upload, pickAndUpload, reset, limitHit: uploadLimit, clearLimit } = useUpload(recent.refresh);
+  const { state: upload, pickAndUpload, reset, limitHit: uploadLimit, clearLimit } = useUpload(recent.refresh, device.deviceId);
   const listRef = useRef<FlatList<FileRow>>(null);
   const opener = useOpenFile();
   const now = useNow();
@@ -81,16 +83,23 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
             mimeType={item.mime_type}
             tone={opening ? "sending" : "plain"}
             badge={item.pinned ? <PinBadge /> : undefined}
+            singleLineMeta
             status={
               opening
                 ? "Opening…"
-                : `${item.delivered_at ? "Landed" : "Waiting for your devices"} · ${formatExpiry(item.created_at, now)}`
+                : [
+                    formatSender(item.device_id, device.deviceId, device.names),
+                    item.delivered_at ? "Landed" : "Waiting for your devices",
+                    formatExpiry(item.created_at, now),
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")
             }
           />
         </Pressable>
       );
     },
-    [menu, now, opener.openingId, styles],
+    [menu, now, opener.openingId, styles, device.deviceId, device.names],
   );
 
   const menuItems: FileMenuItem[] = menu
@@ -125,7 +134,7 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
       <FlatList
         ref={listRef}
         data={visibleFiles}
-        extraData={[menu, now]}
+        extraData={[menu, now, device.names]}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
         contentContainerStyle={styles.content}
@@ -215,7 +224,12 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
         onPick={(source) => void pickAndUpload(source)}
         onClose={() => setSourceOpen(false)}
       />
-      <SettingsSheet visible={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <SettingsSheet
+        visible={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        deviceName={device.name}
+        onRenameDevice={device.rename}
+      />
     </SafeAreaView>
   );
 }

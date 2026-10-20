@@ -18,7 +18,7 @@ export function useRecentFiles(userId: string) {
   const refresh = useCallback(async () => {
     const { data, error: queryError } = await supabase
       .from("files")
-      .select("id, user_id, name, size, mime_type, storage_path, created_at, delivered_at, pinned, pinned_at")
+      .select("id, user_id, name, size, mime_type, storage_path, created_at, delivered_at, pinned, pinned_at, device_id")
       // Pinned files first, then newest.
       .order("pinned", { ascending: false })
       .order("created_at", { ascending: false })

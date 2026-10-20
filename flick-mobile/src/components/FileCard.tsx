@@ -26,6 +26,7 @@ type Props = {
   tone: CardTone;
   status: string;
   badge?: ReactNode; // small sticker next to the name (e.g. pinned)
+  singleLineMeta?: boolean; // list cards keep one line so they don't grow
   children?: ReactNode; // trailing actions
 };
 
@@ -43,7 +44,7 @@ function extension(name: string): string {
   return dot > 0 ? name.slice(dot + 1, dot + 5).toUpperCase() : "FILE";
 }
 
-export function FileCard({ name, size, mimeType, tone, status, badge, children }: Props) {
+export function FileCard({ name, size, mimeType, tone, status, badge, singleLineMeta, children }: Props) {
   const { palette } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const colored = isColored(tone);
@@ -67,7 +68,11 @@ export function FileCard({ name, size, mimeType, tone, status, badge, children }
           </Text>
           {badge}
         </View>
-        <Text style={[styles.meta, colored && styles.onColor]} numberOfLines={2}>
+        <Text
+          style={[styles.meta, colored && styles.onColor]}
+          numberOfLines={singleLineMeta ? 1 : 2}
+          ellipsizeMode="tail"
+        >
           {formatBytes(size)} · {status}
         </Text>
       </View>

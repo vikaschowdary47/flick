@@ -9,6 +9,7 @@ export type FileRow = {
   delivered_at: string | null;
   pinned: boolean;
   pinned_at: string | null;
+  device_id: string | null; // sender
 };
 
 export type PickedFile = {
