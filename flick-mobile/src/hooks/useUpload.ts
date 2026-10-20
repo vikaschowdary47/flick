@@ -22,7 +22,10 @@ export function useUpload(onUploaded?: () => void) {
 
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        copyToCacheDirectory: true,
+        // Android: Expo Go only lets us read files inside our own scoped cache,
+        // and the picker's copy lands outside it (Missing 'READ' permission).
+        // So on Android keep the picker's content:// uri and read it directly.
+        copyToCacheDirectory: Platform.OS !== "android",
         multiple: false,
       });
       if (result.canceled || !result.assets?.[0]) return;
@@ -54,17 +57,19 @@ export function useUpload(onUploaded?: () => void) {
         return;
       }
 
-      // The document picker (copyToCacheDirectory) already gives a readable
-      // file:// copy, so read that. Only content:// URIs (Android providers)
-      // are copied to our cache first. Never fetch(uri).blob().
-      let source: File;
-      if (asset.uri.startsWith("content://")) {
+      // iOS: the picker's file:// copy. Android: the content:// uri, which
+      // expo-file-system reads through the system provider. If that read is
+      // refused, fall back to copying into our own cache. Never fetch(uri).blob().
+      let source = new File(asset.uri);
+      let bytes: ArrayBuffer;
+      try {
+        bytes = await source.arrayBuffer();
+      } catch (readError) {
+        if (!asset.uri.startsWith("content://")) throw readError;
         cached = await copyToCache(asset.uri, picked.name);
         source = cached;
-      } else {
-        source = new File(asset.uri);
+        bytes = await source.arrayBuffer();
       }
-      const bytes = await source.arrayBuffer();
       if (bytes.byteLength === 0) throw new Error("empty file");
       if (!picked.size) picked = { ...picked, size: bytes.byteLength };
       if (bytes.byteLength > MAX_FILE_BYTES) throw new Error("payload too large");
