@@ -12,9 +12,10 @@ import { useRemoveFile } from "../hooks/useRemoveFile";
 import { useUpload } from "../hooks/useUpload";
 import { formatExpiry } from "../lib/format";
 import type { FileRow } from "../lib/types";
-import { FileActions } from "./FileActions";
 import { FileCard } from "./FileCard";
+import { FileMenu, type FileMenuItem } from "./FileMenu";
 import { Header } from "./Header";
+import { EyeIcon, TrashIcon } from "./Icons";
 import { PillButton } from "./PillButton";
 import { SettingsSheet } from "./SettingsSheet";
 import { UploadCard } from "./UploadCard";
@@ -36,7 +37,8 @@ export function HomeScreen({ userId, onSignOut }: Props) {
   const opener = useOpenFile();
   const now = useNow();
   const remover = useRemoveFile(recent.refresh);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  // The card whose menu is open, and where it was touched.
+  const [menu, setMenu] = useState<{ file: FileRow; anchorY: number } | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
@@ -53,18 +55,18 @@ export function HomeScreen({ userId, onSignOut }: Props) {
 
   const renderItem = useCallback(
     ({ item, index }: { item: FileRow; index: number }) => {
-      const selected = selectedId === item.id;
       const opening = opener.openingId === item.id;
+      const open = menu?.file.id === item.id;
+      const showMenu = (pageY: number) => {
+        if (!opening) setMenu({ file: item, anchorY: pageY });
+      };
       return (
         <Pressable
           accessibilityRole="button"
-          accessibilityState={{ selected }}
-          accessibilityHint={selected ? "Hides file actions" : "Shows preview and remove"}
-          onPress={() => setSelectedId(selected ? null : item.id)}
-          style={[
-            index % 2 === 0 ? styles.tiltLeft : styles.tiltRight,
-            selected && styles.selectedCard,
-          ]}
+          accessibilityHint="Opens Preview and Delete"
+          onPress={(event) => showMenu(event.nativeEvent.pageY)}
+          onLongPress={(event) => showMenu(event.nativeEvent.pageY)}
+          style={[index % 2 === 0 ? styles.tiltLeft : styles.tiltRight, open && styles.selectedCard]}
         >
           <FileCard
             name={item.name}
@@ -76,29 +78,38 @@ export function HomeScreen({ userId, onSignOut }: Props) {
                 ? "Opening…"
                 : `${item.delivered_at ? "Landed" : "Waiting for your devices"} · ${formatExpiry(item.created_at, now)}`
             }
-          >
-            {selected && !opening && (
-              <FileActions
-                fileName={item.name}
-                onPreview={() => opener.open(item)}
-                onRemove={() => {
-                  setSelectedId(null);
-                  remover.remove(item);
-                }}
-              />
-            )}
-          </FileCard>
+          />
         </Pressable>
       );
     },
-    [selectedId, now, opener.open, opener.openingId, remover.remove],
+    [menu, now, opener.openingId, styles],
   );
+
+  const menuItems: FileMenuItem[] = menu
+    ? [
+        {
+          key: "preview",
+          label: "Preview",
+          icon: <EyeIcon />,
+          fill: "preview",
+          onPress: () => opener.open(menu.file),
+        },
+        {
+          key: "delete",
+          label: "Delete",
+          icon: <TrashIcon />,
+          fill: "danger",
+          // Same as before: 5-second Undo, then gone from every device.
+          onPress: () => remover.remove(menu.file),
+        },
+      ]
+    : [];
 
   return (
     <SafeAreaView style={styles.safe} edges={["top", "left", "right", "bottom"]}>
       <FlatList
         data={visibleFiles}
-        extraData={[selectedId, now]}
+        extraData={[menu, now]}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
         contentContainerStyle={styles.content}
@@ -167,6 +178,12 @@ export function HomeScreen({ userId, onSignOut }: Props) {
           </Pressable>
         </View>
       </View>
+      <FileMenu
+        title={menu?.file.name ?? null}
+        anchorY={menu?.anchorY ?? 0}
+        items={menuItems}
+        onClose={() => setMenu(null)}
+      />
       <SettingsSheet visible={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </SafeAreaView>
   );

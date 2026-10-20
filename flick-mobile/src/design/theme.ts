@@ -25,6 +25,7 @@ export type Palette = {
   archiveTile: string;
   fallbackTile: string;
   pinBadge: string;
+  dangerFill: string; // Delete in menus
   connectedPill: string;
   signedOutPill: string;
   offlinePill: string;
@@ -61,6 +62,7 @@ const playfulLight: Palette = {
   archiveTile: mint,
   fallbackTile: cream,
   pinBadge: yellow,
+  dangerFill: coral,
   connectedPill: mint,
   signedOutPill: cream,
   offlinePill: yellow,
@@ -105,6 +107,7 @@ const classyLight: Palette = {
   archiveTile: "#DCE7E2",
   fallbackTile: "#F6F5F2",
   pinBadge: "#EFE6D2",
+  dangerFill: "#F0D9D6",
   connectedPill: "#DCE7E2",
   signedOutPill: "#F6F5F2",
   offlinePill: "#EFE6D2",
