@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme, useThemedStyles } from "../design/ThemeProvider";
@@ -12,6 +12,7 @@ import { usePinFile } from "../hooks/usePinFile";
 import { useRecentFiles } from "../hooks/useRecentFiles";
 import { useRemoveFile } from "../hooks/useRemoveFile";
 import { useUpload } from "../hooks/useUpload";
+import { pruneCache } from "../lib/cache";
 import { formatExpiry, formatSender } from "../lib/format";
 import type { FileRow } from "../lib/types";
 import { FileCard, PinBadge } from "./FileCard";
@@ -51,6 +52,17 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
   const [refreshing, setRefreshing] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [sourceOpen, setSourceOpen] = useState(false);
+
+  // Drop cached copies of files that expired or were deleted (on any device),
+  // copies unused for 24 hours, and the oldest ones past 150 MB.
+  const viewerUri = opener.viewer?.folder.uri;
+  useEffect(() => {
+    if (recent.loading || recent.error) return;
+    pruneCache({
+      liveFileIds: new Set(recent.files.map((file) => file.id)),
+      protectUris: viewerUri ? [viewerUri] : [],
+    });
+  }, [recent.files, recent.loading, recent.error, viewerUri]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);

@@ -5,6 +5,7 @@ import { Directory, File, Paths } from "expo-file-system";
 import { getContentUriAsync } from "expo-file-system/legacy";
 import * as IntentLauncher from "expo-intent-launcher";
 import * as Sharing from "expo-sharing";
+import { OPEN_DIR, pruneCache } from "../lib/cache";
 import { FILE_LIFETIME_MS } from "../lib/format";
 import { resolveMimeType } from "../lib/mime";
 import { FILES_BUCKET, supabase } from "../lib/supabase";
@@ -55,7 +56,7 @@ export function useOpenFile() {
   const run = useCallback(async (file: FileRow, mode: OpenMode) => {
     setOpeningId(file.id);
     setError(null);
-    const folder = new Directory(Paths.cache, "flick-open", Crypto.randomUUID());
+    const folder = new Directory(Paths.cache, OPEN_DIR, file.id, Crypto.randomUUID());
     const mimeType = resolveMimeType(file.mime_type, file.name);
     let keepFolder = false; // the viewer owns the copy until it closes
     try {
@@ -73,6 +74,7 @@ export function useOpenFile() {
       folder.create({ intermediates: true, idempotent: true });
       const destination = new File(folder, file.name.replace(/[/\\:]/g, "_") || "file");
       const downloaded = await File.downloadFileAsync(data.signedUrl, destination);
+      pruneCache({ protectUris: [folder.uri] }); // keep the cache under 150 MB
 
       setOpeningId(null); // the system UI is up; stop the "Downloading…" state
 

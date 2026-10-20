@@ -7,6 +7,7 @@ import { Platform } from "react-native";
 import { Directory, File, Paths } from "expo-file-system";
 import { FILES_BUCKET, MAX_FILE_BYTES, supabase } from "../lib/supabase";
 import { formatBytes, safeStorageName } from "../lib/format";
+import { deleteIfCached } from "../lib/cache";
 import { limitFromError, type LimitKind } from "../lib/limits";
 import { MIME_BY_EXTENSION, resolveMimeType } from "../lib/mime";
 import type { PickedFile, UploadState } from "../lib/types";
@@ -83,6 +84,8 @@ export function useUpload(onUploaded?: () => void, deviceId?: string | null) {
       } catch {
         // the OS clears the cache eventually anyway
       }
+      // Picker/HEIC copies are only needed for the upload; don't keep originals.
+      deleteIfCached(candidate.uri);
     }
   }, []);
 

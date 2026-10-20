@@ -5,6 +5,8 @@ import { useTheme, useThemedStyles } from "../design/ThemeProvider";
 import type { AppearancePreference, Palette, ThemeName } from "../design/theme";
 import { tokens } from "../design/tokens";
 import { DEVICE_NAME_MAX } from "../hooks/useDevice";
+import { cacheSize, clearCache } from "../lib/cache";
+import { formatBytes } from "../lib/format";
 import { PillButton } from "./PillButton";
 
 type Props = {
@@ -32,6 +34,11 @@ export function SettingsSheet({ visible, onClose, deviceName, onRenameDevice }: 
   const { palette } = useTheme();
   const [draft, setDraft] = useState(deviceName ?? "");
   const [nameError, setNameError] = useState<string | null>(null);
+  const [cacheBytes, setCacheBytes] = useState(0);
+
+  useEffect(() => {
+    if (visible) setCacheBytes(cacheSize());
+  }, [visible]);
 
   // Show the current name each time the sheet opens (or once it loads).
   useEffect(() => {
@@ -85,6 +92,26 @@ export function SettingsSheet({ visible, onClose, deviceName, onRenameDevice }: 
               {nameError}
             </Text>
           )}
+        </View>
+        <View style={styles.group}>
+          <Text style={styles.eyebrow}>STORAGE</Text>
+          <View style={styles.cacheRow}>
+            <Text style={styles.cacheText}>
+              Cached files: {formatBytes(cacheBytes)}
+            </Text>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Clear cache, ${formatBytes(cacheBytes)}`}
+              disabled={cacheBytes === 0}
+              onPress={() => {
+                clearCache();
+                setCacheBytes(cacheSize());
+              }}
+              style={[styles.segment, styles.cacheButton, cacheBytes === 0 && styles.disabled]}
+            >
+              <Text style={styles.segmentLabel}>Clear cache</Text>
+            </Pressable>
+          </View>
         </View>
         <PillButton label="Done" onPress={() => void close()} variant="secondary" />
       </SafeAreaView>
@@ -169,6 +196,24 @@ const makeStyles = (c: Palette) =>
       color: c.text,
       fontFamily: tokens.fonts.semibold,
       fontSize: tokens.fontSizes.meta,
+    },
+    cacheRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing.md,
+    },
+    cacheText: {
+      flex: 1,
+      color: c.text,
+      fontFamily: tokens.fonts.semibold,
+      fontSize: tokens.fontSizes.body,
+    },
+    cacheButton: {
+      flex: 0,
+      paddingHorizontal: tokens.spacing.lg,
+    },
+    disabled: {
+      opacity: 0.5,
     },
     segments: {
       flexDirection: "row",

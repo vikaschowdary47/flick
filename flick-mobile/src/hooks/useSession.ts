@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
+import { clearCache } from "../lib/cache";
 import { supabase } from "../lib/supabase";
 
 export function useSession() {
@@ -68,6 +69,7 @@ export function useSession() {
   // with provider "apple"), and enable the Apple provider in Supabase.
 
   const signOut = useCallback(async () => {
+    clearCache(); // no downloaded copies stay behind after sign-out
     await supabase.auth.signOut();
   }, []);
 
