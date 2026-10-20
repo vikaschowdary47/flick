@@ -16,9 +16,7 @@ interface Window {
     startFileDrag: (fileId: string) => void
     endFileDrag: () => void
     notifyArrival: () => void
-    getClipboardSharing: () => Promise<boolean>
-    setClipboardSharing: (on: boolean) => Promise<void>
-    onClipboardSharingChanged: (listener: (on: boolean) => void) => () => void
+    setClipsActive: (active: boolean) => Promise<void>
     readClipboard: () => Promise<string>
     writeClipboard: (text: string) => Promise<void>
     onSendClipboardText: (listener: (text: string) => void) => () => void

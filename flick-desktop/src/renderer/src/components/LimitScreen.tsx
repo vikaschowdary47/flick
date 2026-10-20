@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { PAYMENTS_ENABLED } from "../config";
 import type { DeviceRow } from "../hooks/useDevice";
 import { useWaitlist } from "../hooks/useWaitlist";
 import type { LimitKind, Usage } from "../limits";
@@ -11,6 +10,7 @@ interface LimitScreenProps {
   devices: DeviceRow[];
   thisDeviceId: string | null;
   onRemoveDevice: (id: string) => Promise<string | null>;
+  paymentsEnabled: boolean; // the "payments" feature flag
   onClose: () => void;
 }
 
@@ -57,8 +57,8 @@ function copy(limit: LimitKind, usage: Usage | null): { title: string; body: str
 }
 
 // Same screen as the phone's: pins, storage or devices. The secondary action
-// is the Pro waitlist while PAYMENTS_ENABLED is false; flipping it swaps in an
-// upgrade button (no payment code exists yet).
+// is the Pro waitlist while the "payments" feature flag is off; turning it on
+// swaps in an upgrade button (no payment code exists yet).
 export default function LimitScreen({
   limit,
   usage,
@@ -66,6 +66,7 @@ export default function LimitScreen({
   devices,
   thisDeviceId,
   onRemoveDevice,
+  paymentsEnabled,
   onClose,
 }: LimitScreenProps) {
   const waitlist = useWaitlist(email);
@@ -160,7 +161,7 @@ export default function LimitScreen({
               Free up space
             </button>
           )}
-          {PAYMENTS_ENABLED ? (
+          {paymentsEnabled ? (
             // Later: the real upgrade flow goes here.
             <button type="button" className="sign-in-button sign-in-button-secondary" onClick={close}>
               Upgrade
@@ -179,7 +180,7 @@ export default function LimitScreen({
               Want more? Get notified when Pro is ready
             </button>
           )}
-          {!PAYMENTS_ENABLED && (
+          {!paymentsEnabled && (
             <p className="limit-note">
               {waitlist.state === "error"
                 ? "Couldn't save that. Check your connection and try again."

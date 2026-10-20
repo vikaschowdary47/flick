@@ -7,11 +7,9 @@ export interface AppSettings {
   // true: the widget floats and stays put; false: tray popover that hides
   // when you click elsewhere.
   keepOnTop: boolean;
-  // Settings → Clipboard sharing (only used when CLIPBOARD_ENABLED).
-  clipboardSharing: boolean;
 }
 
-const DEFAULTS: AppSettings = { keepOnTop: false, clipboardSharing: false };
+const DEFAULTS: AppSettings = { keepOnTop: false };
 
 let cached: AppSettings | null = null;
 
@@ -27,11 +25,11 @@ export function getSettings(): AppSettings {
     const saved = JSON.parse(readFileSync(settingsPath(), "utf8")) as Partial<AppSettings>;
     cached = {
       keepOnTop: typeof saved.keepOnTop === "boolean" ? saved.keepOnTop : DEFAULTS.keepOnTop,
-      clipboardSharing:
-        typeof saved.clipboardSharing === "boolean"
-          ? saved.clipboardSharing
-          : DEFAULTS.clipboardSharing,
     };
+    // Clipboard sharing used to be saved here; it now lives on the profile.
+    if ("clipboardSharing" in saved) {
+      writeFileSync(settingsPath(), JSON.stringify(cached, null, 2), "utf8");
+    }
   } catch {
     cached = { ...DEFAULTS };
   }

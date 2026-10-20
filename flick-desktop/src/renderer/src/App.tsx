@@ -3,10 +3,10 @@ import ClipsPanel from "./components/ClipsPanel";
 import LimitScreen from "./components/LimitScreen";
 import Widget from "./components/Widget";
 import { useEffect, useState } from "react";
-import { CLIPBOARD_ENABLED } from "./config";
 import { useClips } from "./hooks/useClips";
 import { useClipboardSetting } from "./hooks/useClipboardSetting";
 import { useDevice } from "./hooks/useDevice";
+import { useFeatureFlags } from "./hooks/useFeatureFlags";
 import { useFiles } from "./hooks/useFiles";
 import { useUsage } from "./hooks/useUsage";
 import { useSession } from "./hooks/useSession";
@@ -19,9 +19,10 @@ export default function App() {
   const activeLimit = fileState.limitHit ?? (device.limitHit ? "devices" : null);
   // Limits and usage come from the server; refresh when they're about to show.
   const usage = useUsage(auth.isAccountMenuOpen || activeLimit !== null);
-  // Clips: nothing is fetched, subscribed or bound unless the developer flag
-  // and this device's Clipboard sharing setting are both on.
-  const clipboardSetting = useClipboardSetting();
+  // Clips: nothing is fetched, subscribed or bound unless the clipboard
+  // feature flag and the user's Clipboard sharing setting are both on.
+  const flags = useFeatureFlags(auth.session);
+  const clipboardSetting = useClipboardSetting(auth.session, flags.clipboard);
   const clips = useClips(auth.session, device.deviceId, clipboardSetting.clipsActive);
   const [sendStatus, setSendStatus] = useState("");
   const sendClip = clips.send;
@@ -121,7 +122,7 @@ export default function App() {
       }
       clipsDot={clips.hasNew}
       onOpenClips={clips.clearNew}
-      clipboardSharing={CLIPBOARD_ENABLED ? clipboardSetting.sharingOn : null}
+      clipboardSharing={flags.clipboard ? clipboardSetting.sharingOn : null}
       onClipboardSharingChange={clipboardSetting.setSharing}
     />
     <LimitScreen
@@ -131,6 +132,7 @@ export default function App() {
       devices={device.devices}
       thisDeviceId={device.deviceId}
       onRemoveDevice={device.removeDevice}
+      paymentsEnabled={flags.payments}
       onClose={() => {
         fileState.clearLimit();
         device.clearLimit();

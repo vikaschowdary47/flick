@@ -79,15 +79,8 @@ contextBridge.exposeInMainWorld('flick', {
   startFileDrag: (fileId: string) => ipcRenderer.send('file:start-drag', fileId),
   endFileDrag: () => ipcRenderer.send('file:drag-ended'),
   notifyArrival: () => ipcRenderer.send('tray:arrival'),
-  getClipboardSharing: (): Promise<boolean> =>
-    ipcRenderer.invoke('settings:get-clipboard-sharing'),
-  setClipboardSharing: (on: boolean): Promise<void> =>
-    ipcRenderer.invoke('settings:set-clipboard-sharing', on),
-  onClipboardSharingChanged: (listener: (on: boolean) => void): (() => void) => {
-    const handler = (_event: unknown, on: unknown) => listener(on === true)
-    ipcRenderer.on('settings:clipboard-sharing', handler)
-    return () => ipcRenderer.removeListener('settings:clipboard-sharing', handler)
-  },
+  setClipsActive: (active: boolean): Promise<void> =>
+    ipcRenderer.invoke('clips:set-active', active),
   readClipboard: (): Promise<string> => ipcRenderer.invoke('clipboard:read'),
   writeClipboard: (text: string): Promise<void> => ipcRenderer.invoke('clipboard:write', text),
   onSendClipboardText: (listener: (text: string) => void): (() => void) => {
