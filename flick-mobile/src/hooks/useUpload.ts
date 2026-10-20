@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 import * as Crypto from "expo-crypto";
 import * as DocumentPicker from "expo-document-picker";
+import { Platform } from "react-native";
 import { Directory, File, Paths } from "expo-file-system";
 import { FILES_BUCKET, MAX_FILE_BYTES, supabase } from "../lib/supabase";
 import { formatBytes, safeStorageName } from "../lib/format";
@@ -27,13 +28,12 @@ export function useUpload(onUploaded?: () => void) {
       if (result.canceled || !result.assets?.[0]) return;
 
       const asset = result.assets[0];
-      const name = normalizeName(asset.name);
-      picked = {
-        name,
-        size: asset.size ?? 0,
-        mimeType: resolveMimeType(asset.mimeType, name),
-      };
-      debug = { uri: asset.uri, name: asset.name, mimeType: asset.mimeType ?? null, size: asset.size ?? null };
+      const mimeType = resolveMimeType(asset.mimeType, normalizeName(asset.name));
+      // Android photo providers can return names without an extension
+      // (e.g. "1000012345"); add one from the type so the stored file opens.
+      const name = withExtension(normalizeName(asset.name), mimeType);
+      picked = { name, size: asset.size ?? 0, mimeType };
+      debug = { platform: Platform.OS, uri: asset.uri, name: asset.name, mimeType: asset.mimeType ?? null, size: asset.size ?? null };
       const size = picked.size;
 
       if (size > MAX_FILE_BYTES) {
@@ -138,6 +138,14 @@ function resolveMimeType(mimeType: string | null | undefined, name: string): str
   return MIME_BY_EXTENSION[extension] ?? "application/octet-stream";
 }
 
+function withExtension(name: string, mimeType: string): string {
+  if (name.lastIndexOf(".") > 0) return name;
+  const extension = Object.keys(MIME_BY_EXTENSION).find((key) => MIME_BY_EXTENSION[key] === mimeType);
+  return extension ? `${name}.${extension}` : name;
+}
+
+// Works for file:// (iOS, and Android with copyToCacheDirectory) and
+// content:// (Android SAF/photo providers): we always upload from our own file:// copy.
 function copyToCache(uri: string, name: string): File {
   const folder = new Directory(Paths.cache, "flick-upload", Crypto.randomUUID());
   folder.create({ intermediates: true, idempotent: true });
