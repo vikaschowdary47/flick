@@ -14,6 +14,8 @@ interface Window {
       import('../../shared/files').FileCard
     >
     startFileDrag: (fileId: string) => void
+    endFileDrag: () => void
+    notifyArrival: () => void
     startAuthLoopback: () => Promise<string>
     getDefaultDevice: () => Promise<{ name: string; platform: string }>
     waitForAuthCode: (authUrl: string) => Promise<string>

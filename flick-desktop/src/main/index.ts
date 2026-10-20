@@ -29,12 +29,20 @@ import type {
   ReceivedFileInput,
 } from "../shared/files";
 import { designTokens } from "../design/tokens";
+import {
+  attachWindow,
+  noteArrival,
+  setDragInProgress,
+  setupTray,
+  showPopover,
+} from "./tray";
 
 app.setName("Flick");
 
 const currentDirectory = fileURLToPath(new URL(".", import.meta.url));
 const isDevelopment = !app.isPackaged;
 let mainWindow: BrowserWindow | null = null;
+let isQuitting = false;
 let demoFileIcon: NativeImage;
 type RegisteredFile = FileCard & { path: string };
 interface SavedFileRegistry {
@@ -469,6 +477,8 @@ function createWindow(): void {
     // minHeight: 280,
     // maxHeight: 280,
     title: "Flick",
+    show: false, // shown under the tray icon once ready
+    skipTaskbar: true,
     alwaysOnTop: true,
     frame: false,
     resizable: true,
@@ -487,6 +497,8 @@ function createWindow(): void {
     void mainWindow.loadFile(join(currentDirectory, "../renderer/index.html"));
   }
 
+  attachWindow(mainWindow, () => isQuitting);
+  mainWindow.once("ready-to-show", showPopover);
   mainWindow.on("closed", () => {
     mainWindow = null;
   });
@@ -606,11 +618,18 @@ ipcMain.on("file:start-drag", (event, fileId: unknown) => {
     return;
   }
 
+  setDragInProgress(true);
   event.sender.startDrag({
     file: file.path,
     icon: demoFileIcon,
   });
 });
+
+// The renderer saw the drag end (first plain mouse move afterwards).
+ipcMain.on("file:drag-ended", () => setDragInProgress(false));
+
+// A new file arrived over Realtime: dot on the tray icon if the popover is closed.
+ipcMain.on("tray:arrival", () => noteArrival());
 
 ipcMain.handle("files:list", (event) => {
   assertMainWindow(event);
@@ -663,6 +682,7 @@ app
       throw new Error("Could not create the demo file drag icon.");
     }
     createWindow();
+    setupTray(() => mainWindow);
 
     app.on("activate", () => {
       if (BrowserWindow.getAllWindows().length === 0) {
@@ -674,6 +694,10 @@ app
     console.error("Failed to start Flick desktop:", error);
     app.quit();
   });
+
+app.on("before-quit", () => {
+  isQuitting = true;
+});
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {

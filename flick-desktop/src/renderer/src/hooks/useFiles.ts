@@ -326,6 +326,7 @@ export function useFiles(session: Session | null, deviceId: string | null = null
           console.info("New Flick file row:", payload.new);
           if (isCloudFile(payload.new)) {
             setArrivalPulse((pulse) => pulse + 1);
+            window.flick.notifyArrival();
             if (!firstArrivalRef.current) {
               firstArrivalRef.current = true;
               setShowConfetti(true);
@@ -538,6 +539,7 @@ export function useFiles(session: Session | null, deviceId: string | null = null
     const clear = (event: MouseEvent) => {
       if (event.buttons === 0) {
         outgoingDragRef.current = false;
+        window.flick.endFileDrag();
         window.removeEventListener("mousemove", clear);
       }
     };
