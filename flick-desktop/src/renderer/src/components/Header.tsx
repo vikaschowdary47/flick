@@ -1,5 +1,6 @@
 import { motion, useReducedMotion } from "framer-motion";
-import type { RefObject } from "react";
+import { useEffect, useState, type RefObject } from "react";
+import { DEVICE_NAME_MAX } from "../hooks/useDevice";
 import type { Session } from "@supabase/supabase-js";
 import { designTokens } from "../../../design/tokens";
 
@@ -12,6 +13,8 @@ interface HeaderProps {
   setIsAccountMenuOpen: (isOpen: boolean | ((current: boolean) => boolean)) => void;
   session: Session | null;
   arrivalPulse: number;
+  deviceName?: string | null;
+  onRenameDevice?: (name: string) => Promise<string | null>;
 }
 
 export default function Header({
@@ -23,8 +26,26 @@ export default function Header({
   setIsAccountMenuOpen,
   session,
   arrivalPulse,
+  deviceName = null,
+  onRenameDevice,
 }: HeaderProps) {
   const prefersReducedMotion = useReducedMotion();
+  const [draftName, setDraftName] = useState(deviceName ?? "");
+  const [nameError, setNameError] = useState("");
+
+  useEffect(() => {
+    if (isAccountMenuOpen) {
+      setDraftName(deviceName ?? "");
+      setNameError("");
+    }
+  }, [isAccountMenuOpen, deviceName]);
+
+  async function saveDeviceName(): Promise<void> {
+    if (!onRenameDevice || draftName.trim() === (deviceName ?? "")) {
+      return;
+    }
+    setNameError((await onRenameDevice(draftName)) ?? "");
+  }
 
   return (
     <header className="topbar">
@@ -91,6 +112,34 @@ export default function Header({
                   <span className="account-email" title={session.user.email}>
                     {session.user.email}
                   </span>
+                  {onRenameDevice && (
+                    <form
+                      className="device-name-form"
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        void saveDeviceName();
+                      }}
+                    >
+                      <label>
+                        This device
+                        <input
+                          type="text"
+                          value={draftName}
+                          maxLength={DEVICE_NAME_MAX}
+                          placeholder="Name"
+                          disabled={deviceName === null}
+                          aria-label="This device name"
+                          onChange={(event) => setDraftName(event.target.value)}
+                          onBlur={() => void saveDeviceName()}
+                        />
+                      </label>
+                      {nameError && (
+                        <span className="device-name-error" role="alert">
+                          {nameError}
+                        </span>
+                      )}
+                    </form>
+                  )}
                   <button
                     className="sign-out-button"
                     type="button"

@@ -1,12 +1,14 @@
 import SignIn from "./components/SignIn";
 import Widget from "./components/Widget";
+import { useDevice } from "./hooks/useDevice";
 import { useFiles } from "./hooks/useFiles";
 import { useSession } from "./hooks/useSession";
 import { supabase } from "./supabase";
 
 export default function App() {
   const auth = useSession();
-  const fileState = useFiles(auth.session);
+  const device = useDevice(auth.session);
+  const fileState = useFiles(auth.session, device.deviceId);
 
   if (!auth.session) {
     return (
@@ -57,6 +59,10 @@ export default function App() {
       isOnline={auth.isOnline}
       isUploading={fileState.isUploading}
       pendingRemovals={fileState.pendingRemovals}
+      deviceId={device.deviceId}
+      deviceName={device.deviceName}
+      deviceNames={device.deviceNames}
+      onRenameDevice={device.renameDevice}
       onOutsideClick={auth.handleOutsideClick}
       onPreviewFile={fileState.previewFile}
       onStartFileDrag={fileState.startFileDrag}

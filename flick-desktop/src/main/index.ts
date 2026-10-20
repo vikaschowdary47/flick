@@ -7,7 +7,9 @@ import {
   shell,
   type NativeImage,
 } from "electron";
+import { execFile } from "node:child_process";
 import { randomUUID } from "node:crypto";
+import { hostname } from "node:os";
 import { createServer, type Server } from "node:http";
 import {
   mkdir,
@@ -546,6 +548,33 @@ function startLoopback(): Promise<string> {
     });
   });
 }
+
+// Default device name from the system ("Vikas's MacBook Pro"), used once
+// when this computer registers itself in Supabase.
+function computerName(): Promise<string> {
+  const fallback = hostname().replace(/\.local$/i, "").replace(/[-_]+/g, " ").trim();
+  if (process.platform !== "darwin") {
+    return Promise.resolve(fallback);
+  }
+  return new Promise((resolveName) => {
+    execFile("/usr/sbin/scutil", ["--get", "ComputerName"], (error, stdout) => {
+      resolveName(!error && stdout.trim() ? stdout.trim() : fallback);
+    });
+  });
+}
+
+ipcMain.handle("device:default", async (event) => {
+  assertMainWindow(event);
+  const platform =
+    process.platform === "darwin"
+      ? "macos"
+      : process.platform === "win32"
+        ? "windows"
+        : process.platform === "linux"
+          ? "linux"
+          : "other";
+  return { name: (await computerName()) || "Computer", platform };
+});
 
 ipcMain.handle("auth:loopback-start", async (event) => {
   assertMainWindow(event);

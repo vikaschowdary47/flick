@@ -1213,3 +1213,40 @@ input:focus-visible {
   stroke-linejoin: round;
   stroke-width: 2;
 }
+
+/* "from <device>" takes whatever room is left on the meta row and never
+   wraps, so the card doesn't get taller. */
+.file-sender {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.device-name-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--flick-muted);
+  font-size: 12px;
+  font-weight: var(--flick-font-weight-extrabold);
+}
+
+.device-name-form input {
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1.5px solid var(--flick-navy);
+  border-radius: var(--flick-radius-small);
+  background: var(--flick-white);
+  color: var(--flick-navy);
+  font: inherit;
+  font-weight: var(--flick-font-weight-semibold);
+}
+
+.device-name-error {
+  display: block;
+  margin-top: 4px;
+  color: var(--flick-navy);
+  font-size: 12px;
+}

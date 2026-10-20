@@ -11,7 +11,7 @@ export interface PendingRemoval {
   file: CloudFile;
 }
 
-export function useFiles(session: Session | null) {
+export function useFiles(session: Session | null, deviceId: string | null = null) {
   const [files, setFiles] = useState<CloudFile[]>([]);
   const [isLoadingFiles, setIsLoadingFiles] = useState(false);
   const [uploadError, setUploadError] = useState("");
@@ -257,7 +257,7 @@ export function useFiles(session: Session | null) {
           client
             .from("files")
             .select(
-              "id,user_id,name,size,mime_type,storage_path,created_at,delivered_at,pinned,pinned_at",
+              "id,user_id,name,size,mime_type,storage_path,created_at,delivered_at,pinned,pinned_at,device_id",
             )
             .eq("user_id", userId)
             .order("created_at", { ascending: false })
@@ -449,9 +449,10 @@ export function useFiles(session: Session | null) {
               size: file.size,
               mime_type: file.type || "application/octet-stream",
               storage_path: storagePath,
+              device_id: deviceId, // the sender, for "from <device>"
             })
             .select(
-              "id,user_id,name,size,mime_type,storage_path,created_at,delivered_at,pinned,pinned_at",
+              "id,user_id,name,size,mime_type,storage_path,created_at,delivered_at,pinned,pinned_at,device_id",
             )
             .single()
             .returns<CloudFileRow>();

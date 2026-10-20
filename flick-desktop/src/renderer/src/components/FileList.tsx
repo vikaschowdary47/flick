@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import type { ChangeEvent, RefObject } from "react";
 import FileCard from "./FileCard";
-import { CloudFile } from "../types";
+import { CloudFile, formatSender } from "../types";
 import type { PendingRemoval } from "../hooks/useFiles";
 import { useNow } from "../hooks/useNow";
 
@@ -12,6 +12,8 @@ interface FileListProps {
   isUploading: boolean;
   uploadError: string;
   pendingRemovals: PendingRemoval[];
+  deviceId: string | null;
+  deviceNames: Record<string, string>;
   onFileSelection: (event: ChangeEvent<HTMLInputElement>) => void;
   onPreview: (file: CloudFile) => void;
   onStartDrag: (file: CloudFile) => void;
@@ -28,6 +30,8 @@ export default function FileList({
   isUploading,
   uploadError,
   pendingRemovals,
+  deviceId,
+  deviceNames,
   onFileSelection,
   onPreview,
   onStartDrag,
@@ -84,6 +88,7 @@ export default function FileList({
                 file={file}
                 index={index}
                 now={now}
+                sender={formatSender(file.device_id, deviceId, deviceNames)}
                 key={file.id}
                 onPreview={onPreview}
                 onStartDrag={onStartDrag}

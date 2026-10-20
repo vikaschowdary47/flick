@@ -23,6 +23,10 @@ interface WidgetProps {
   isOnline: boolean;
   isUploading: boolean;
   pendingRemovals: PendingRemoval[];
+  deviceId: string | null;
+  deviceName: string | null;
+  deviceNames: Record<string, string>;
+  onRenameDevice: (name: string) => Promise<string | null>;
   onOutsideClick: (event: MouseEvent<HTMLElement>) => void;
   onPreviewFile: (file: CloudFile) => void;
   onStartFileDrag: (file: CloudFile) => void;
@@ -54,6 +58,10 @@ export default function Widget({
   isOnline,
   isUploading,
   pendingRemovals,
+  deviceId,
+  deviceName,
+  deviceNames,
+  onRenameDevice,
   onOutsideClick,
   onPreviewFile,
   onStartFileDrag,
@@ -96,6 +104,8 @@ export default function Widget({
         isAccountMenuOpen={isAccountMenuOpen}
         isOnline={isOnline}
         onSignOut={handleSignOut}
+        deviceName={deviceName}
+        onRenameDevice={onRenameDevice}
         setIsAccountMenuOpen={setIsAccountMenuOpen}
         session={session}
         arrivalPulse={arrivalPulse}
@@ -108,6 +118,8 @@ export default function Widget({
           isUploading={isUploading}
           uploadError={uploadError}
           pendingRemovals={pendingRemovals}
+          deviceId={deviceId}
+          deviceNames={deviceNames}
           onFileSelection={handleFileSelection}
           onPreview={onPreviewFile}
           onStartDrag={onStartFileDrag}

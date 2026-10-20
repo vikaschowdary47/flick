@@ -14,6 +14,7 @@ interface FileCardProps {
   file: CloudFile;
   index: number;
   now: number;
+  sender: string; // "from …" or empty
   onPreview: (file: CloudFile) => void;
   onStartDrag: (file: CloudFile) => void;
   onRemove: (file: CloudFile) => void;
@@ -25,6 +26,7 @@ export default function FileCard({
   file,
   index,
   now,
+  sender,
   onPreview,
   onStartDrag,
   onRemove,
@@ -199,6 +201,16 @@ export default function FileCard({
               ·
             </span>
             <span className="file-expiry">{formatExpiry(file.created_at, now)}</span>
+            {sender && (
+              <>
+                <span className="meta-divider" aria-hidden="true">
+                  ·
+                </span>
+                <span className="file-sender" title={sender}>
+                  {sender}
+                </span>
+              </>
+            )}
           </span>
         </span>
         {isReady && <span className="drag-me-pill">drag me ↗</span>}

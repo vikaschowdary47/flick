@@ -9,6 +9,7 @@ export interface CloudFileRow {
   delivered_at: string | null;
   pinned?: boolean;
   pinned_at?: string | null;
+  device_id?: string | null; // sender
 }
 
 export interface CloudFile extends CloudFileRow {
@@ -21,6 +22,32 @@ export interface CloudFile extends CloudFileRow {
 export function compareFiles(left: CloudFileRow, right: CloudFileRow): number {
   const pinned = Number(Boolean(right.pinned)) - Number(Boolean(left.pinned));
   return pinned !== 0 ? pinned : right.created_at.localeCompare(left.created_at);
+}
+
+// "from this device" / "from Vikas's MacBook", shortened so the card's
+// metadata stays on one line. Empty when the sender isn't known.
+const SENDER_MAX_CHARS = 18;
+
+export function formatSender(
+  deviceId: string | null | undefined,
+  thisDeviceId: string | null,
+  names: Record<string, string>,
+): string {
+  if (!deviceId) {
+    return "";
+  }
+  if (deviceId === thisDeviceId) {
+    return "from this device";
+  }
+  const name = names[deviceId];
+  if (!name) {
+    return "";
+  }
+  return `from ${
+    name.length > SENDER_MAX_CHARS
+      ? `${name.slice(0, SENDER_MAX_CHARS - 1).trimEnd()}…`
+      : name
+  }`;
 }
 
 export const MAX_FILE_SIZE = 50 * 1024 * 1024;

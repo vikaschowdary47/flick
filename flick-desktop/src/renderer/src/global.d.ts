@@ -15,6 +15,7 @@ interface Window {
     >
     startFileDrag: (fileId: string) => void
     startAuthLoopback: () => Promise<string>
+    getDefaultDevice: () => Promise<{ name: string; platform: string }>
     waitForAuthCode: (authUrl: string) => Promise<string>
   }
 }

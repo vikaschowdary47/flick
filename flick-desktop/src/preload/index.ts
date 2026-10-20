@@ -77,6 +77,8 @@ contextBridge.exposeInMainWorld('flick', {
     return file
   },
   startFileDrag: (fileId: string) => ipcRenderer.send('file:start-drag', fileId),
+  getDefaultDevice: (): Promise<{ name: string; platform: string }> =>
+    ipcRenderer.invoke('device:default'),
   startAuthLoopback: (): Promise<string> => ipcRenderer.invoke('auth:loopback-start'),
   waitForAuthCode: (authUrl: string): Promise<string> =>
     ipcRenderer.invoke('auth:loopback-wait', authUrl),
