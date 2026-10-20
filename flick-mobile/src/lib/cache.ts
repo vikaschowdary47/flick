@@ -7,8 +7,10 @@ import { Directory, File, Paths } from "expo-file-system";
 export const CACHE_MAX_BYTES = 150 * 1024 * 1024; // 150 MB
 export const CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000; // unused for 24 hours
 
-// Preview/Share downloads live in flick-open/<file id>/<random>/.
+// One cached copy per Flick file: flick-open/<file id>/<name>, plus a
+// .last-used marker rewritten each time the copy is opened.
 export const OPEN_DIR = "flick-open";
+const LAST_USED = ".last-used";
 const UPLOAD_DIR = "flick-upload";
 // Copies the pickers and the HEIC converter write into our cache.
 const PICKER_DIRS = ["ImagePicker", "ImageManipulator", "DocumentPicker"];
@@ -54,11 +56,7 @@ function entries(): Entry[] {
   };
 
   for (const fileDir of children(OPEN_DIR)) {
-    if (!(fileDir instanceof Directory)) {
-      add(fileDir, null);
-      continue;
-    }
-    for (const copy of fileDir.list()) add(copy, fileDir.name);
+    add(fileDir, fileDir instanceof Directory ? fileDir.name : null);
   }
   for (const name of [UPLOAD_DIR, ...PICKER_DIRS]) {
     for (const item of children(name)) add(item, null);
@@ -99,7 +97,12 @@ export function pruneCache({ liveFileIds, protectUris = [] }: PruneOptions = {})
       kept.push(entry);
       continue;
     }
-    const gone = liveFileIds !== undefined && entry.fileId !== null && !liveFileIds.has(entry.fileId);
+    // Brand-new copies (e.g. just uploaded) may not be in the file list yet.
+    const gone =
+      liveFileIds !== undefined &&
+      entry.fileId !== null &&
+      !liveFileIds.has(entry.fileId) &&
+      now - entry.lastUsed > 2 * 60 * 1000;
     const stale = now - entry.lastUsed > CACHE_MAX_AGE_MS;
     if (gone || stale) remove(entry.item);
     else kept.push(entry);
@@ -126,10 +129,61 @@ export function pruneCache({ liveFileIds, protectUris = [] }: PruneOptions = {})
   }
 }
 
-// Settings → Clear cache, and sign-out.
-export function clearCache(): void {
-  for (const name of [OPEN_DIR, UPLOAD_DIR, ...PICKER_DIRS]) {
-    remove(new Directory(Paths.cache, name));
+// Settings → Clear cache (keeps a file that's open right now), and sign-out.
+export function clearCache(protectUris: string[] = []): void {
+  if (protectUris.length === 0) {
+    for (const name of [OPEN_DIR, UPLOAD_DIR, ...PICKER_DIRS]) {
+      remove(new Directory(Paths.cache, name));
+    }
+    return;
+  }
+  for (const entry of entries()) {
+    const keep = protectUris.some((uri) => uri.startsWith(entry.item.uri) || entry.item.uri.startsWith(uri));
+    if (!keep) remove(entry.item);
+  }
+}
+
+export function fileCacheDir(fileId: string): Directory {
+  return new Directory(Paths.cache, OPEN_DIR, fileId);
+}
+
+// The cached copy of a Flick file, if there is one.
+export function cachedCopy(fileId: string): File | null {
+  try {
+    const dir = fileCacheDir(fileId);
+    if (!dir.exists) return null;
+    const copy = dir.list().find((item): item is File => item instanceof File && item.name !== LAST_USED);
+    return copy && (copy.size ?? 0) > 0 ? copy : null;
+  } catch {
+    return null;
+  }
+}
+
+// Mark a cached copy as just used (its age for the 24-hour rule restarts).
+export function touchCachedCopy(fileId: string): void {
+  try {
+    const dir = fileCacheDir(fileId);
+    dir.create({ intermediates: true, idempotent: true });
+    const marker = new File(dir, LAST_USED);
+    if (!marker.exists) marker.create();
+    marker.write(String(Date.now()));
+  } catch {
+    // only affects cleanup order
+  }
+}
+
+// After an upload, keep our own copy as this file's cached copy, so opening
+// it on the sending device needs no download.
+export function adoptUploadCopy(fileId: string, copy: File, name: string): boolean {
+  try {
+    const dir = fileCacheDir(fileId);
+    dir.create({ intermediates: true, idempotent: true });
+    copy.move(new File(dir, name));
+    touchCachedCopy(fileId);
+    pruneCache({ protectUris: [dir.uri] });
+    return true;
+  } catch {
+    return false;
   }
 }
 

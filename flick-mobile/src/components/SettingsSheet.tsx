@@ -16,6 +16,7 @@ type Props = {
   deviceName: string | null;
   onRenameDevice: (name: string) => Promise<string | null>;
   usage: Usage | null;
+  protectUris?: string[]; // a file open right now survives Clear cache
 };
 
 const APPEARANCES: { value: AppearancePreference; label: string }[] = [
@@ -29,7 +30,7 @@ const THEMES: { value: ThemeName; label: string }[] = [
   { value: "classy", label: "Classy" },
 ];
 
-export function SettingsSheet({ visible, onClose, deviceName, onRenameDevice, usage }: Props) {
+export function SettingsSheet({ visible, onClose, deviceName, onRenameDevice, usage, protectUris = [] }: Props) {
   const { appearance, setAppearance, themeName, setThemeName } = useTheme();
   const styles = useThemedStyles(makeStyles);
 
@@ -112,7 +113,7 @@ export function SettingsSheet({ visible, onClose, deviceName, onRenameDevice, us
               accessibilityLabel={`Clear cache, ${formatBytes(cacheBytes)}`}
               disabled={cacheBytes === 0}
               onPress={() => {
-                clearCache();
+                clearCache(protectUris);
                 setCacheBytes(cacheSize());
               }}
               style={[styles.segment, styles.cacheButton, cacheBytes === 0 && styles.disabled]}

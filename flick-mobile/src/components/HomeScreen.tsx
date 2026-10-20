@@ -266,6 +266,7 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
         deviceName={device.name}
         onRenameDevice={device.rename}
         usage={usage.usage}
+        protectUris={viewerUri ? [viewerUri] : []}
       />
     </SafeAreaView>
   );

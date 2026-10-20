@@ -7,7 +7,7 @@ import { Platform } from "react-native";
 import { Directory, File, Paths } from "expo-file-system";
 import { FILES_BUCKET, MAX_FILE_BYTES, supabase } from "../lib/supabase";
 import { formatBytes, safeStorageName } from "../lib/format";
-import { deleteIfCached } from "../lib/cache";
+import { adoptUploadCopy, deleteIfCached } from "../lib/cache";
 import { limitFromError, type LimitKind } from "../lib/limits";
 import { MIME_BY_EXTENSION, resolveMimeType } from "../lib/mime";
 import type { PickedFile, UploadState } from "../lib/types";
@@ -60,17 +60,22 @@ export function useUpload(onUploaded?: () => void, deviceId?: string | null) {
         .upload(storagePath, bytes, { contentType: picked.mimeType, upsert: false });
       if (uploadError) throw uploadError;
 
-      const { error: insertError } = await supabase.from("files").insert({
+      const { data: inserted, error: insertError } = await supabase.from("files").insert({
         user_id: userId,
         name: picked.name,
         size: picked.size,
         mime_type: picked.mimeType,
         storage_path: storagePath,
         device_id: deviceIdRef.current, // the sender, for "from <device>"
-      });
+      }).select("id").single();
       if (insertError) {
         await supabase.storage.from(FILES_BUCKET).remove([storagePath]);
         throw insertError;
+      }
+      // Keep our copy as this file's cached copy (cache.ts rules still apply),
+      // so Preview/Share on this phone open it without downloading.
+      if (cached && inserted && adoptUploadCopy(inserted.id, cached, safeStorageName(picked.name))) {
+        cached = null;
       }
       return { ok: true as const, picked };
     } catch (error) {

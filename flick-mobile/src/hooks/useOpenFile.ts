@@ -1,11 +1,10 @@
 import { useCallback, useState } from "react";
 import { Platform } from "react-native";
-import * as Crypto from "expo-crypto";
-import { Directory, File, Paths } from "expo-file-system";
+import { Directory, File } from "expo-file-system";
 import { getContentUriAsync } from "expo-file-system/legacy";
 import * as IntentLauncher from "expo-intent-launcher";
 import * as Sharing from "expo-sharing";
-import { OPEN_DIR, pruneCache } from "../lib/cache";
+import { cachedCopy, fileCacheDir, pruneCache, touchCachedCopy } from "../lib/cache";
 import { FILE_LIFETIME_MS } from "../lib/format";
 import { resolveMimeType } from "../lib/mime";
 import { FILES_BUCKET, supabase } from "../lib/supabase";
@@ -25,7 +24,7 @@ export type ViewerState = {
   mimeType: string;
   kind: ViewerKind;
   text?: string; // HTML source, shown as plain text
-  folder: Directory; // deleted when the viewer closes
+  folder: Directory; // protected from Clear cache while the viewer is open
 };
 
 const OFFICE = /\.(docx?|xlsx?|pptx?)$/i;
@@ -42,8 +41,9 @@ function viewerKind(mimeType: string, name: string): ViewerKind | null {
 class ExpiredError extends Error {}
 class NoAppError extends Error {}
 
-// Download the file into our own cache (a fresh folder keeps the real name
-// without clashing), then hand it to the system:
+// Open the file's cached copy (downloading it only if there isn't one), then
+// hand it to the system. Copies stay cached; cache.ts removes them by its
+// rules (file gone, 24 hours unused, 150 MB cap, sign-out, Clear cache).
 // - Share: the share sheet on both platforms (expo-sharing).
 // - Preview: iOS shows Quick Look at the top of the share sheet; Android opens
 //   it with a VIEW intent ("Open with"), falling back to the share sheet when
@@ -56,24 +56,28 @@ export function useOpenFile() {
   const run = useCallback(async (file: FileRow, mode: OpenMode) => {
     setOpeningId(file.id);
     setError(null);
-    const folder = new Directory(Paths.cache, OPEN_DIR, file.id, Crypto.randomUUID());
+    const folder = fileCacheDir(file.id);
     const mimeType = resolveMimeType(file.mime_type, file.name);
-    let keepFolder = false; // the viewer owns the copy until it closes
+    let fresh: File | null = null; // a download in progress, removed if it fails
     try {
       if (Date.now() > new Date(file.created_at).getTime() + FILE_LIFETIME_MS) {
         throw new ExpiredError();
       }
 
-      const { data, error: linkError } = await supabase.storage
-        .from(FILES_BUCKET)
-        .createSignedUrl(file.storage_path, LINK_SECONDS);
-      if (linkError || !data?.signedUrl) {
-        throw /not.?found|404|object/i.test(linkError?.message ?? "") ? new ExpiredError() : linkError ?? new Error("No link");
+      let downloaded = cachedCopy(file.id);
+      if (!downloaded) {
+        const { data, error: linkError } = await supabase.storage
+          .from(FILES_BUCKET)
+          .createSignedUrl(file.storage_path, LINK_SECONDS);
+        if (linkError || !data?.signedUrl) {
+          throw /not.?found|404|object/i.test(linkError?.message ?? "") ? new ExpiredError() : linkError ?? new Error("No link");
+        }
+        folder.create({ intermediates: true, idempotent: true });
+        fresh = new File(folder, file.name.replace(/[/\\:]/g, "_") || "file");
+        downloaded = await File.downloadFileAsync(data.signedUrl, fresh);
+        fresh = null;
       }
-
-      folder.create({ intermediates: true, idempotent: true });
-      const destination = new File(folder, file.name.replace(/[/\\:]/g, "_") || "file");
-      const downloaded = await File.downloadFileAsync(data.signedUrl, destination);
+      touchCachedCopy(file.id);
       pruneCache({ protectUris: [folder.uri] }); // keep the cache under 150 MB
 
       setOpeningId(null); // the system UI is up; stop the "Downloading…" state
@@ -81,7 +85,6 @@ export function useOpenFile() {
       const kind = viewerKind(mimeType, file.name);
       if (Platform.OS === "ios" && mode === "preview" && kind) {
         const text = kind === "source" ? await downloaded.text() : undefined;
-        keepFolder = true;
         setViewer({ file, uri: downloaded.uri, mimeType, kind, text, folder });
         return;
       }
@@ -122,10 +125,8 @@ export function useOpenFile() {
       );
     } finally {
       setOpeningId(null);
-      // shareAsync resolves when the sheet closes and startActivityAsync when
-      // the other app returns, so the copy can go. (Android may still be
-      // reading it in rare cases; the cache is cleared by the OS anyway.)
-      if (!keepFolder) deleteFolder(folder);
+      // A half-finished download is useless; a complete copy stays cached.
+      if (fresh) deleteFile(fresh);
     }
   }, []);
 
@@ -140,10 +141,7 @@ export function useOpenFile() {
   }, [viewer]);
 
   const closeViewer = useCallback(() => {
-    setViewer((current) => {
-      if (current) deleteFolder(current.folder);
-      return null;
-    });
+    setViewer(null); // the copy stays cached for next time
   }, []);
 
   const viewerFailed = useCallback(
@@ -160,9 +158,9 @@ export function useOpenFile() {
   return { open, share, openingId, error, viewer, closeViewer, shareFromViewer, viewerFailed };
 }
 
-function deleteFolder(folder: Directory) {
+function deleteFile(file: File) {
   try {
-    if (folder.exists) folder.delete();
+    if (file.exists) file.delete();
   } catch {
     // the OS clears the cache eventually anyway
   }
