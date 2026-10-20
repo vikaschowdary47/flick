@@ -1,4 +1,6 @@
 import { ActivityIndicator, Pressable, StyleSheet, Text } from "react-native";
+import { useTheme, useThemedStyles } from "../design/ThemeProvider";
+import type { Palette } from "../design/theme";
 import { tokens } from "../design/tokens";
 
 type Props = {
@@ -7,11 +9,23 @@ type Props = {
   disabled?: boolean;
   busy?: boolean;
   size?: "regular" | "large";
+  variant?: "primary" | "secondary";
   accessibilityHint?: string;
 };
 
-export function PillButton({ label, onPress, disabled, busy, size = "regular", accessibilityHint }: Props) {
+export function PillButton({
+  label,
+  onPress,
+  disabled,
+  busy,
+  size = "regular",
+  variant = "primary",
+  accessibilityHint,
+}: Props) {
+  const { palette } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const inactive = disabled || busy;
+  const secondary = variant === "secondary";
   return (
     <Pressable
       accessibilityRole="button"
@@ -22,47 +36,65 @@ export function PillButton({ label, onPress, disabled, busy, size = "regular", a
       onPress={onPress}
       style={({ pressed }) => [
         styles.button,
+        secondary && styles.secondary,
         size === "large" && styles.large,
-        pressed ? styles.pressed : tokens.shadows.sticker,
+        pressed ? styles.pressed : styles.raised,
         inactive && styles.inactive,
       ]}
     >
       {busy ? (
-        <ActivityIndicator color={tokens.colors.textOnCoral} />
+        <ActivityIndicator color={secondary ? palette.text : palette.onAccent} />
       ) : (
-        <Text style={[styles.label, size === "large" && styles.largeLabel]}>{label}</Text>
+        <Text
+          style={[styles.label, secondary && styles.secondaryLabel, size === "large" && styles.largeLabel]}
+        >
+          {label}
+        </Text>
       )}
     </Pressable>
   );
 }
 
-const styles = StyleSheet.create({
-  button: {
-    minHeight: tokens.layout.inputHeight,
-    paddingHorizontal: tokens.spacing.xl,
-    borderRadius: tokens.radii.pill,
-    backgroundColor: tokens.colors.coral,
-    borderWidth: tokens.borderWidth.outline,
-    borderColor: tokens.colors.outline,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  large: {
-    minHeight: tokens.layout.flickButtonHeight,
-  },
-  pressed: {
-    ...tokens.shadows.stickerPressed,
-    transform: [{ translateY: tokens.shadows.sticker.shadowOffset.height - tokens.shadows.stickerPressed.shadowOffset.height }],
-  },
-  inactive: {
-    opacity: 0.6,
-  },
-  label: {
-    color: tokens.colors.textOnCoral,
-    fontFamily: tokens.fonts.extrabold,
-    fontSize: tokens.fontSizes.cardTitle,
-  },
-  largeLabel: {
-    fontSize: tokens.fontSizes.button,
-  },
-});
+const makeStyles = (c: Palette) =>
+  StyleSheet.create({
+    button: {
+      minHeight: tokens.layout.inputHeight,
+      paddingHorizontal: tokens.spacing.xl,
+      borderRadius: tokens.radii.pill,
+      backgroundColor: c.accent,
+      borderWidth: tokens.borderWidth.outline,
+      borderColor: c.outline,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    secondary: {
+      backgroundColor: c.card,
+    },
+    large: {
+      minHeight: tokens.layout.flickButtonHeight,
+    },
+    raised: {
+      ...tokens.shadows.sticker,
+      shadowColor: c.shadow,
+    },
+    pressed: {
+      ...tokens.shadows.stickerPressed,
+      shadowColor: c.shadow,
+      transform: [{ translateY: tokens.shadows.sticker.shadowOffset.height - tokens.shadows.stickerPressed.shadowOffset.height }],
+    },
+    inactive: {
+      opacity: 0.6,
+    },
+    label: {
+      color: c.onAccent,
+      fontFamily: tokens.fonts.extrabold,
+      fontSize: tokens.fontSizes.cardTitle,
+      textAlign: "center",
+    },
+    secondaryLabel: {
+      color: c.text,
+    },
+    largeLabel: {
+      fontSize: tokens.fontSizes.button,
+    },
+  });

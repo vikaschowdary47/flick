@@ -1,6 +1,8 @@
 import { useCallback, useMemo, useState } from "react";
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTheme, useThemedStyles } from "../design/ThemeProvider";
+import type { Palette } from "../design/theme";
 import { tokens } from "../design/tokens";
 import { useConnectionStatus } from "../hooks/useConnectionStatus";
 import { useNow } from "../hooks/useNow";
@@ -14,6 +16,7 @@ import { FileActions } from "./FileActions";
 import { FileCard } from "./FileCard";
 import { Header } from "./Header";
 import { PillButton } from "./PillButton";
+import { SettingsSheet } from "./SettingsSheet";
 import { UploadCard } from "./UploadCard";
 
 type Props = {
@@ -22,6 +25,8 @@ type Props = {
 };
 
 export function HomeScreen({ userId, onSignOut }: Props) {
+  const { palette } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const recent = useRecentFiles(userId);
   const connection = useConnectionStatus({
     realtimeStatus: recent.realtimeStatus,
@@ -33,6 +38,7 @@ export function HomeScreen({ userId, onSignOut }: Props) {
   const remover = useRemoveFile(recent.refresh);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -98,7 +104,7 @@ export function HomeScreen({ userId, onSignOut }: Props) {
         contentContainerStyle={styles.content}
         ItemSeparatorComponent={Separator}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={tokens.colors.navy} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.text} />
         }
         ListHeaderComponent={
           <View style={styles.top}>
@@ -142,111 +148,129 @@ export function HomeScreen({ userId, onSignOut }: Props) {
           busy={upload.kind === "uploading"}
           accessibilityHint="Pick a file to send to all your devices"
         />
-        <Pressable
-          accessibilityRole="button"
-          onPress={onSignOut}
-          style={styles.signOut}
-          hitSlop={tokens.spacing.sm}
-        >
-          <Text style={styles.signOutLabel}>Sign out</Text>
-        </Pressable>
+        <View style={styles.footerLinks}>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => setSettingsOpen(true)}
+            style={styles.signOut}
+            hitSlop={tokens.spacing.sm}
+          >
+            <Text style={styles.signOutLabel}>Settings</Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            onPress={onSignOut}
+            style={styles.signOut}
+            hitSlop={tokens.spacing.sm}
+          >
+            <Text style={styles.signOutLabel}>Sign out</Text>
+          </Pressable>
+        </View>
       </View>
+      <SettingsSheet visible={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </SafeAreaView>
   );
 }
 
 function Separator() {
+  const styles = useThemedStyles(makeStyles);
   return <View style={styles.separator} />;
 }
 
-const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: tokens.colors.background,
-  },
-  content: {
-    paddingHorizontal: tokens.layout.screenPadding,
-    paddingTop: tokens.spacing.sm,
-    paddingBottom: tokens.spacing.lg,
-  },
-  top: {
-    gap: tokens.spacing.lg,
-    marginBottom: tokens.spacing.md,
-  },
-  heading: {
-    color: tokens.colors.text,
-    fontFamily: tokens.fonts.extrabold,
-    fontSize: tokens.fontSizes.heading,
-  },
-  eyebrow: {
-    marginTop: tokens.spacing.sm,
-    color: tokens.colors.muted,
-    fontFamily: tokens.fonts.extrabold,
-    fontSize: tokens.fontSizes.eyebrow,
-    letterSpacing: tokens.letterSpacing.eyebrow,
-  },
-  separator: {
-    height: tokens.layout.cardGap,
-  },
-  tiltLeft: {
-    transform: [{ rotate: `${tokens.motion.cardTiltMinDeg / 2}deg` }],
-  },
-  tiltRight: {
-    transform: [{ rotate: `${tokens.motion.cardTiltMaxDeg / 2}deg` }],
-  },
-  selectedCard: {
-    transform: [{ rotate: "0deg" }, { translateY: -tokens.spacing.xs }],
-  },
-  undoBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: tokens.spacing.sm,
-    paddingLeft: tokens.spacing.lg,
-    paddingRight: tokens.spacing.xs,
-    marginBottom: tokens.spacing.sm,
-    borderRadius: tokens.radii.pill,
-    backgroundColor: tokens.colors.navy,
-  },
-  undoText: {
-    flex: 1,
-    color: tokens.colors.cream,
-    fontFamily: tokens.fonts.semibold,
-    fontSize: tokens.fontSizes.meta,
-  },
-  undoButton: {
-    minHeight: tokens.layout.minTouchTarget,
-    paddingHorizontal: tokens.spacing.md,
-    justifyContent: "center",
-  },
-  undoLabel: {
-    color: tokens.colors.yellow,
-    fontFamily: tokens.fonts.extrabold,
-    fontSize: tokens.fontSizes.body,
-  },
-  openError: {
-    color: tokens.colors.text,
-    fontFamily: tokens.fonts.semibold,
-    fontSize: tokens.fontSizes.meta,
-  },
-  empty: {
-    color: tokens.colors.muted,
-    fontFamily: tokens.fonts.semibold,
-    fontSize: tokens.fontSizes.body,
-  },
-  thumbZone: {
-    paddingHorizontal: tokens.layout.screenPadding,
-    paddingTop: tokens.spacing.sm,
-    paddingBottom: tokens.spacing.sm,
-    gap: tokens.spacing.xs,
-  },
-  signOut: {
-    minHeight: tokens.layout.minTouchTarget,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  signOutLabel: {
-    color: tokens.colors.muted,
-    fontFamily: tokens.fonts.semibold,
-    fontSize: tokens.fontSizes.meta,
-  },
-});
+const makeStyles = (c: Palette) =>
+  StyleSheet.create({
+    safe: {
+      flex: 1,
+      backgroundColor: c.background,
+    },
+    content: {
+      paddingHorizontal: tokens.layout.screenPadding,
+      paddingTop: tokens.spacing.sm,
+      paddingBottom: tokens.spacing.lg,
+    },
+    top: {
+      gap: tokens.spacing.lg,
+      marginBottom: tokens.spacing.md,
+    },
+    heading: {
+      color: c.text,
+      fontFamily: tokens.fonts.extrabold,
+      fontSize: tokens.fontSizes.heading,
+    },
+    eyebrow: {
+      marginTop: tokens.spacing.sm,
+      color: c.textMuted,
+      fontFamily: tokens.fonts.extrabold,
+      fontSize: tokens.fontSizes.eyebrow,
+      letterSpacing: tokens.letterSpacing.eyebrow,
+    },
+    separator: {
+      height: tokens.layout.cardGap,
+    },
+    tiltLeft: {
+      transform: [{ rotate: `${tokens.motion.cardTiltMinDeg / 2}deg` }],
+    },
+    tiltRight: {
+      transform: [{ rotate: `${tokens.motion.cardTiltMaxDeg / 2}deg` }],
+    },
+    selectedCard: {
+      transform: [{ rotate: "0deg" }, { translateY: -tokens.spacing.xs }],
+    },
+    undoBar: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing.sm,
+      paddingLeft: tokens.spacing.lg,
+      paddingRight: tokens.spacing.xs,
+      marginBottom: tokens.spacing.sm,
+      borderRadius: tokens.radii.pill,
+      backgroundColor: c.inverse,
+    },
+    undoText: {
+      flex: 1,
+      color: c.onInverse,
+      fontFamily: tokens.fonts.semibold,
+      fontSize: tokens.fontSizes.meta,
+    },
+    undoButton: {
+      minHeight: tokens.layout.minTouchTarget,
+      paddingHorizontal: tokens.spacing.md,
+      justifyContent: "center",
+    },
+    undoLabel: {
+      color: c.inverseAccent,
+      fontFamily: tokens.fonts.extrabold,
+      fontSize: tokens.fontSizes.body,
+    },
+    openError: {
+      color: c.text,
+      fontFamily: tokens.fonts.semibold,
+      fontSize: tokens.fontSizes.meta,
+    },
+    empty: {
+      color: c.textMuted,
+      fontFamily: tokens.fonts.semibold,
+      fontSize: tokens.fontSizes.body,
+    },
+    thumbZone: {
+      paddingHorizontal: tokens.layout.screenPadding,
+      paddingTop: tokens.spacing.sm,
+      paddingBottom: tokens.spacing.sm,
+      gap: tokens.spacing.xs,
+    },
+    footerLinks: {
+      flexDirection: "row",
+      justifyContent: "center",
+      gap: tokens.spacing.xl,
+    },
+    signOut: {
+      minHeight: tokens.layout.minTouchTarget,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    signOutLabel: {
+      color: c.textMuted,
+      fontFamily: tokens.fonts.semibold,
+      fontSize: tokens.fontSizes.meta,
+    },
+  });

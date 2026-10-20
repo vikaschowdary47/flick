@@ -1,4 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useThemedStyles } from "../design/ThemeProvider";
+import type { Palette } from "../design/theme";
 import { tokens } from "../design/tokens";
 import type { UploadState } from "../lib/types";
 import { FileCard } from "./FileCard";
@@ -6,6 +8,7 @@ import { FileCard } from "./FileCard";
 type Props = { state: UploadState; onDismiss: () => void };
 
 export function UploadCard({ state, onDismiss }: Props) {
+  const styles = useThemedStyles(makeStyles);
   if (state.kind === "idle") return null;
 
   if (state.kind === "error" && !state.file) {
@@ -39,31 +42,32 @@ export function UploadCard({ state, onDismiss }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  wrap: {
-    transform: [{ rotate: `${tokens.motion.cardTiltMinDeg}deg` }],
-  },
-  dismiss: {
-    alignSelf: "flex-end",
-    minHeight: tokens.layout.minTouchTarget,
-    justifyContent: "center",
-    paddingHorizontal: tokens.spacing.sm,
-  },
-  dismissText: {
-    color: tokens.colors.muted,
-    fontFamily: tokens.fonts.semibold,
-    fontSize: tokens.fontSizes.meta,
-  },
-  errorOnly: {
-    padding: tokens.spacing.md,
-    borderRadius: tokens.radii.card,
-    borderWidth: tokens.borderWidth.outline,
-    borderColor: tokens.colors.errorOutline,
-    backgroundColor: tokens.colors.white,
-  },
-  errorText: {
-    color: tokens.colors.text,
-    fontFamily: tokens.fonts.semibold,
-    fontSize: tokens.fontSizes.body,
-  },
-});
+const makeStyles = (c: Palette) =>
+  StyleSheet.create({
+    wrap: {
+      transform: [{ rotate: `${tokens.motion.cardTiltMinDeg}deg` }],
+    },
+    dismiss: {
+      alignSelf: "flex-end",
+      minHeight: tokens.layout.minTouchTarget,
+      justifyContent: "center",
+      paddingHorizontal: tokens.spacing.sm,
+    },
+    dismissText: {
+      color: c.textMuted,
+      fontFamily: tokens.fonts.semibold,
+      fontSize: tokens.fontSizes.meta,
+    },
+    errorOnly: {
+      padding: tokens.spacing.md,
+      borderRadius: tokens.radii.card,
+      borderWidth: tokens.borderWidth.outline,
+      borderColor: c.error,
+      backgroundColor: c.card,
+    },
+    errorText: {
+      color: c.text,
+      fontFamily: tokens.fonts.semibold,
+      fontSize: tokens.fontSizes.body,
+    },
+  });

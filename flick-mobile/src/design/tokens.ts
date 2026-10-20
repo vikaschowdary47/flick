@@ -1,32 +1,7 @@
 // Flick design tokens for React Native. Values come from DESIGN.md "Tokens".
 // RN uses unitless numbers (density-independent points), not "px" strings.
 
-const colors = {
-  cream: "#FFF8EE",
-  navy: "#1B2140",
-  muted: "#6B6F8A",
-  coral: "#F67381",
-  yellow: "#FFD66B",
-  mint: "#8EE3C8",
-  lilac: "#C9B8FF",
-  white: "#FFFFFF",
-  transparent: "transparent",
-
-  // Semantic aliases
-  background: "#FFF8EE",
-  text: "#1B2140",
-  textOnCoral: "#1B2140", // navy on coral, never white (contrast)
-  outline: "#1B2140",
-  errorOutline: "#F67381",
-  imageTile: "#FFD66B",
-  documentTile: "#C9B8FF",
-  archiveTile: "#8EE3C8",
-  fallbackTile: "#FFF8EE",
-  sendingCard: "#8EE3C8",
-  connectedPill: "#8EE3C8",
-  signedOutPill: "#FFF8EE",
-  offlinePill: "#FFD66B",
-} as const;
+// Colors live in theme.ts (per theme and light/dark).
 
 const radii = {
   window: 24,
@@ -60,17 +35,16 @@ const borderWidth = {
   outline: 2,
 } as const;
 
-// Flat sticker shadow: 0 4px 0 navy. iOS uses shadow*, Android uses elevation.
+// Flat sticker shadow: 0 4px 0. iOS uses shadow*, Android uses elevation.
+// The color comes from the palette (palette.shadow).
 const shadows = {
   sticker: {
-    shadowColor: colors.navy,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 1,
     shadowRadius: 0,
     elevation: 4,
   },
   stickerPressed: {
-    shadowColor: colors.navy,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 1,
     shadowRadius: 0,
@@ -103,6 +77,7 @@ const layout = {
   signInMark: 56,
   statusDot: 8,
   iconSize: 20,
+  menuWidth: 220,
 } as const;
 
 const spacing = {
@@ -115,7 +90,6 @@ const spacing = {
 } as const;
 
 export const tokens = {
-  colors,
   radii,
   fonts,
   fontSizes,

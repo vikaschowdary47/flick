@@ -1,9 +1,12 @@
 import { StyleSheet, Text, View } from "react-native";
+import { useThemedStyles } from "../design/ThemeProvider";
+import type { Palette } from "../design/theme";
 import { tokens } from "../design/tokens";
 
 type Props = { size?: number };
 
 export function LogoMark({ size = tokens.layout.logoMark }: Props) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <View
       accessibilityElementsHidden
@@ -15,17 +18,19 @@ export function LogoMark({ size = tokens.layout.logoMark }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  mark: {
-    backgroundColor: tokens.colors.coral,
-    borderWidth: tokens.borderWidth.outline,
-    borderColor: tokens.colors.outline,
-    alignItems: "center",
-    justifyContent: "center",
-    ...tokens.shadows.stickerPressed,
-  },
-  arrow: {
-    color: tokens.colors.textOnCoral,
-    fontFamily: tokens.fonts.extrabold,
-  },
-});
+const makeStyles = (c: Palette) =>
+  StyleSheet.create({
+    mark: {
+      backgroundColor: c.accent,
+      borderWidth: tokens.borderWidth.outline,
+      borderColor: c.outline,
+      alignItems: "center",
+      justifyContent: "center",
+      ...tokens.shadows.stickerPressed,
+      shadowColor: c.shadow,
+    },
+    arrow: {
+      color: c.onAccent,
+      fontFamily: tokens.fonts.extrabold,
+    },
+  });

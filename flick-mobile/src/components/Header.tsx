@@ -1,9 +1,12 @@
 import { StyleSheet, Text, View } from "react-native";
+import { useThemedStyles } from "../design/ThemeProvider";
+import type { Palette } from "../design/theme";
 import { tokens } from "../design/tokens";
 import { LogoMark } from "./LogoMark";
 import { StatusPill, type Status } from "./StatusPill";
 
 export function Header({ status }: { status: Status }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.row}>
       <View style={styles.brand}>
@@ -17,21 +20,22 @@ export function Header({ status }: { status: Status }) {
   );
 }
 
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    minHeight: tokens.layout.minTouchTarget,
-  },
-  brand: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: tokens.spacing.sm,
-  },
-  wordmark: {
-    color: tokens.colors.text,
-    fontFamily: tokens.fonts.extrabold,
-    fontSize: tokens.fontSizes.wordmark,
-  },
-});
+const makeStyles = (c: Palette) =>
+  StyleSheet.create({
+    row: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      minHeight: tokens.layout.minTouchTarget,
+    },
+    brand: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing.sm,
+    },
+    wordmark: {
+      color: c.text,
+      fontFamily: tokens.fonts.extrabold,
+      fontSize: tokens.fontSizes.wordmark,
+    },
+  });

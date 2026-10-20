@@ -8,6 +8,8 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTheme, useThemedStyles } from "../design/ThemeProvider";
+import type { Palette } from "../design/theme";
 import { tokens } from "../design/tokens";
 import { LogoMark } from "./LogoMark";
 import { PillButton } from "./PillButton";
@@ -17,6 +19,8 @@ type Props = {
 };
 
 export function SignInScreen({ onSignIn }: Props) {
+  const { palette } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -49,7 +53,7 @@ export function SignInScreen({ onSignIn }: Props) {
           <TextInput
             style={styles.input}
             placeholder="Email"
-            placeholderTextColor={tokens.colors.muted}
+            placeholderTextColor={palette.textMuted}
             autoCapitalize="none"
             autoComplete="email"
             keyboardType="email-address"
@@ -62,7 +66,7 @@ export function SignInScreen({ onSignIn }: Props) {
           <TextInput
             style={styles.input}
             placeholder="Password"
-            placeholderTextColor={tokens.colors.muted}
+            placeholderTextColor={palette.textMuted}
             secureTextEntry
             autoComplete="password"
             textContentType="password"
@@ -90,50 +94,51 @@ export function SignInScreen({ onSignIn }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: tokens.colors.background,
-  },
-  center: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: tokens.layout.screenPadding,
-    gap: tokens.spacing.md,
-  },
-  heading: {
-    marginTop: tokens.spacing.sm,
-    color: tokens.colors.text,
-    fontFamily: tokens.fonts.extrabold,
-    fontSize: tokens.fontSizes.heading,
-  },
-  sub: {
-    color: tokens.colors.muted,
-    fontFamily: tokens.fonts.semibold,
-    fontSize: tokens.fontSizes.body,
-    textAlign: "center",
-  },
-  form: {
-    alignSelf: "stretch",
-    marginTop: tokens.spacing.lg,
-    gap: tokens.spacing.md,
-  },
-  input: {
-    minHeight: tokens.layout.inputHeight,
-    paddingHorizontal: tokens.spacing.lg,
-    borderRadius: tokens.radii.pill,
-    borderWidth: tokens.borderWidth.outline,
-    borderColor: tokens.colors.outline,
-    backgroundColor: tokens.colors.white,
-    color: tokens.colors.text,
-    fontFamily: tokens.fonts.semibold,
-    fontSize: tokens.fontSizes.body,
-  },
-  error: {
-    color: tokens.colors.text,
-    fontFamily: tokens.fonts.semibold,
-    fontSize: tokens.fontSizes.meta,
-    textAlign: "center",
-  },
-});
+const makeStyles = (c: Palette) =>
+  StyleSheet.create({
+    safe: {
+      flex: 1,
+      backgroundColor: c.background,
+    },
+    center: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      padding: tokens.layout.screenPadding,
+      gap: tokens.spacing.md,
+    },
+    heading: {
+      marginTop: tokens.spacing.sm,
+      color: c.text,
+      fontFamily: tokens.fonts.extrabold,
+      fontSize: tokens.fontSizes.heading,
+    },
+    sub: {
+      color: c.textMuted,
+      fontFamily: tokens.fonts.semibold,
+      fontSize: tokens.fontSizes.body,
+      textAlign: "center",
+    },
+    form: {
+      alignSelf: "stretch",
+      marginTop: tokens.spacing.lg,
+      gap: tokens.spacing.md,
+    },
+    input: {
+      minHeight: tokens.layout.inputHeight,
+      paddingHorizontal: tokens.spacing.lg,
+      borderRadius: tokens.radii.pill,
+      borderWidth: tokens.borderWidth.outline,
+      borderColor: c.outline,
+      backgroundColor: c.card,
+      color: c.text,
+      fontFamily: tokens.fonts.semibold,
+      fontSize: tokens.fontSizes.body,
+    },
+    error: {
+      color: c.text,
+      fontFamily: tokens.fonts.semibold,
+      fontSize: tokens.fontSizes.meta,
+      textAlign: "center",
+    },
+  });
