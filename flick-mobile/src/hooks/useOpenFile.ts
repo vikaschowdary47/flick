@@ -15,6 +15,29 @@ const FLAG_GRANT_READ_URI_PERMISSION = 1; // Android Intent flag
 
 export type OpenMode = "preview" | "share";
 
+// What the in-app viewer (iPhone Preview) shows.
+export type ViewerKind = "image" | "document" | "source";
+
+export type ViewerState = {
+  file: FileRow;
+  uri: string; // our cached copy
+  mimeType: string;
+  kind: ViewerKind;
+  text?: string; // HTML source, shown as plain text
+  folder: Directory; // deleted when the viewer closes
+};
+
+const OFFICE = /\.(docx?|xlsx?|pptx?)$/i;
+
+// iPhone Preview: images zoom, PDFs/text/Office go in a WebView, HTML is shown
+// as source text only (never rendered). Anything else uses the share sheet.
+function viewerKind(mimeType: string, name: string): ViewerKind | null {
+  if (mimeType.startsWith("image/")) return "image";
+  if (mimeType === "text/html" || /\.html?$/i.test(name)) return "source";
+  if (mimeType === "application/pdf" || mimeType === "text/plain" || OFFICE.test(name)) return "document";
+  return null;
+}
+
 class ExpiredError extends Error {}
 class NoAppError extends Error {}
 
@@ -27,12 +50,14 @@ class NoAppError extends Error {}
 export function useOpenFile() {
   const [openingId, setOpeningId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [viewer, setViewer] = useState<ViewerState | null>(null);
 
   const run = useCallback(async (file: FileRow, mode: OpenMode) => {
     setOpeningId(file.id);
     setError(null);
     const folder = new Directory(Paths.cache, "flick-open", Crypto.randomUUID());
     const mimeType = resolveMimeType(file.mime_type, file.name);
+    let keepFolder = false; // the viewer owns the copy until it closes
     try {
       if (Date.now() > new Date(file.created_at).getTime() + FILE_LIFETIME_MS) {
         throw new ExpiredError();
@@ -50,6 +75,14 @@ export function useOpenFile() {
       const downloaded = await File.downloadFileAsync(data.signedUrl, destination);
 
       setOpeningId(null); // the system UI is up; stop the "Downloading…" state
+
+      const kind = viewerKind(mimeType, file.name);
+      if (Platform.OS === "ios" && mode === "preview" && kind) {
+        const text = kind === "source" ? await downloaded.text() : undefined;
+        keepFolder = true;
+        setViewer({ file, uri: downloaded.uri, mimeType, kind, text, folder });
+        return;
+      }
 
       if (Platform.OS === "android" && mode === "preview") {
         try {
@@ -90,16 +123,45 @@ export function useOpenFile() {
       // shareAsync resolves when the sheet closes and startActivityAsync when
       // the other app returns, so the copy can go. (Android may still be
       // reading it in rare cases; the cache is cleared by the OS anyway.)
-      try {
-        if (folder.exists) folder.delete();
-      } catch {
-        // ignore
-      }
+      if (!keepFolder) deleteFolder(folder);
     }
   }, []);
+
+  // Viewer: share the copy it already has, without downloading again.
+  const shareFromViewer = useCallback(async () => {
+    if (!viewer) return;
+    try {
+      await Sharing.shareAsync(viewer.uri, { mimeType: viewer.mimeType, dialogTitle: "Share file" });
+    } catch {
+      setError(`Couldn't share "${viewer.file.name}".`);
+    }
+  }, [viewer]);
+
+  const closeViewer = useCallback(() => {
+    setViewer((current) => {
+      if (current) deleteFolder(current.folder);
+      return null;
+    });
+  }, []);
+
+  const viewerFailed = useCallback(
+    (file: FileRow) => {
+      closeViewer();
+      setError(`Couldn't open "${file.name}".`);
+    },
+    [closeViewer],
+  );
 
   const open = useCallback((file: FileRow) => run(file, "preview"), [run]);
   const share = useCallback((file: FileRow) => run(file, "share"), [run]);
 
-  return { open, share, openingId, error };
+  return { open, share, openingId, error, viewer, closeViewer, shareFromViewer, viewerFailed };
+}
+
+function deleteFolder(folder: Directory) {
+  try {
+    if (folder.exists) folder.delete();
+  } catch {
+    // the OS clears the cache eventually anyway
+  }
 }

@@ -15,6 +15,7 @@ const radii = {
 const fonts = {
   semibold: "Nunito_600SemiBold",
   extrabold: "Nunito_800ExtraBold",
+  mono: "Menlo", // HTML source in the iPhone viewer (built into iOS)
 } as const;
 
 const fontSizes = {

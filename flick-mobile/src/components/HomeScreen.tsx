@@ -16,6 +16,7 @@ import { formatExpiry, formatSender } from "../lib/format";
 import type { FileRow } from "../lib/types";
 import { FileCard, PinBadge } from "./FileCard";
 import { FileMenu, type FileMenuItem } from "./FileMenu";
+import { FileViewer } from "./FileViewer";
 import { Header } from "./Header";
 import { LimitScreen } from "./LimitScreen";
 import { EyeIcon, PinIcon, ShareIcon, TrashIcon } from "./Icons";
@@ -225,6 +226,12 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
           clearLimit();
           pinner.clearLimit();
         }}
+      />
+      <FileViewer
+        viewer={opener.viewer}
+        onClose={opener.closeViewer}
+        onShare={() => void opener.shareFromViewer()}
+        onFailed={opener.viewerFailed}
       />
       <SourceSheet
         visible={sourceOpen}
