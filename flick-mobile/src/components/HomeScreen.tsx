@@ -6,6 +6,7 @@ import type { Palette } from "../design/theme";
 import { tokens } from "../design/tokens";
 import { useConnectionStatus } from "../hooks/useConnectionStatus";
 import { useDevice } from "../hooks/useDevice";
+import { useUsage } from "../hooks/useUsage";
 import { useNow } from "../hooks/useNow";
 import { useOpenFile } from "../hooks/useOpenFile";
 import { usePinFile } from "../hooks/usePinFile";
@@ -36,7 +37,7 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
   const { palette } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const recent = useRecentFiles(userId);
-  const device = useDevice(userId);
+  const device = useDevice(userId, onSignOut);
   const connection = useConnectionStatus({
     realtimeStatus: recent.realtimeStatus,
     onReconnect: recent.reconnect,
@@ -52,6 +53,10 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
   const [refreshing, setRefreshing] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [sourceOpen, setSourceOpen] = useState(false);
+
+  const activeLimit = uploadLimit ?? pinner.limitHit ?? (device.limitHit ? "devices" : null);
+  // Limits and usage come from the server; refresh when they're about to show.
+  const usage = useUsage(settingsOpen || activeLimit !== null);
 
   // Drop cached copies of files that expired or were deleted (on any device),
   // copies unused for 24 hours, and the oldest ones past 150 MB.
@@ -230,13 +235,18 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
         onClose={() => setMenu(null)}
       />
       <LimitScreen
-        limit={uploadLimit ?? pinner.limitHit}
+        limit={activeLimit}
+        usage={usage.usage}
         email={email}
+        devices={device.devices}
+        thisDeviceId={device.deviceId}
+        onRemoveDevice={device.removeDevice}
         // Back to their files, so they can delete or unpin old ones.
         onFreeUpSpace={() => listRef.current?.scrollToOffset({ offset: 0, animated: true })}
         onClose={() => {
           clearLimit();
           pinner.clearLimit();
+          device.clearLimit();
         }}
       />
       <FileViewer
@@ -255,6 +265,7 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
         onClose={() => setSettingsOpen(false)}
         deviceName={device.name}
         onRenameDevice={device.rename}
+        usage={usage.usage}
       />
     </SafeAreaView>
   );

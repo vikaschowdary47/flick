@@ -1,12 +1,25 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Crypto from "expo-crypto";
 import * as Device from "expo-device";
+import { limitFromError } from "../lib/limits";
 import { supabase } from "../lib/supabase";
 
 export const DEVICE_NAME_MAX = 30;
 
-const storageKey = (userId: string) => `flick.device.v1.${userId}`;
+// One random key per install, shared by every account on this phone. The
+// server reuses a device row when the same key signs in again.
+const INSTALL_KEY = "flick.install.v1";
+// Row id saved by older builds (before device keys); adopted once.
+const legacyKey = (userId: string) => `flick.device.v1.${userId}`;
+
+export type DeviceRow = {
+  id: string;
+  name: string;
+  platform: string;
+  last_seen_at: string;
+};
 
 // "Vikas's iPhone" where the system shares it, otherwise the model ("Pixel 8").
 function defaultName(): string {
@@ -15,68 +28,80 @@ function defaultName(): string {
   return (name || fallback).slice(0, DEVICE_NAME_MAX);
 }
 
-function platformName(): string {
-  return Platform.OS === "ios" || Platform.OS === "android" || Platform.OS === "web" ? Platform.OS : "other";
+async function installKey(): Promise<string> {
+  const stored = await AsyncStorage.getItem(INSTALL_KEY);
+  if (stored) return stored;
+  const key = Crypto.randomUUID();
+  await AsyncStorage.setItem(INSTALL_KEY, key);
+  return key;
 }
 
-// Registers this phone once per account (its id is kept on the device) and
-// keeps every device's name live, for "from <device>" on file cards.
-export function useDevice(userId: string) {
+// Registers this phone (server enforces max_devices), keeps every device's
+// name and last-active time live, and signs out if this device is removed
+// from another one.
+export function useDevice(userId: string, onRemoved: () => void) {
   const [deviceId, setDeviceId] = useState<string | null>(null);
-  const [names, setNames] = useState<Record<string, string>>({});
+  const [devices, setDevices] = useState<DeviceRow[]>([]);
+  const [limitHit, setLimitHit] = useState(false);
+  const deviceIdRef = useRef<string | null>(null);
+  const onRemovedRef = useRef(onRemoved);
+  onRemovedRef.current = onRemoved;
 
-  const loadNames = useCallback(async () => {
-    const { data, error } = await supabase.from("devices").select("id, name");
+  const loadDevices = useCallback(async () => {
+    const { data, error } = await supabase
+      .from("devices")
+      .select("id, name, platform, last_seen_at")
+      .order("last_seen_at", { ascending: false });
     if (error || !data) return;
-    setNames(Object.fromEntries(data.map((row) => [row.id as string, row.name as string])));
+    setDevices(data as DeviceRow[]);
+    // Our row is gone: removed from another device (its session was ended).
+    const mine = deviceIdRef.current;
+    if (mine && !data.some((row) => row.id === mine)) onRemovedRef.current();
   }, []);
 
-  useEffect(() => {
-    let active = true;
-
-    async function register() {
-      try {
-        const stored = await AsyncStorage.getItem(storageKey(userId));
-        if (stored) {
-          // Still there? (It could have been removed on the server.)
-          const { data } = await supabase.from("devices").select("id").eq("id", stored).maybeSingle();
-          if (data) {
-            if (active) setDeviceId(stored);
-            return;
-          }
-        }
-        const { data, error } = await supabase
-          .from("devices")
-          .insert({ user_id: userId, name: defaultName(), platform: platformName() })
-          .select("id")
-          .single();
-        if (error || !data) throw error ?? new Error("no device row");
-        await AsyncStorage.setItem(storageKey(userId), data.id);
-        if (active) setDeviceId(data.id);
-        void loadNames();
-      } catch (err) {
-        // Uploads still work without a device id; the card just won't say who sent it.
-        console.warn("Flick couldn't register this device", err);
+  const register = useCallback(async () => {
+    try {
+      const key = await installKey();
+      const legacyId = await AsyncStorage.getItem(legacyKey(userId));
+      const { data, error } = await supabase.rpc("register_device", {
+        p_device_key: key,
+        p_name: defaultName(),
+        p_platform: Platform.OS,
+        p_legacy_id: legacyId,
+      });
+      if (error) {
+        if (limitFromError(error) === "devices") setLimitHit(true);
+        else console.warn("Flick couldn't register this device", error);
+        return;
       }
+      if (legacyId) await AsyncStorage.removeItem(legacyKey(userId));
+      deviceIdRef.current = data as string;
+      setDeviceId(data as string);
+      setLimitHit(false);
+      void loadDevices();
+    } catch (err) {
+      // Uploads still work without a device id; cards just won't say who sent it.
+      console.warn("Flick couldn't register this device", err);
     }
+  }, [userId, loadDevices]);
 
+  useEffect(() => {
     void register();
-    void loadNames();
-
+    void loadDevices();
     const channel = supabase
       .channel(`devices-mobile-${userId}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "devices", filter: `user_id=eq.${userId}` },
-        () => void loadNames(),
+        () => void loadDevices(),
       )
+      // DELETE events can't be filtered by user_id.
+      .on("postgres_changes", { event: "DELETE", schema: "public", table: "devices" }, () => void loadDevices())
       .subscribe();
-
     return () => {
-      active = false;
       supabase.removeChannel(channel);
     };
-  }, [userId, loadNames]);
+  }, [userId, register, loadDevices]);
 
   // Returns an error message, or null when saved.
   const rename = useCallback(
@@ -86,13 +111,27 @@ export function useDevice(userId: string) {
       if (!name) return "Give this device a name.";
       const { error } = await supabase.from("devices").update({ name }).eq("id", deviceId);
       if (error) return /network|fetch/i.test(error.message) ? "Couldn't save. Check your connection." : "Couldn't save that name.";
-      setNames((current) => ({ ...current, [deviceId]: name }));
+      setDevices((current) => current.map((row) => (row.id === deviceId ? { ...row, name } : row)));
       return null;
     },
     [deviceId],
   );
 
+  // Removes another device (and ends its session), then retries registering
+  // this one if it was blocked by the device limit.
+  const removeDevice = useCallback(
+    async (id: string): Promise<string | null> => {
+      const { error } = await supabase.rpc("remove_device", { p_device_id: id });
+      if (error) return "Couldn't remove that device. Try again.";
+      setDevices((current) => current.filter((row) => row.id !== id));
+      if (!deviceIdRef.current) await register();
+      return null;
+    },
+    [register],
+  );
+
+  const names = Object.fromEntries(devices.map((row) => [row.id, row.name]));
   const name = deviceId ? names[deviceId] ?? null : null;
 
-  return { deviceId, name, names, rename };
+  return { deviceId, name, names, devices, rename, removeDevice, limitHit, clearLimit: () => setLimitHit(false) };
 }

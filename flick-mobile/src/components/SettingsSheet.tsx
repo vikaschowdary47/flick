@@ -7,6 +7,7 @@ import { tokens } from "../design/tokens";
 import { DEVICE_NAME_MAX } from "../hooks/useDevice";
 import { cacheSize, clearCache } from "../lib/cache";
 import { formatBytes } from "../lib/format";
+import type { Usage } from "../lib/limits";
 import { PillButton } from "./PillButton";
 
 type Props = {
@@ -14,6 +15,7 @@ type Props = {
   onClose: () => void;
   deviceName: string | null;
   onRenameDevice: (name: string) => Promise<string | null>;
+  usage: Usage | null;
 };
 
 const APPEARANCES: { value: AppearancePreference; label: string }[] = [
@@ -27,7 +29,7 @@ const THEMES: { value: ThemeName; label: string }[] = [
   { value: "classy", label: "Classy" },
 ];
 
-export function SettingsSheet({ visible, onClose, deviceName, onRenameDevice }: Props) {
+export function SettingsSheet({ visible, onClose, deviceName, onRenameDevice, usage }: Props) {
   const { appearance, setAppearance, themeName, setThemeName } = useTheme();
   const styles = useThemedStyles(makeStyles);
 
@@ -95,6 +97,12 @@ export function SettingsSheet({ visible, onClose, deviceName, onRenameDevice }: 
         </View>
         <View style={styles.group}>
           <Text style={styles.eyebrow}>STORAGE</Text>
+          {usage && (
+            <Text style={styles.cacheText}>
+              {usage.pinsUsed} of {usage.maxPins} pins, {Math.round(usage.storageUsedBytes / (1024 * 1024))} of{" "}
+              {usage.maxStorageMb} MB, {usage.devicesUsed} of {usage.maxDevices} devices
+            </Text>
+          )}
           <View style={styles.cacheRow}>
             <Text style={styles.cacheText}>
               Cached files: {formatBytes(cacheBytes)}

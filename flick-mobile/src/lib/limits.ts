@@ -1,17 +1,27 @@
-// Free-plan limits. The real enforcement is the files_enforce_limits trigger
-// in supabase/migrations; these numbers are only for messages in the app.
-export const FREE_MAX_PINS = 3;
-export const FREE_MAX_BYTES = 524288000; // 500 MB
+// Plan limits live in the plan_limits table and are enforced in the database
+// (supabase/migrations/20261022120000_plan_limits.sql). The apps only read
+// them (get_usage) to word messages, so they can change without an update.
 
-export type LimitKind = "pins" | "storage";
+export type LimitKind = "pins" | "storage" | "devices";
 
-// The trigger's errors start with FLICK_LIMIT_PINS / FLICK_LIMIT_STORAGE.
+export type Usage = {
+  plan: string;
+  pinsUsed: number;
+  maxPins: number;
+  storageUsedBytes: number;
+  maxStorageMb: number;
+  devicesUsed: number;
+  maxDevices: number;
+};
+
+// The server raises pin_limit / storage_limit / device_limit.
 export function limitFromError(error: unknown): LimitKind | null {
   const message =
     typeof error === "object" && error !== null && "message" in error
       ? String((error as { message: unknown }).message)
       : String(error);
-  if (message.includes("FLICK_LIMIT_PINS")) return "pins";
-  if (message.includes("FLICK_LIMIT_STORAGE")) return "storage";
+  if (/\bpin_limit\b/.test(message)) return "pins";
+  if (/\bstorage_limit\b/.test(message)) return "storage";
+  if (/\bdevice_limit\b/.test(message)) return "devices";
   return null;
 }
