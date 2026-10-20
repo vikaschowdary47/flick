@@ -4,6 +4,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme, useThemedStyles } from "../design/ThemeProvider";
 import type { Palette } from "../design/theme";
 import { tokens } from "../design/tokens";
+import { useClips } from "../hooks/useClips";
+import { useClipboardSetting } from "../hooks/useClipboardSetting";
 import { useConnectionStatus } from "../hooks/useConnectionStatus";
 import { useDevice } from "../hooks/useDevice";
 import { useUsage } from "../hooks/useUsage";
@@ -17,6 +19,7 @@ import { pruneCache } from "../lib/cache";
 import { formatExpiry, formatSender } from "../lib/format";
 import type { FileRow } from "../lib/types";
 import { FileCard, PinBadge } from "./FileCard";
+import { ClipsList } from "./ClipsList";
 import { FileMenu, type FileMenuItem } from "./FileMenu";
 import { FileViewer } from "./FileViewer";
 import { Header } from "./Header";
@@ -25,6 +28,7 @@ import { EyeIcon, PinIcon, ShareIcon, TrashIcon } from "./Icons";
 import { PillButton } from "./PillButton";
 import { SettingsSheet } from "./SettingsSheet";
 import { SourceSheet } from "./SourceSheet";
+import { Tabs, type HomeTab } from "./Tabs";
 import { UploadCard } from "./UploadCard";
 
 type Props = {
@@ -53,6 +57,18 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
   const [refreshing, setRefreshing] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [sourceOpen, setSourceOpen] = useState(false);
+  // Clips: hidden, not fetched and not subscribed unless the developer flag
+  // and this device's Settings → Clipboard sharing are both on.
+  const clipboardSetting = useClipboardSetting();
+  const clipsOn = clipboardSetting.clipsActive;
+  const clips = useClips(userId, device.deviceId, clipsOn);
+  const [tab, setTab] = useState<HomeTab>("files");
+  const activeTab: HomeTab = clipsOn ? tab : "files";
+  const changeTab = (next: HomeTab) => {
+    setTab(next);
+    if (next === "clips") clips.clearNew();
+  };
+  const tabs = clipsOn ? <Tabs tab={activeTab} onChange={changeTab} clipsDot={clips.hasNew} /> : null;
 
   const activeLimit = uploadLimit ?? pinner.limitHit ?? (device.limitHit ? "devices" : null);
   // Limits and usage come from the server; refresh when they're about to show.
@@ -156,6 +172,27 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
 
   return (
     <SafeAreaView style={styles.safe} edges={["top", "left", "right", "bottom"]}>
+      {activeTab === "clips" ? (
+        <ClipsList
+          header={
+            <>
+              <Header status={connection.status} />
+              <Text accessibilityRole="header" style={styles.heading}>
+                Flick it to all your devices
+              </Text>
+              {tabs}
+            </>
+          }
+          clips={clips.clips}
+          error={clips.error}
+          now={now}
+          deviceId={device.deviceId}
+          deviceNames={device.names}
+          onSend={clips.send}
+          onDelete={(id) => void clips.remove(id)}
+          onRefresh={clips.refresh}
+        />
+      ) : (
       <FlatList
         ref={listRef}
         data={visibleFiles}
@@ -173,6 +210,7 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
             <Text accessibilityRole="header" style={styles.heading}>
               Flick it to all your devices
             </Text>
+            {tabs}
             <UploadCard state={upload} onDismiss={reset} />
             <Text accessibilityRole="header" style={styles.eyebrow}>
               RECENTLY SENT
@@ -190,6 +228,7 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
           </Text>
         }
       />
+      )}
 
       <View style={styles.thumbZone}>
         {remover.pending && (
@@ -267,6 +306,8 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
         onRenameDevice={device.rename}
         usage={usage.usage}
         protectUris={viewerUri ? [viewerUri] : []}
+        clipboardSharing={clipboardSetting.sharingOn}
+        onClipboardSharingChange={clipboardSetting.setSharing}
       />
     </SafeAreaView>
   );
