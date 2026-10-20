@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ChangeEvent, type DragEvent } from "react";
 import type { Session } from "@supabase/supabase-js";
 import type { FileCard } from "../../../shared/files";
+import { limitFromError, type LimitKind } from "../limits";
 import { supabase } from "../supabase";
 import { CloudFile, CloudFileRow, compareFiles, isCloudFile, MAX_FILE_SIZE } from "../types";
 
@@ -15,6 +16,7 @@ export function useFiles(session: Session | null, deviceId: string | null = null
   const [files, setFiles] = useState<CloudFile[]>([]);
   const [isLoadingFiles, setIsLoadingFiles] = useState(false);
   const [uploadError, setUploadError] = useState("");
+  const [limitHit, setLimitHit] = useState<LimitKind | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isDraggingFiles, setIsDraggingFiles] = useState(false);
   const [arrivalPulse, setArrivalPulse] = useState(0);
@@ -502,11 +504,9 @@ export function useFiles(session: Session | null, deviceId: string | null = null
               : typeof error === "object" && error !== null && "message" in error
                 ? String(error.message)
                 : "Upload failed.";
-          // Free-plan limit hit (enforced by the database trigger).
-          if (message.includes("FLICK_LIMIT_STORAGE")) {
-            failures.push(
-              "Storage full (500 MB). Remove a few old files to make room.",
-            );
+          // Plan limit hit (enforced by the database): show the limit screen.
+          if (limitFromError(error) === "storage") {
+            setLimitHit("storage");
             break;
           }
           failures.push(`${file.name}: ${message}`);
@@ -723,11 +723,11 @@ export function useFiles(session: Session | null, deviceId: string | null = null
       .maybeSingle();
     if (error || !data) {
       apply(Boolean(file.pinned), file.pinned_at ?? null);
-      setUploadError(
-        error?.message.includes("FLICK_LIMIT_PINS")
-          ? "You've used 3 of 3 pins. Unpin a file to pin another."
-          : `Could not ${pinned ? "pin" : "unpin"} "${file.name}".`,
-      );
+      if (limitFromError(error) === "pins") {
+        setLimitHit("pins");
+      } else {
+        setUploadError(`Could not ${pinned ? "pin" : "unpin"} "${file.name}".`);
+      }
       return;
     }
     apply(Boolean(data.pinned), data.pinned_at ?? null);
@@ -774,5 +774,7 @@ export function useFiles(session: Session | null, deviceId: string | null = null
     togglePin,
     undoRemove,
     uploadError,
+    limitHit,
+    clearLimit: () => setLimitHit(null),
   };
 }

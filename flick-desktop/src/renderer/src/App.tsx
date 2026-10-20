@@ -1,14 +1,19 @@
 import SignIn from "./components/SignIn";
+import LimitScreen from "./components/LimitScreen";
 import Widget from "./components/Widget";
 import { useDevice } from "./hooks/useDevice";
 import { useFiles } from "./hooks/useFiles";
+import { useUsage } from "./hooks/useUsage";
 import { useSession } from "./hooks/useSession";
 import { supabase } from "./supabase";
 
 export default function App() {
   const auth = useSession();
-  const device = useDevice(auth.session);
+  const device = useDevice(auth.session, () => void auth.handleSignOut());
   const fileState = useFiles(auth.session, device.deviceId);
+  const activeLimit = fileState.limitHit ?? (device.limitHit ? "devices" : null);
+  // Limits and usage come from the server; refresh when they're about to show.
+  const usage = useUsage(auth.isAccountMenuOpen || activeLimit !== null);
 
   if (!auth.session) {
     return (
@@ -42,6 +47,7 @@ export default function App() {
   }
 
   return (
+    <>
     <Widget
       accountMenuRef={auth.accountMenuRef}
       authReady={auth.authReady}
@@ -75,6 +81,20 @@ export default function App() {
       showConfetti={fileState.showConfetti}
       arrivalPulse={fileState.arrivalPulse}
       uploadError={fileState.uploadError}
+      usage={usage.usage}
     />
+    <LimitScreen
+      limit={activeLimit}
+      usage={usage.usage}
+      email={auth.session.user.email ?? null}
+      devices={device.devices}
+      thisDeviceId={device.deviceId}
+      onRemoveDevice={device.removeDevice}
+      onClose={() => {
+        fileState.clearLimit();
+        device.clearLimit();
+      }}
+    />
+    </>
   );
 }

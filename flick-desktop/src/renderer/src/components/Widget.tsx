@@ -1,3 +1,4 @@
+import type { Usage } from "../limits";
 import { useReducedMotion } from "framer-motion";
 import type { ChangeEvent, MouseEvent, RefObject } from "react";
 import type { Session } from "@supabase/supabase-js";
@@ -27,6 +28,7 @@ interface WidgetProps {
   deviceName: string | null;
   deviceNames: Record<string, string>;
   onRenameDevice: (name: string) => Promise<string | null>;
+  usage: Usage | null;
   onOutsideClick: (event: MouseEvent<HTMLElement>) => void;
   onPreviewFile: (file: CloudFile) => void;
   onStartFileDrag: (file: CloudFile) => void;
@@ -62,6 +64,7 @@ export default function Widget({
   deviceName,
   deviceNames,
   onRenameDevice,
+  usage,
   onOutsideClick,
   onPreviewFile,
   onStartFileDrag,
@@ -106,6 +109,7 @@ export default function Widget({
         onSignOut={handleSignOut}
         deviceName={deviceName}
         onRenameDevice={onRenameDevice}
+        usage={usage}
         setIsAccountMenuOpen={setIsAccountMenuOpen}
         session={session}
         arrivalPulse={arrivalPulse}

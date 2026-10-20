@@ -1,6 +1,7 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useState, type RefObject } from "react";
 import { DEVICE_NAME_MAX } from "../hooks/useDevice";
+import type { Usage } from "../limits";
 import type { Session } from "@supabase/supabase-js";
 import { designTokens } from "../../../design/tokens";
 
@@ -15,6 +16,7 @@ interface HeaderProps {
   arrivalPulse: number;
   deviceName?: string | null;
   onRenameDevice?: (name: string) => Promise<string | null>;
+  usage?: Usage | null;
 }
 
 export default function Header({
@@ -28,6 +30,7 @@ export default function Header({
   arrivalPulse,
   deviceName = null,
   onRenameDevice,
+  usage = null,
 }: HeaderProps) {
   const prefersReducedMotion = useReducedMotion();
   const [draftName, setDraftName] = useState(deviceName ?? "");
@@ -112,6 +115,14 @@ export default function Header({
                   <span className="account-email" title={session.user.email}>
                     {session.user.email}
                   </span>
+                  {usage && (
+                    <span className="account-usage">
+                      {usage.pinsUsed} of {usage.maxPins} pins,{" "}
+                      {Math.round(usage.storageUsedBytes / (1024 * 1024))} of{" "}
+                      {usage.maxStorageMb} MB, {usage.devicesUsed} of{" "}
+                      {usage.maxDevices} devices
+                    </span>
+                  )}
                   {onRenameDevice && (
                     <form
                       className="device-name-form"
