@@ -280,8 +280,18 @@ function CompactFiles({ files, now, senderOf, ...actions }: CompactFilesProps) {
   );
 }
 
-// Menu bar popover: the newest items (pinned first, as everywhere), images in
-// one small grid, then rows. "Open Flick" shows everything in the main window.
+const POPOVER_GRID = 4; // one row of image tiles in the popover
+
+// What the menu bar popover shows: the newest `limit` items, with at most
+// one pinned file (pins sort first, so they'd otherwise fill it).
+export function popoverSelection(files: CloudFile[], limit: number): { shown: CloudFile[]; hidden: number } {
+  const pinned = files.filter((file) => file.pinned).slice(0, 1);
+  const shown = [...pinned, ...files.filter((file) => !file.pinned)].slice(0, limit);
+  return { shown, hidden: files.length - shown.length };
+}
+
+// Menu bar popover: images as a single row of 4 (the last tile becomes "+N"
+// when there are more), then rows. "Open Flick" sits in the fixed footer.
 function RecentFiles({
   files,
   limit,
@@ -289,25 +299,33 @@ function RecentFiles({
   senderOf,
   ...actions
 }: CompactFilesProps & { limit: number }) {
-  const shown = files.slice(0, limit);
+  const { shown } = popoverSelection(files, limit);
   const images = shown.filter((file) => getFileVisualType(file) === "image");
   const others = shown.filter((file) => getFileVisualType(file) !== "image");
-  const hidden = files.length - shown.length;
+  const overflow = images.length > POPOVER_GRID;
+  const tiles = overflow ? images.slice(0, POPOVER_GRID - 1) : images;
   return (
     <div className="compact-list">
       {images.length > 0 && (
         <div className="compact-grid compact-grid-popover">
-          {images.map((file) => (
+          {tiles.map((file) => (
             <CompactImageTile key={file.id} file={file} now={now} sender={senderOf(file)} {...actions} />
           ))}
+          {overflow && (
+            <button
+              type="button"
+              className="compact-tile-more-images"
+              aria-label={`${images.length - tiles.length} more images. Open Flick`}
+              onClick={() => window.flick.openMainWindow()}
+            >
+              +{images.length - tiles.length}
+            </button>
+          )}
         </div>
       )}
       {others.map((file) => (
         <CompactFileRow key={file.id} file={file} now={now} sender={senderOf(file)} {...actions} />
       ))}
-      <button type="button" className="compact-more-chip" onClick={() => window.flick.openMainWindow()}>
-        {hidden > 0 ? `+${hidden} more · Open Flick` : "Open Flick"}
-      </button>
     </div>
   );
 }

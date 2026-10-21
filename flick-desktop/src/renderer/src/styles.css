@@ -1889,9 +1889,74 @@ input:focus-visible {
   font-size: 13px;
 }
 
-/* The popover has no room for the drop hint; drag-and-drop still works. */
-.widget-popover .footer {
+/* Menu bar popover: a short dropdown sized to its content (max 440px).
+   36px header, 8px padding, a fixed 36px footer; the list scrolls between. */
+.widget-popover .topbar {
+  min-height: 36px;
+  flex: 0 0 36px;
+  padding: 0 8px;
+}
+
+.widget-popover .brand-mark,
+.widget-popover .account-button {
+  width: 26px;
+  height: 26px;
+}
+
+.widget-popover .brand-name {
+  font-size: 18px;
+}
+
+.widget-popover .content {
+  padding: 0 8px 8px;
+}
+
+/* Short when empty: no illustration, just the message and button. */
+.widget-popover .empty-illustration,
+.widget-popover .empty-drop-hint {
   display: none;
+}
+
+.widget-popover .empty-files {
+  gap: 4px;
+  padding: 8px 0;
+}
+
+.popover-footer {
+  display: flex;
+  min-height: 36px;
+  flex: 0 0 36px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  border-top: 1px solid color-mix(in srgb, var(--flick-navy) 15%, transparent);
+}
+
+.popover-open {
+  min-height: 26px;
+  padding: 0 14px;
+  border: 1.5px solid var(--flick-navy);
+  border-radius: 999px;
+  background: var(--flick-yellow);
+  box-shadow: 0 2px 0 var(--flick-navy);
+  color: var(--flick-navy);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: var(--flick-font-weight-extrabold);
+}
+
+.compact-tile-more-images {
+  aspect-ratio: 1;
+  border: 1.5px solid var(--flick-navy);
+  border-radius: var(--flick-radius-card);
+  background: var(--flick-cream);
+  box-shadow: 0 2px 0 var(--flick-navy);
+  color: var(--flick-navy);
+  cursor: pointer;
+  font: inherit;
+  font-size: 16px;
+  font-weight: var(--flick-font-weight-extrabold);
 }
 
 .density-setting {

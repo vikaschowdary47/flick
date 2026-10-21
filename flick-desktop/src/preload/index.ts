@@ -88,6 +88,7 @@ contextBridge.exposeInMainWorld('flick', {
   },
   openMainWindow: () => ipcRenderer.send('window:open-main'),
   hideWindow: () => ipcRenderer.send('window:hide'),
+  reportPopoverHeight: (height: number) => ipcRenderer.send('popover:content-height', height),
   setClipsActive: (active: boolean): Promise<void> =>
     ipcRenderer.invoke('clips:set-active', active),
   readClipboard: (): Promise<string> => ipcRenderer.invoke('clipboard:read'),

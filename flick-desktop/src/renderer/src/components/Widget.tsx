@@ -2,11 +2,11 @@ import type { Usage } from "../limits";
 import type { Density } from "../density";
 import { useWindowMode } from "../hooks/useWindowMode";
 import { useReducedMotion } from "framer-motion";
-import { useState, type ChangeEvent, type MouseEvent, type ReactNode, type RefObject } from "react";
+import { useLayoutEffect, useRef, useState, type ChangeEvent, type MouseEvent, type ReactNode, type RefObject } from "react";
 import type { Session } from "@supabase/supabase-js";
 import type { CloudFile } from "../types";
 import type { PendingRemoval } from "../hooks/useFiles";
-import FileList from "./FileList";
+import FileList, { popoverSelection } from "./FileList";
 import Header from "./Header";
 
 interface WidgetProps {
@@ -53,8 +53,8 @@ interface WidgetProps {
   onClipboardSharingChange: (on: boolean) => void;
 }
 
-// The popover shows this many recent items (8 rows fit in the 580px popover).
-const POPOVER_ITEMS = 8;
+// The menu bar popover shows this many of the newest items.
+const POPOVER_ITEMS = 6;
 
 export default function Widget({
   accountMenuRef,
@@ -105,9 +105,48 @@ export default function Widget({
   // The popover and floating panel are always compact; the main window
   // follows the Comfy/Compact setting.
   const effectiveDensity: Density = windowMode === "main" ? density : "compact";
+  const isPopover = windowMode === "popover";
+  const popoverHidden = isPopover ? popoverSelection(files, POPOVER_ITEMS).hidden : 0;
+
+  // Popover: report the natural height (header + all content + footer) so
+  // the main process can size the window to it; the list scrolls past the cap.
+  const widgetRef = useRef<HTMLElement>(null);
+  useLayoutEffect(() => {
+    const widget = widgetRef.current;
+    if (!isPopover || !widget) {
+      return;
+    }
+    let frame = 0;
+    const measure = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const content = widget.querySelector<HTMLElement>(".content");
+        if (!content) {
+          return;
+        }
+        const chrome = widget.offsetHeight - content.clientHeight; // header, footer, borders
+        window.flick.reportPopoverHeight(chrome + content.scrollHeight);
+      });
+    };
+    const resize = new ResizeObserver(measure);
+    const observeAll = () => {
+      resize.disconnect();
+      widget.querySelectorAll(".content > *, .content .compact-list").forEach((node) => resize.observe(node));
+      measure();
+    };
+    const mutations = new MutationObserver(observeAll);
+    mutations.observe(widget, { childList: true, subtree: true });
+    observeAll();
+    return () => {
+      cancelAnimationFrame(frame);
+      resize.disconnect();
+      mutations.disconnect();
+    };
+  }, [isPopover]);
 
   return (
     <main
+      ref={widgetRef}
       className={`widget${isDraggingFiles ? " drag-active" : ""}${effectiveDensity === "compact" ? " widget-compact" : ""}${windowMode === "popover" ? " widget-popover" : ""}`}
       onClickCapture={onOutsideClick}
       onDragEnter={handleDragEnter}
@@ -197,12 +236,21 @@ export default function Widget({
         />
         )}
       </section>
-      <footer className="footer">
-        <span className="helper-icon" aria-hidden="true">
-          ↓
-        </span>
-        <span>Drop files here, or flick something over!</span>
-      </footer>
+      {isPopover ? (
+        // Always visible: the list scrolls above it.
+        <footer className="popover-footer">
+          <button type="button" className="popover-open" onClick={() => window.flick.openMainWindow()}>
+            {popoverHidden > 0 ? `Open Flick · +${popoverHidden} more` : "Open Flick"}
+          </button>
+        </footer>
+      ) : (
+        <footer className="footer">
+          <span className="helper-icon" aria-hidden="true">
+            ↓
+          </span>
+          <span>Drop files here, or flick something over!</span>
+        </footer>
+      )}
     </main>
   );
 }

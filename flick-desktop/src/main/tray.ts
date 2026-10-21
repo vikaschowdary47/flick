@@ -132,13 +132,32 @@ function trayImage(dot: boolean): NativeImage {
 // - main:    resizable window from "Open Flick", remembers its size
 export type WindowMode = "popover" | "panel" | "main";
 
-// 44px header + tabs + heading + 8 rows (48px + 6px gap) + "Open Flick" ≈ 580px.
-const POPOVER_SIZE = { width: 360, height: 600 };
+// The popover sizes itself to its content (the page reports its height),
+// between these bounds: a quick dropdown, not a window.
+const POPOVER_WIDTH = 360;
+const POPOVER_MIN_HEIGHT = 200;
+const POPOVER_MAX_HEIGHT = 440;
+const POPOVER_MAX_SHARE = 0.45; // of the screen's work area height
+let popoverContentHeight = POPOVER_MIN_HEIGHT;
 const PANEL_SIZE = { width: 320, height: 460 };
 const MAIN_SIZE = { width: 480, height: 640 };
 const MAIN_MIN = { width: 360, height: 420 };
 
 let mode: WindowMode = "popover";
+
+function popoverHeight(window: BrowserWindow): number {
+  const area = screen.getDisplayMatching(window.getBounds()).workArea;
+  const max = Math.min(POPOVER_MAX_HEIGHT, Math.floor(area.height * POPOVER_MAX_SHARE));
+  return Math.max(POPOVER_MIN_HEIGHT, Math.min(max, Math.ceil(popoverContentHeight)));
+}
+
+// Resize to the reported content height and re-anchor under the icon (which
+// also keeps it on screen).
+function fitPopover(window: BrowserWindow): void {
+  window.setMinimumSize(POPOVER_WIDTH, POPOVER_MIN_HEIGHT);
+  window.setSize(POPOVER_WIDTH, popoverHeight(window), false);
+  positionUnderTray(window);
+}
 let saveTimer: NodeJS.Timeout | null = null;
 
 export function currentMode(): WindowMode {
@@ -212,10 +231,8 @@ function applyMode(window: BrowserWindow, next: WindowMode): void {
     }
   } else {
     window.setAlwaysOnTop(true, "pop-up-menu");
-    window.setMinimumSize(POPOVER_SIZE.width, POPOVER_SIZE.height);
-    window.setSize(POPOVER_SIZE.width, POPOVER_SIZE.height, false);
     window.setResizable(false);
-    positionUnderTray(window);
+    fitPopover(window);
   }
   window.webContents.send("window:mode", next);
 }
@@ -406,6 +423,17 @@ export function attachWindow(window: BrowserWindow, isQuitting: () => boolean): 
 
 export function setupWindowModeIpc(): void {
   ipcMain.handle("window:get-mode", () => mode);
+  // The popover page reports its natural height whenever its list changes.
+  ipcMain.on("popover:content-height", (_event, height: unknown) => {
+    if (typeof height !== "number" || !Number.isFinite(height)) {
+      return;
+    }
+    popoverContentHeight = height;
+    const window = getWindow();
+    if (window && mode === "popover") {
+      fitPopover(window);
+    }
+  });
   ipcMain.on("window:open-main", () => openMainWindow());
   ipcMain.on("window:hide", () => getWindow()?.hide());
 }
