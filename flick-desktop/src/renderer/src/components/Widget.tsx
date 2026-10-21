@@ -46,7 +46,10 @@ interface WidgetProps {
   loadError: string;
   onRetryLoad: () => void;
   // Clips tab content; null when clips are off (flag or setting).
-  clipsPanel: ReactNode | null;
+  // Renders the Clips tab (null when clips are off). The popover passes how
+  // many clips to show and forces compact chips.
+  clipsPanel: ((view: { popover: boolean; limit?: number }) => ReactNode) | null;
+  clipsCount: number;
   clipsDot: boolean;
   onOpenClips: () => void;
   density: Density;
@@ -95,6 +98,7 @@ export default function Widget({
   loadError,
   onRetryLoad,
   clipsPanel,
+  clipsCount,
   clipsDot,
   onOpenClips,
   density,
@@ -116,7 +120,13 @@ export default function Widget({
   // The popover (compact or taller) and the floating panel are always
   // compact; only the separate main window follows the Comfy/Compact setting.
   const effectiveDensity: Density = windowMode === "main" ? density : "compact";
-  const popoverHidden = isPopover && !expanded ? popoverSelection(files, POPOVER_ITEMS).hidden : 0;
+  // Footer "+N more" counts whatever the active tab hides.
+  const popoverHidden =
+    isPopover && !expanded
+      ? activeTab === "clips"
+        ? Math.max(0, clipsCount - POPOVER_ITEMS)
+        : popoverSelection(files, POPOVER_ITEMS).hidden
+      : 0;
   const expandedRef = useRef(expanded);
   expandedRef.current = expanded;
 
@@ -235,7 +245,9 @@ export default function Widget({
             </button>
           </div>
         )}
-        {activeTab === "clips" ? clipsPanel : (
+        {activeTab === "clips" && clipsPanel ? (
+          clipsPanel({ popover: isPopover, limit: isPopover && !expanded ? POPOVER_ITEMS : undefined })
+        ) : (
         <FileList
           files={files}
           fileInputRef={fileInputRef}

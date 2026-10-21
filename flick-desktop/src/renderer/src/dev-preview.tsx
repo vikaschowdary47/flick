@@ -6,7 +6,9 @@ import type { Session } from "@supabase/supabase-js";
 import "@fontsource/nunito/600.css";
 import "@fontsource/nunito/800.css";
 import { designTokenCssVariables } from "../../design/tokens";
+import ClipsPanel from "./components/ClipsPanel";
 import Widget from "./components/Widget";
+import type { ClipRow } from "./clips";
 import type { CloudFile } from "./types";
 import "./styles.css";
 
@@ -14,7 +16,11 @@ for (const [name, value] of Object.entries(designTokenCssVariables)) {
   document.documentElement.style.setProperty(name, value);
 }
 
-const state = new URLSearchParams(location.search).get("state") ?? "files";
+const params = new URLSearchParams(location.search);
+const state = params.get("state") ?? "files";
+// state=mixed&files=N&clips=M: N files and M clips (Clips tab available).
+const fileCount = Number(params.get("files") ?? 0);
+const clipCount = Number(params.get("clips") ?? 0);
 const now = Date.now();
 const file = (n: number, name: string, mime: string, hoursAgo: number, pinned = false): CloudFile => ({
   id: `00000000-0000-4000-8000-00000000000${n}`,
@@ -45,6 +51,24 @@ const many: CloudFile[] = Array.from({ length: 20 }, (_, i) =>
     : file(i, `document-${i + 1}.pdf`, "application/pdf", i * 1.1),
 );
 
+const mixed: CloudFile[] = Array.from({ length: fileCount }, (_, i) =>
+  file(i, `document-${i + 1}.pdf`, "application/pdf", i * 1.3),
+);
+const clipTexts = [
+  "https://www.figma.com/design/abc123/Flick-mobile-compact-layout?node-id=42-1337&t=averyveryverylongquerystring",
+  "Meeting moved to 3pm — bring the October numbers\nand the deck",
+  "https://github.com/vikas/flick/pull/12",
+];
+const sampleClips: ClipRow[] = Array.from({ length: clipCount }, (_, i) => ({
+  id: `clip-${i}`,
+  user_id: "preview",
+  device_id: "phone",
+  kind: clipTexts[i % 3].startsWith("http") ? "link" : "text",
+  content: clipTexts[i % 3],
+  created_at: new Date(now - (i * 3 + 10) * 3_600_000).toISOString(),
+  expires_at: new Date(now + 3_600_000).toISOString(),
+}));
+
 const noop = () => {};
 const session = { user: { id: "preview", email: "you@example.com" } } as unknown as Session;
 
@@ -53,7 +77,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     accountMenuRef={createRef<HTMLDivElement>()}
     authReady
     fileInputRef={createRef<HTMLInputElement>()}
-    files={state === "files" ? sample : state === "many" ? many : []}
+    files={state === "files" ? sample : state === "many" ? many : state === "mixed" ? mixed : []}
     handleDragEnter={noop}
     handleDragLeave={noop}
     handleDragOver={noop}
@@ -89,7 +113,25 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         : ""
     }
     onRetryLoad={noop}
-    clipsPanel={null}
+    clipsCount={sampleClips.length}
+    clipsPanel={
+      state === "mixed"
+        ? (view) => (
+            <ClipsPanel
+              clips={sampleClips}
+              error=""
+              deviceId="mac"
+              deviceNames={{ phone: "Vikas's iPhone" }}
+              onSend={async () => null}
+              onDelete={noop}
+              sendStatus=""
+              density="compact"
+              popover={view.popover}
+              limit={view.limit}
+            />
+          )
+        : null
+    }
     clipsDot={false}
     onOpenClips={noop}
     density="compact"

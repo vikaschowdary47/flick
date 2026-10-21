@@ -1388,6 +1388,16 @@ input:focus-visible {
   background: var(--flick-coral);
 }
 
+/* One outline only: the pill's own border. Keyboard focus thickens it
+   instead of drawing a second ring around it. */
+.home-tab:focus {
+  outline: none;
+}
+
+.home-tab:focus-visible {
+  border-width: 2.5px;
+}
+
 .home-tab-dot {
   width: 8px;
   height: 8px;
@@ -1708,26 +1718,25 @@ input:focus-visible {
 
 .clip-chip {
   display: flex;
-  min-height: 34px;
+  height: 40px;
   align-items: center;
+  gap: 2px;
+  padding-right: 4px;
   border: 1.5px solid var(--flick-navy);
-  border-radius: 999px;
-  background: var(--flick-lilac);
+  border-radius: 14px;
+  background: var(--flick-white);
   box-shadow: 0 2px 0 var(--flick-navy);
   color: var(--flick-navy);
-}
-
-.clip-chip.clip-card-link {
-  background: var(--flick-mint);
 }
 
 .clip-chip-main {
   display: flex;
   min-width: 0;
+  height: 100%;
   flex: 1;
   align-items: center;
   gap: 8px;
-  padding: 6px 4px 6px 12px;
+  padding: 0 4px 0 6px;
   border: 0;
   background: transparent;
   color: inherit;
@@ -1736,37 +1745,85 @@ input:focus-visible {
   text-align: left;
 }
 
+.clip-chip-icon {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  flex: none;
+  place-items: center;
+  border: 1.5px solid var(--flick-navy);
+  border-radius: 8px;
+  background: var(--flick-lilac);
+}
+
+.clip-card-link .clip-chip-icon {
+  background: var(--flick-mint);
+}
+
+.clip-chip-icon svg,
+.clip-chip-icon-button svg {
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: var(--flick-navy);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.2;
+}
+
 .clip-chip-text {
-  overflow: hidden;
+  display: flex;
+  min-width: 0;
   flex: 1;
-  font-size: 13px;
-  font-weight: var(--flick-font-weight-extrabold);
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+/* Long URLs and text end in an ellipsis on one line. */
+.clip-chip-title,
+.clip-chip-meta {
+  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.clip-chip-time {
-  flex: none;
-  font-size: 11px;
-  opacity: 0.75;
-}
-
-.clip-chip-delete {
-  width: 28px;
-  height: 28px;
-  margin-right: 3px;
-  border: 0;
-  border-radius: 50%;
-  background: transparent;
-  color: var(--flick-navy);
-  cursor: pointer;
-  font-size: 16px;
+.clip-chip-title {
+  font-size: 13px;
   font-weight: var(--flick-font-weight-extrabold);
 }
 
-.clip-chip-delete:hover {
+.clip-chip-meta {
+  color: var(--flick-muted);
+  font-size: 11px;
+  font-weight: var(--flick-font-weight-semibold);
+}
+
+.clip-chip-icon-button {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  flex: none;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+}
+
+.clip-chip-icon-button:hover {
   background: var(--flick-cream);
 }
+
+/* × only on hover or keyboard focus. */
+.clip-chip-delete {
+  opacity: 0;
+}
+
+.clip-chip:hover .clip-chip-delete,
+.clip-chip:focus-within .clip-chip-delete {
+  opacity: 1;
+}
+
 
 .compact-section {
   display: flex;
@@ -2200,3 +2257,9 @@ input:focus-visible {
   height: 28px;
 }
 
+
+.widget-popover .clip-send {
+  min-height: 30px;
+  margin-bottom: 6px;
+  font-size: 13px;
+}

@@ -111,8 +111,9 @@ export default function App() {
       loadError={fileState.loadError}
       onRetryLoad={fileState.retryLoad}
       usage={usage.usage}
+      clipsCount={clips.clips.length}
       clipsPanel={
-        clipboardSetting.clipsActive ? (
+        clipboardSetting.clipsActive ? (view) => (
           <ClipsPanel
             clips={clips.clips}
             error={clips.error}
@@ -121,7 +122,9 @@ export default function App() {
             onSend={clips.send}
             onDelete={(id) => void clips.remove(id)}
             sendStatus={sendStatus}
-            density={density}
+            density={view.popover ? "compact" : density}
+            popover={view.popover}
+            limit={view.limit}
           />
         ) : null
       }

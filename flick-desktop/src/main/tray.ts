@@ -472,7 +472,9 @@ export function setupTray(windowGetter: () => BrowserWindow | null): void {
 // Hook up the window: mode behavior on blur, remembered bounds, hide not close.
 export function attachWindow(window: BrowserWindow, isQuitting: () => boolean): void {
   window.on("blur", () => {
-    if (mode === "popover" && !dragInProgress && !window.webContents.isDevToolsOpened()) {
+    // FLICK_KEEP_POPOVER=1 (development only) keeps it open for screenshots.
+    const keepForDev = !app.isPackaged && process.env.FLICK_KEEP_POPOVER === "1";
+    if (mode === "popover" && !dragInProgress && !keepForDev && !window.webContents.isDevToolsOpened()) {
       window.hide();
     }
   });
