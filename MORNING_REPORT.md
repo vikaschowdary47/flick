@@ -24,6 +24,8 @@ Nothing was applied to the real Supabase project, deployed, pushed, or deleted.
 | D2 Limit notice + waitlist opt-in | `11d0aa9` | done | Existed (waitlist table + limit screens); new wording in both apps; fixed the popover clipping the limit screen (found by screenshot) |
 | D4 iOS Share Extension "Flick it" | `6dc7cae` | partial | Builds and embeds; sheet states rendered. Needs a real share from Photos/Files with your signed-in app to confirm uploads (and device signing with your Team ID) |
 | D5 Rename device + sender name everywhere | `c04322e` | done | Already existed in both apps; added rename to the popover Settings panel and sender to widget rows |
+| C1–C6 Android widget, bubble, settings | — | not started | Your second message said "Do not start … Android". The approved plan stands; `widget_mode` already has the Android keys |
+| D3 | — | — | Not in your list (it went D1, D2, D4, D5) |
 | F1 Sharing with friends/groups by link (plan) | `5eb2f2f` | plan | docs/PLAN_share_links.md — Size: L |
 | F2 QR Receive file without sign-in (plan) | `703d755` | plan | docs/PLAN_qr_receive.md — Size: M |
 | F3 Send via Gmail/Outlook from right-click (plan) | `f2eb299` | plan | docs/PLAN_email_send.md — Size: M (desktop) / L (with the share-link backend) |
@@ -67,16 +69,56 @@ Nothing was applied to the real Supabase project, deployed, pushed, or deleted.
 
 ## Migrations / deploys for you to run (in order)
 
+0. **First, fix the expiry secret** ("Found while working" #1) — independent of the rest, but expiry is broken until then.
 1. `supabase/migrations/20261027120000_widget_mode.sql` — per-device widget switches (B6). Tested on a throwaway local Postgres 14.
+   The apps work before you run it (device rows are read with `select("*")`); the widget toggles just won't save until it's applied.
+
+No function deploys needed. (The thumbnails/expiry function change from yesterday is already deployed, per your message.)
 
 ## What to test
 
-_(filled in at the end)_
+**Before testing on iPhone:** add your Apple Team ID to `flick-mobile/app.json` as `ios.appleTeamId`, then `cd flick-mobile && npx expo prebuild -p ios && npx expo run:ios --device`.
+If CocoaPods errors with "Unicode Normalization not appropriate for ASCII-8BIT", run `export LANG=en_US.UTF-8` first.
+Expo Go still works for everything except widgets, Live Activity and the share extension.
+
+### Mac (desktop)
+- [ ] Sign in; click the tray icon: compact popover (6 newest), sized to content, never over 440px.
+- [ ] **Open Flick** → grows downward to show everything, same look; **Show less** shrinks it; click-away hides; reopen is compact.
+- [ ] Pop-out icon (taller state) opens the separate window.
+- [ ] Clips tab: 40px chips; footer "+N more" counts clips on Clips and files on Files.
+- [ ] Remove a file: slim "Removed · Undo" strip in place; Undo restores; after 5s it collapses. Image tile: dimmed with Undo.
+- [ ] Avatar → Settings panel (← Back): usage bars, This device name, Clipboard sharing, Show from menu bar as, Launch at login, Sign out — nothing cut off on your 14" screen.
+- [ ] Flick a new **photo** from the phone: the desktop tile shows a **real thumbnail** (A2 — the key thing I couldn't test).
+- [ ] At 80%+ storage (lower `plan_limits.max_storage_mb` to test): yellow banner → Free up space → confirm lists oldest unpinned files.
+- [ ] Hit a limit in the popover: the limit screen fits completely; "Notify me when more is available" saves to `waitlist`.
+
+### iPhone (development build)
+- [ ] Flick a new photo: the compact grid shows its thumbnail; the Mac shows it too.
+- [ ] Add the **Flick** widget (small and medium) and the **Lock Screen** widgets. They show the latest items (Lock Screen: counts only).
+- [ ] Tap a widget row → Flick opens that file's menu. Tap a clip → Clips tab and the clip is copied.
+- [ ] Medium widget **Copy latest clip** → paste somewhere. (Tell me if iOS blocked it; the tap-the-clip fallback covers it.)
+- [ ] Settings → Widgets on this iPhone: turn Home Screen widget off → widget says "Turned off in Flick". Turn on "Show content on Lock Screen" → names appear there.
+- [ ] Send a file from the Mac, then swipe Flick away (background): a Live Activity "1 new file from <Mac>" appears; open Flick → it disappears.
+- [ ] In Photos, Share → **Flick it** with 2 photos → "Sending 1 of 2…" → "Got it!" → both on the Mac. Share a link from Safari → appears as a clip.
+- [ ] Sign out → widgets clear.
+
+### Android
+- [ ] Nothing new tonight (Android work not started). Quick regression: upload, Preview, Share, Clips still work in Expo Go.
 
 ## Screenshots
 
-In `docs/screenshots/`: popover loading / error / empty / files, compact vs expanded, clips compact / taller, undo, settings.
+All in `docs/screenshots/` (desktop from the dev-preview page in the real Electron window; iOS rendered from the real SwiftUI views with sample data):
+- Desktop popover: `popover-loading`, `popover-error`, `popover-empty`, `popover-files`, `popover-compact`, `popover-expanded`, `popover-clips-compact`, `popover-clips-taller`, `popover-undo`, `popover-settings`, `popover-storage-nudge`, `popover-storage-confirm`, `popover-limit-waitlist`
+- iOS widgets: `widget-small`, `widget-small-clip`, `widget-small-empty`, `widget-small-turned-off`, `widget-medium`
+- Lock Screen: `lock-inline`, `lock-circular`, `lock-rectangular`, `lock-rectangular-content`
+- Live Activity: `live-activity-banner`, `live-activity-island`
+- Share sheet: `share-sending`, `share-done`, `share-error` (the 🚫 in `share-sending` is the offscreen renderer failing to draw the system spinner; it's a normal spinner on a phone)
 
 ## Worth reviewing first
 
-_(filled in at the end)_
+1. **The expiry job has been failing (401) since setup** — files never expire. Fix the Vault secret first (top of this report).
+2. **Share extension session handling** (`flick-mobile/targets/share/FlickUploader.swift`, `src/hooks/useShareSession.ts`): the app writes its session tokens to the App Group so the extension can upload as you. The file is protected (until first unlock) and only the app and its extensions can read it, but a **Keychain access group** would be the stronger home once your Apple account can sign it. Also review the refresh hand-back: the extension may rotate the refresh token and the app adopts it on next open.
+3. **"Free up space" deletes several files at once** (after a confirm that lists them). Mobile removes them without the 5-second Undo (the confirm replaces it); desktop gives each its Undo strip. Check you're happy with that difference.
+4. **The popover now loads usage all the time** (one small RPC per file-list change) for the 80% banner, instead of only when menus open.
+5. **Live Activity without push** only starts when Flick goes to the background; it can't appear for files that arrive while Flick is fully closed. Push (commit 7) would fix that after launch.
+6. **The iOS app now needs a development build for widgets/share**; `npm run ios` builds it. Expo Go still runs the app without those parts.
