@@ -33,6 +33,10 @@ export type WidgetSnapshot = {
   latestClip: { id: string; content: string } | null;
   // Lock Screen shows counts only unless the user turned this on.
   showContentOnLockScreen: boolean;
+  // A widget that's switched off in Settings shows "Turned off in Flick"
+  // (iOS doesn't let apps remove widgets the user placed).
+  homeEnabled: boolean;
+  lockEnabled: boolean;
 };
 
 function fileType(file: FileRow): SnapshotItem["type"] {
@@ -54,6 +58,8 @@ export function buildSnapshot(input: {
   senderOf: (deviceId: string | null) => string;
   thumbs: Record<string, string>; // file id → saved thumbnail name
   showContentOnLockScreen: boolean;
+  homeEnabled?: boolean;
+  lockEnabled?: boolean;
   now?: number;
 }): WidgetSnapshot {
   const now = input.now ?? Date.now();
@@ -101,5 +107,7 @@ export function buildSnapshot(input: {
     clipCount: liveClips.length,
     latestClip: newestClip ? { id: newestClip.id, content: newestClip.content } : null,
     showContentOnLockScreen: input.showContentOnLockScreen,
+    homeEnabled: input.homeEnabled ?? true,
+    lockEnabled: input.lockEnabled ?? true,
   };
 }

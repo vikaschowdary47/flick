@@ -19,6 +19,27 @@ export type DeviceRow = {
   name: string;
   platform: string;
   last_seen_at: string;
+  widget_mode?: Partial<WidgetMode> | null;
+};
+
+// Which widgets are on for this device (devices.widget_mode). Defaults match
+// the migration, and apply until the column exists or loads.
+export type WidgetMode = {
+  home: boolean;
+  lock: boolean;
+  lock_content: boolean;
+  live_activity: boolean;
+  android_widget: boolean;
+  bubble: boolean;
+};
+
+export const DEFAULT_WIDGET_MODE: WidgetMode = {
+  home: true,
+  lock: true,
+  lock_content: false,
+  live_activity: true,
+  android_widget: true,
+  bubble: false,
 };
 
 // "Vikas's iPhone" where the system shares it, otherwise the model ("Pixel 8").
@@ -50,7 +71,7 @@ export function useDevice(userId: string, onRemoved: () => void) {
   const loadDevices = useCallback(async () => {
     const { data, error } = await supabase
       .from("devices")
-      .select("id, name, platform, last_seen_at")
+      .select("*")
       .order("last_seen_at", { ascending: false });
     if (error || !data) return;
     setDevices(data as DeviceRow[]);
@@ -130,8 +151,40 @@ export function useDevice(userId: string, onRemoved: () => void) {
     [register],
   );
 
+  // Turn one widget switch on or off for this device. Returns an error or null.
+  const setWidgetMode = useCallback(
+    async (changes: Partial<WidgetMode>): Promise<string | null> => {
+      if (!deviceId) return "This device isn't registered yet.";
+      const current = { ...DEFAULT_WIDGET_MODE, ...(devices.find((row) => row.id === deviceId)?.widget_mode ?? {}) };
+      const next = { ...current, ...changes };
+      setDevices((rows) => rows.map((row) => (row.id === deviceId ? { ...row, widget_mode: next } : row)));
+      const { error } = await supabase.from("devices").update({ widget_mode: next }).eq("id", deviceId);
+      if (error) {
+        void loadDevices();
+        return "Couldn't save that setting.";
+      }
+      return null;
+    },
+    [deviceId, devices, loadDevices],
+  );
+
   const names = Object.fromEntries(devices.map((row) => [row.id, row.name]));
+  const widgetMode: WidgetMode = {
+    ...DEFAULT_WIDGET_MODE,
+    ...(deviceId ? devices.find((row) => row.id === deviceId)?.widget_mode ?? {} : {}),
+  };
   const name = deviceId ? names[deviceId] ?? null : null;
 
-  return { deviceId, name, names, devices, rename, removeDevice, limitHit, clearLimit: () => setLimitHit(false) };
+  return {
+    deviceId,
+    name,
+    names,
+    devices,
+    rename,
+    removeDevice,
+    widgetMode,
+    setWidgetMode,
+    limitHit,
+    clearLimit: () => setLimitHit(false),
+  };
 }

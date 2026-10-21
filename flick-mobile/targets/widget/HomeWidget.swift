@@ -80,6 +80,19 @@ struct ItemRow: View {
   }
 }
 
+struct TurnedOffState: View {
+  var body: some View {
+    VStack(spacing: 4) {
+      Text("flick").font(.system(size: 14, weight: .heavy, design: .rounded))
+      Text("Turned off in Flick")
+        .font(.system(size: 12, weight: .semibold, design: .rounded))
+        .foregroundStyle(.secondary)
+        .multilineTextAlignment(.center)
+    }
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+  }
+}
+
 struct EmptyState: View {
   var body: some View {
     VStack(spacing: 6) {
@@ -107,7 +120,9 @@ struct FlickHomeView: View {
   var body: some View {
     let items = SharedStore.live(entry.snapshot.items, at: entry.date)
     Group {
-      if items.isEmpty {
+      if !entry.snapshot.homeOn {
+        TurnedOffState()
+      } else if items.isEmpty {
         EmptyState()
       } else if family == .systemSmall {
         small(items)

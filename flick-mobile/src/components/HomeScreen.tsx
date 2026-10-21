@@ -74,8 +74,8 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
     if (next === "clips") clips.clearNew();
   };
   const compact = profile.density === "compact";
-  // Home/Lock Screen widgets (development build only). Turned off per device
-  // in Settings once widget_mode exists; on by default.
+  // Home/Lock Screen widgets (development build only), switched per device
+  // in Settings (devices.widget_mode).
   const widgetSenderOf = useCallback(
     (fromDevice: string | null) => formatSender(fromDevice, device.deviceId, device.names),
     [device.deviceId, device.names],
@@ -84,14 +84,15 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
     files: recent.files,
     clips: clips.clips,
     senderOf: widgetSenderOf,
-    enabled: true,
-    showContentOnLockScreen: false,
+    homeEnabled: device.widgetMode.home,
+    lockEnabled: device.widgetMode.lock,
+    showContentOnLockScreen: device.widgetMode.lock_content,
   });
   useLiveActivity({
     files: recent.files,
     thisDeviceId: device.deviceId,
     deviceNames: device.names,
-    enabled: true,
+    enabled: device.widgetMode.live_activity,
   });
 
   // Widget taps: flick://file/<id> opens that file's menu on the Files tab;
@@ -447,6 +448,8 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
         onClipboardSharingChange={profile.setClipboardSharing}
         density={profile.density}
         onDensityChange={profile.setDensity}
+        widgetMode={device.widgetMode}
+        onWidgetModeChange={device.setWidgetMode}
       />
     </SafeAreaView>
   );

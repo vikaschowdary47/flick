@@ -5,7 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme, useThemedStyles } from "../design/ThemeProvider";
 import type { AppearancePreference, Palette, ThemeName } from "../design/theme";
 import { tokens } from "../design/tokens";
-import { DEVICE_NAME_MAX } from "../hooks/useDevice";
+import { DEVICE_NAME_MAX, type WidgetMode } from "../hooks/useDevice";
 import type { Density } from "../hooks/useProfileSettings";
 import { cacheSize, clearCache } from "../lib/cache";
 import { formatBytes } from "../lib/format";
@@ -24,6 +24,8 @@ type Props = {
   onClipboardSharingChange: (on: boolean) => void;
   density: Density;
   onDensityChange: (density: Density) => void;
+  widgetMode: WidgetMode;
+  onWidgetModeChange: (changes: Partial<WidgetMode>) => Promise<string | null>;
 };
 
 const APPEARANCES: { value: AppearancePreference; label: string }[] = [
@@ -42,7 +44,7 @@ const THEMES: { value: ThemeName; label: string }[] = [
   { value: "classy", label: "Classy" },
 ];
 
-export function SettingsSheet({ visible, onClose, deviceName, onRenameDevice, usage, protectUris = [], showClipboardSetting, clipboardSharing, onClipboardSharingChange, density, onDensityChange }: Props) {
+export function SettingsSheet({ visible, onClose, deviceName, onRenameDevice, usage, protectUris = [], showClipboardSetting, clipboardSharing, onClipboardSharingChange, density, onDensityChange, widgetMode, onWidgetModeChange }: Props) {
   const { appearance, setAppearance, themeName, setThemeName } = useTheme();
   const styles = useThemedStyles(makeStyles);
 
@@ -135,6 +137,35 @@ export function SettingsSheet({ visible, onClose, deviceName, onRenameDevice, us
             </Pressable>
           </View>
         </View>
+        {Platform.OS === "ios" && (
+          // Saved for this device only (devices.widget_mode). iOS doesn't let
+          // apps remove a placed widget, so "off" makes it say so instead.
+          <View style={styles.group}>
+            <Text style={styles.eyebrow}>WIDGETS ON THIS IPHONE</Text>
+            {(
+              [
+                ["home", "Home Screen widget", null],
+                ["lock", "Lock Screen widget", null],
+                ["lock_content", "Show content on Lock Screen", "Off: only counts, since the Lock Screen is visible without unlocking."],
+                ["live_activity", "Live Activity for new files", null],
+              ] as const
+            ).map(([key, label, help]) => (
+              <View key={key} style={styles.cacheRow}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.cacheText}>{label}</Text>
+                  {help && <Text style={styles.nameError}>{help}</Text>}
+                </View>
+                <Switch
+                  accessibilityLabel={label}
+                  value={widgetMode[key]}
+                  disabled={key === "lock_content" && !widgetMode.lock}
+                  onValueChange={(on) => void onWidgetModeChange({ [key]: on })}
+                  trackColor={{ true: palette.accent, false: palette.fallbackTile }}
+                />
+              </View>
+            ))}
+          </View>
+        )}
         {showClipboardSetting && (
           <View style={styles.group}>
             <Text style={styles.eyebrow}>CLIPBOARD SHARING</Text>

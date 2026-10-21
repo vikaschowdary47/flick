@@ -18,6 +18,10 @@ struct FlickLockView: View {
     let latest = items.first
     let showContent = snapshot.showContentOnLockScreen
 
+    if !snapshot.lockOn {
+      Text(family == .accessoryCircular ? "off" : "Flick · turned off in Flick")
+        .font(.system(size: 12, weight: .semibold, design: .rounded))
+    } else {
     switch family {
     case .accessoryInline:
       Text(items.isEmpty ? "Flick · nothing new" : "Flick · \(summary(files: files, clips: clips))")
@@ -55,6 +59,7 @@ struct FlickLockView: View {
         }
       }
       .frame(maxWidth: .infinity, alignment: .leading)
+    }
     }
   }
 

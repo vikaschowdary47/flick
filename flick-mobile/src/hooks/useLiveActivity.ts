@@ -21,7 +21,11 @@ export function useLiveActivity(options: {
   latest.current = options;
 
   useEffect(() => {
-    if (!options.enabled || !widgetsBridge.available()) return;
+    if (!widgetsBridge.available()) return;
+    if (!options.enabled) {
+      void widgetsBridge.endLiveActivity(); // switched off in Settings
+      return;
+    }
     let seenAt = Date.now();
     AsyncStorage.getItem(SEEN_KEY)
       .then((value) => {

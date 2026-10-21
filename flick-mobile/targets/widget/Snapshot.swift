@@ -29,6 +29,12 @@ struct WidgetSnapshot: Codable {
   let clipCount: Int
   let latestClip: LatestClip?
   let showContentOnLockScreen: Bool
+  // Switched off in Flick's Settings (missing in older snapshots = on).
+  var homeEnabled: Bool? = nil
+  var lockEnabled: Bool? = nil
+
+  var homeOn: Bool { homeEnabled ?? true }
+  var lockOn: Bool { lockEnabled ?? true }
 
   static let empty = WidgetSnapshot(
     version: 1, updatedAt: "", items: [], fileCount: 0, clipCount: 0,
