@@ -1929,3 +1929,25 @@ input:focus-visible {
   color: var(--flick-muted);
   font-size: 11px;
 }
+
+.compact-tile-main {
+  overflow: hidden;
+}
+
+.compact-tile-thumb {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+.compact-tile-thumb ~ .compact-tile-time {
+  right: auto;
+  left: 50%;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--flick-cream);
+  transform: translateX(-50%);
+}

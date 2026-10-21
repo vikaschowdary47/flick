@@ -19,7 +19,7 @@ const LIFETIME_MS = 24 * 60 * 60 * 1000;
 const BATCH_SIZE = 500; // Storage remove() accepts up to 1000 paths per call
 const MAX_BATCHES = 20; // cap one run at 10,000 files; the next hour picks up the rest
 
-type ExpiredRow = { id: string; storage_path: string };
+type ExpiredRow = { id: string; storage_path: string; thumb_path: string | null };
 
 function timingSafeEqual(a: string, b: string): boolean {
   const encoder = new TextEncoder();
@@ -67,7 +67,7 @@ Deno.serve(async (request) => {
   for (let batch = 0; batch < MAX_BATCHES; batch++) {
     const { data: rows, error: selectError } = await supabase
       .from("files")
-      .select("id, storage_path")
+      .select("id, storage_path, thumb_path")
       .lt("created_at", cutoff)
       .order("created_at", { ascending: true })
       .limit(BATCH_SIZE)
@@ -83,7 +83,10 @@ Deno.serve(async (request) => {
     // deleting rows first could orphan objects nobody can find again.
     const { data: removed, error: storageError } = await supabase.storage
       .from(BUCKET)
-      .remove(rows.map((row) => row.storage_path));
+      .remove(
+        // Each file's object plus its thumbnail, if it has one.
+        rows.flatMap((row) => (row.thumb_path ? [row.storage_path, row.thumb_path] : [row.storage_path])),
+      );
 
     if (storageError) {
       errors.push(`storage: ${storageError.message}`);

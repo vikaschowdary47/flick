@@ -12,6 +12,8 @@ export const CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000; // unused for 24 hours
 export const OPEN_DIR = "flick-open";
 const LAST_USED = ".last-used";
 const UPLOAD_DIR = "flick-upload";
+// Downloaded thumbnails: flick-thumbs/<file id>.jpg (see thumbs.ts).
+const THUMB_DIR = "flick-thumbs";
 // Copies the pickers and the HEIC converter write into our cache.
 const PICKER_DIRS = ["ImagePicker", "ImageManipulator", "DocumentPicker"];
 
@@ -57,6 +59,9 @@ function entries(): Entry[] {
 
   for (const fileDir of children(OPEN_DIR)) {
     add(fileDir, fileDir instanceof Directory ? fileDir.name : null);
+  }
+  for (const thumb of children(THUMB_DIR)) {
+    add(thumb, thumb instanceof File ? thumb.name.replace(/\.jpg$/, "") : null);
   }
   for (const name of [UPLOAD_DIR, ...PICKER_DIRS]) {
     for (const item of children(name)) add(item, null);
@@ -132,7 +137,7 @@ export function pruneCache({ liveFileIds, protectUris = [] }: PruneOptions = {})
 // Settings → Clear cache (keeps a file that's open right now), and sign-out.
 export function clearCache(protectUris: string[] = []): void {
   if (protectUris.length === 0) {
-    for (const name of [OPEN_DIR, UPLOAD_DIR, ...PICKER_DIRS]) {
+    for (const name of [OPEN_DIR, THUMB_DIR, UPLOAD_DIR, ...PICKER_DIRS]) {
       remove(new Directory(Paths.cache, name));
     }
     return;

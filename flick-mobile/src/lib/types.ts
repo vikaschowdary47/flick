@@ -10,6 +10,7 @@ export type FileRow = {
   pinned: boolean;
   pinned_at: string | null;
   device_id: string | null; // sender
+  thumb_path: string | null; // ~200px JPEG for images
 };
 
 export type PickedFile = {

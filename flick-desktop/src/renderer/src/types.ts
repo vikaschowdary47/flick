@@ -10,6 +10,7 @@ export interface CloudFileRow {
   pinned?: boolean;
   pinned_at?: string | null;
   device_id?: string | null; // sender
+  thumb_path?: string | null; // ~200px JPEG for images
 }
 
 export interface CloudFile extends CloudFileRow {

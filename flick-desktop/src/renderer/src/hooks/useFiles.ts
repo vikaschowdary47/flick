@@ -3,6 +3,7 @@ import type { Session } from "@supabase/supabase-js";
 import type { FileCard } from "../../../shared/files";
 import { limitFromError, type LimitKind } from "../limits";
 import { supabase } from "../supabase";
+import { uploadThumbnail } from "../thumbs";
 import { CloudFile, CloudFileRow, compareFiles, isCloudFile, MAX_FILE_SIZE } from "../types";
 
 const REMOVAL_UNDO_DELAY = 5000;
@@ -259,7 +260,7 @@ export function useFiles(session: Session | null, deviceId: string | null = null
           client
             .from("files")
             .select(
-              "id,user_id,name,size,mime_type,storage_path,created_at,delivered_at,pinned,pinned_at,device_id",
+              "id,user_id,name,size,mime_type,storage_path,created_at,delivered_at,pinned,pinned_at,device_id,thumb_path",
             )
             .eq("user_id", userId)
             .order("created_at", { ascending: false })
@@ -431,6 +432,7 @@ export function useFiles(session: Session | null, deviceId: string | null = null
         const safeName = file.name.replace(/[\\/]/g, "_").trim() || "file";
         const storagePath = `${session.user.id}/${crypto.randomUUID()}/${safeName}`;
         let uploadExists = false;
+        let thumbPath: string | null = null;
         try {
           const { error: storageError } = await supabase.storage
             .from("flick-files")
@@ -444,6 +446,11 @@ export function useFiles(session: Session | null, deviceId: string | null = null
           }
           uploadExists = true;
 
+          // Images: a small thumbnail for the grid (skipped if it fails).
+          if (file.type.startsWith("image/")) {
+            thumbPath = await uploadThumbnail(session.user.id, file);
+          }
+
           const { data, error: rowError } = await supabase
             .from("files")
             .insert({
@@ -453,9 +460,10 @@ export function useFiles(session: Session | null, deviceId: string | null = null
               mime_type: file.type || "application/octet-stream",
               storage_path: storagePath,
               device_id: deviceId, // the sender, for "from <device>"
+              thumb_path: thumbPath,
             })
             .select(
-              "id,user_id,name,size,mime_type,storage_path,created_at,delivered_at,pinned,pinned_at,device_id",
+              "id,user_id,name,size,mime_type,storage_path,created_at,delivered_at,pinned,pinned_at,device_id,thumb_path",
             )
             .single()
             .returns<CloudFileRow>();
@@ -485,7 +493,7 @@ export function useFiles(session: Session | null, deviceId: string | null = null
             try {
               const { error: cleanupError } = await supabase.storage
                 .from("flick-files")
-                .remove([storagePath]);
+                .remove(thumbPath ? [storagePath, thumbPath] : [storagePath]);
               if (cleanupError) {
                 console.error(
                   `Could not remove incomplete upload "${storagePath}":`,
@@ -626,7 +634,7 @@ export function useFiles(session: Session | null, deviceId: string | null = null
     }
     const { error: storageError } = await supabase.storage
       .from("flick-files")
-      .remove([file.storage_path]);
+      .remove(file.thumb_path ? [file.storage_path, file.thumb_path] : [file.storage_path]);
     if (storageError) {
       console.error(
         `Deleted "${file.name}" but could not remove "${file.storage_path}" from storage:`,

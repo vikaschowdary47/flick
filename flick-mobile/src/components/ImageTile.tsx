@@ -1,9 +1,10 @@
-import { memo } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { memo, useEffect, useState } from "react";
+import { ActivityIndicator, Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { useTheme, useThemedStyles } from "../design/ThemeProvider";
 import type { Palette } from "../design/theme";
 import { tokens } from "../design/tokens";
 import { formatTimeLeft } from "../lib/format";
+import { localThumbnail } from "../lib/thumbs";
 import type { FileRow } from "../lib/types";
 import { extension } from "./FileCard";
 
@@ -17,12 +18,24 @@ type Props = {
   onMenu: (file: FileRow, pageY: number) => void;
 };
 
-// One square in the compact image grid. A colored sticker tile for now;
-// the thumbnail commit fills it with a ~200px preview.
+// One square in the compact image grid: the ~200px thumbnail when the file
+// has one, otherwise a colored sticker tile with the extension.
 export const ImageTile = memo(function ImageTile({ file, size, now, sender, opening, selected, onMenu }: Props) {
   const { palette } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const timeLeft = opening ? "Downloading…" : formatTimeLeft(file.created_at, now);
+  const [thumbUri, setThumbUri] = useState<string | null>(null);
+  useEffect(() => {
+    let active = true;
+    if (file.thumb_path) {
+      void localThumbnail(file.id, file.thumb_path).then((uri) => {
+        if (active) setThumbUri(uri);
+      });
+    }
+    return () => {
+      active = false;
+    };
+  }, [file.id, file.thumb_path]);
   return (
     <Pressable
       accessibilityRole="button"
@@ -32,12 +45,16 @@ export const ImageTile = memo(function ImageTile({ file, size, now, sender, open
       onLongPress={(event) => onMenu(file, event.nativeEvent.pageY)}
       style={[styles.tile, { width: size, height: size }, selected && styles.selected]}
     >
-      <Text style={styles.label}>{extension(file.name)}</Text>
+      {thumbUri ? (
+        <Image source={{ uri: thumbUri }} style={styles.thumb} resizeMode="cover" accessibilityIgnoresInvertColors />
+      ) : (
+        <Text style={styles.label}>{extension(file.name)}</Text>
+      )}
       {file.pinned && <View style={styles.pin} />}
       {opening ? (
         <ActivityIndicator style={styles.spinner} color={palette.onColor} />
       ) : (
-        <Text style={styles.time} numberOfLines={1}>
+        <Text style={[styles.time, thumbUri ? styles.timeOnThumb : null]} numberOfLines={1}>
           {timeLeft}
         </Text>
       )}
@@ -48,6 +65,7 @@ export const ImageTile = memo(function ImageTile({ file, size, now, sender, open
 const makeStyles = (c: Palette) =>
   StyleSheet.create({
     tile: {
+      overflow: "hidden",
       alignItems: "center",
       justifyContent: "center",
       borderRadius: tokens.radii.card,
@@ -59,6 +77,20 @@ const makeStyles = (c: Palette) =>
     },
     selected: {
       backgroundColor: c.doneCard,
+    },
+    thumb: {
+      ...StyleSheet.absoluteFill,
+      borderRadius: tokens.radii.card - tokens.borderWidth.outline,
+    },
+    timeOnThumb: {
+      // Readable over any photo: a small cream pill.
+      alignSelf: "center",
+      left: undefined,
+      right: undefined,
+      paddingHorizontal: tokens.spacing.sm,
+      borderRadius: tokens.radii.pill,
+      backgroundColor: c.fallbackTile,
+      overflow: "hidden",
     },
     label: {
       color: c.onColor,

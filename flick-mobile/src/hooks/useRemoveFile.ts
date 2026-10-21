@@ -29,7 +29,7 @@ export function useRemoveFile(onRemoved: () => void) {
 
         const { error: storageError } = await supabase.storage
           .from(FILES_BUCKET)
-          .remove([file.storage_path]);
+          .remove(file.thumb_path ? [file.storage_path, file.thumb_path] : [file.storage_path]);
         if (storageError) {
           console.warn(`Deleted "${file.name}" but storage cleanup failed`, storageError);
         }
