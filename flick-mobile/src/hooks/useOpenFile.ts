@@ -41,6 +41,28 @@ function viewerKind(mimeType: string, name: string): ViewerKind | null {
 class ExpiredError extends Error {}
 class NoAppError extends Error {}
 
+function describeOpenError(error: unknown): {
+  message: string;
+  status?: unknown;
+  code?: unknown;
+  name?: unknown;
+} {
+  if (typeof error !== "object" || error === null) return { message: String(error) };
+  const value = error as {
+    message?: unknown;
+    status?: unknown;
+    statusCode?: unknown;
+    code?: unknown;
+    name?: unknown;
+  };
+  return {
+    message: value.message ? String(value.message) : String(error),
+    status: value.status ?? value.statusCode,
+    code: value.code,
+    name: value.name,
+  };
+}
+
 // Open the file's cached copy (downloading it only if there isn't one), then
 // hand it to the system. Copies stay cached; cache.ts removes them by its
 // rules (file gone, 24 hours unused, 150 MB cap, sign-out, Clear cache).
@@ -58,6 +80,7 @@ export function useOpenFile() {
     setError(null);
     const folder = fileCacheDir(file.id);
     const mimeType = resolveMimeType(file.mime_type, file.name);
+    let stage = "cache";
     let fresh: File | null = null; // a download in progress, removed if it fails
     try {
       if (isExpired(file, Date.now())) {
@@ -66,15 +89,40 @@ export function useOpenFile() {
 
       let downloaded = cachedCopy(file.id);
       if (!downloaded) {
+        stage = "signed-url";
         const { data, error: linkError } = await supabase.storage
           .from(FILES_BUCKET)
           .createSignedUrl(file.storage_path, LINK_SECONDS);
         if (linkError || !data?.signedUrl) {
+          console.warn("Flick signed URL failed", {
+            storagePath: file.storage_path,
+            ...describeOpenError(linkError ?? new Error("No signed URL returned")),
+          });
           throw /not.?found|404|object/i.test(linkError?.message ?? "") ? new ExpiredError() : linkError ?? new Error("No link");
         }
         folder.create({ intermediates: true, idempotent: true });
         fresh = new File(folder, file.name.replace(/[/\\:]/g, "_") || "file");
-        downloaded = await File.downloadFileAsync(data.signedUrl, fresh);
+        stage = "download";
+        try {
+          downloaded = await File.downloadFileAsync(data.signedUrl, fresh);
+        } catch (downloadError) {
+          // Some Expo/iOS builds surface a blank FileSystem error even when
+          // the signed URL is valid. Fetch the URL directly so a valid file
+          // still opens, while preserving the HTTP status when it is not.
+          console.warn("Flick file download failed; retrying signed URL", {
+            storagePath: file.storage_path,
+            ...describeOpenError(downloadError),
+          });
+          stage = "download-fallback";
+          const response = await fetch(data.signedUrl);
+          if (!response.ok) {
+            const statusError = new Error(`Storage download returned HTTP ${response.status}`);
+            Object.assign(statusError, { status: response.status });
+            throw statusError;
+          }
+          fresh.write(new Uint8Array(await response.arrayBuffer()));
+          downloaded = fresh;
+        }
         fresh = null;
       }
       touchCachedCopy(file.id);
@@ -84,6 +132,7 @@ export function useOpenFile() {
 
       const kind = viewerKind(mimeType, file.name);
       if (Platform.OS === "ios" && mode === "preview" && kind) {
+        stage = "viewer";
         const text = kind === "source" ? await downloaded.text() : undefined;
         setViewer({ file, uri: downloaded.uri, mimeType, kind, text, folder });
         return;
@@ -91,6 +140,7 @@ export function useOpenFile() {
 
       if (Platform.OS === "android" && mode === "preview") {
         try {
+          stage = "intent";
           // Other apps can't read file:// in our cache; give them a content:// uri.
           const contentUri = await getContentUriAsync(downloaded.uri);
           await IntentLauncher.startActivityAsync("android.intent.action.VIEW", {
@@ -106,22 +156,34 @@ export function useOpenFile() {
       }
 
       if (!(await Sharing.isAvailableAsync())) throw new NoAppError();
+      stage = "share";
       await Sharing.shareAsync(downloaded.uri, {
         mimeType,
         dialogTitle: "Share file",
         UTI: mimeType === "application/pdf" ? "com.adobe.pdf" : undefined,
       });
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      console.warn("Flick open failed", { mode, name: file.name, mimeType, message });
+      const details = describeOpenError(err);
+      const message = details.message;
+      const status = details.status;
+      console.warn("Flick open failed", {
+        mode,
+        name: file.name,
+        mimeType,
+        storagePath: file.storage_path,
+        stage,
+        ...details,
+      });
       setError(
         err instanceof ExpiredError || /not.?found|404/i.test(message)
           ? `"${file.name}" has expired and isn't available anymore.`
           : err instanceof NoAppError
             ? "Sharing isn't available on this device."
-            : /network|fetch|offline|timed? ?out/i.test(message)
+            : status === 401 || status === 403
+              ? "Your session expired. Sign in again."
+              : /network|fetch|offline|timed? ?out/i.test(message)
               ? "Connection dropped. Try again."
-              : `Couldn't open "${file.name}".`,
+              : `Couldn't open "${file.name}" (${stage} failed).`,
       );
     } finally {
       setOpeningId(null);
