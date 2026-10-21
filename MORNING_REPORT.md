@@ -23,6 +23,7 @@ Nothing was applied to the real Supabase project, deployed, pushed, or deleted.
 | D1 Limits + 80% free-up-space prompt | `bcac866` | done | Server limits/config table existed (20261022 migration); added 80% banner + confirm listing oldest unpinned files, both apps; desktop screenshots |
 | D2 Limit notice + waitlist opt-in | `11d0aa9` | done | Existed (waitlist table + limit screens); new wording in both apps; fixed the popover clipping the limit screen (found by screenshot) |
 | D4 iOS Share Extension "Flick it" | `6dc7cae` | partial | Builds and embeds; sheet states rendered. Needs a real share from Photos/Files with your signed-in app to confirm uploads (and device signing with your Team ID) |
+| D5 Rename device + sender name everywhere | `c04322e` | done | Already existed in both apps; added rename to the popover Settings panel and sender to widget rows |
 
 ## Decisions I made on my own
 
