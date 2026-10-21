@@ -1,4 +1,5 @@
 import type { Usage } from "../limits";
+import type { Density } from "../density";
 import { useReducedMotion } from "framer-motion";
 import { useState, type ChangeEvent, type MouseEvent, type ReactNode, type RefObject } from "react";
 import type { Session } from "@supabase/supabase-js";
@@ -45,6 +46,7 @@ interface WidgetProps {
   clipsPanel: ReactNode | null;
   clipsDot: boolean;
   onOpenClips: () => void;
+  density: Density;
   clipboardSharing: boolean | null; // null hides the setting (flag off)
   onClipboardSharingChange: (on: boolean) => void;
 }
@@ -86,6 +88,7 @@ export default function Widget({
   clipsPanel,
   clipsDot,
   onOpenClips,
+  density,
   clipboardSharing,
   onClipboardSharingChange,
 }: WidgetProps) {
@@ -169,6 +172,7 @@ export default function Widget({
           pendingRemovals={pendingRemovals}
           deviceId={deviceId}
           deviceNames={deviceNames}
+          density={density}
           onFileSelection={handleFileSelection}
           onPreview={onPreviewFile}
           onStartDrag={onStartFileDrag}

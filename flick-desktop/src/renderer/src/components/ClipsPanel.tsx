@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { formatAgo, siteName, type ClipRow } from "../clips";
 import { useNow } from "../hooks/useNow";
+import type { Density } from "../density";
 import { formatSender } from "../types";
 
 interface ClipsPanelProps {
@@ -11,6 +12,7 @@ interface ClipsPanelProps {
   onSend: (text: string) => Promise<string | null>;
   onDelete: (id: string) => void;
   sendStatus: string; // result of the last shortcut/tray send
+  density: Density;
 }
 
 const COPIED_MS = 1500;
@@ -20,11 +22,13 @@ function ClipCard({
   sender,
   now,
   onDelete,
+  compact,
 }: {
   clip: ClipRow;
   sender: string;
   now: number;
   onDelete: () => void;
+  compact: boolean;
 }) {
   const [copied, setCopied] = useState(false);
 
@@ -43,6 +47,34 @@ function ClipCard({
 
   const isLink = clip.kind === "link";
   const meta = [sender, formatAgo(clip.created_at, now)].filter(Boolean).join(" · ");
+
+  if (compact) {
+    // Single-line chip: text or site name, time; click copies, × deletes.
+    return (
+      <article className={`clip-chip clip-card-${clip.kind}`} title={`${clip.content}\n${meta}`}>
+        <button
+          type="button"
+          className="clip-chip-main"
+          aria-label={`Copy ${isLink ? `link to ${siteName(clip.content)}` : "clip"}`}
+          onClick={() => void copy()}
+        >
+          <span className="clip-chip-text">
+            {copied ? "Copied!" : isLink ? siteName(clip.content) : clip.content}
+          </span>
+          <span className="clip-chip-time">{formatAgo(clip.created_at, now)}</span>
+        </button>
+        <button
+          type="button"
+          className="clip-chip-delete"
+          aria-label="Delete clip from all devices"
+          title="Delete everywhere"
+          onClick={onDelete}
+        >
+          ×
+        </button>
+      </article>
+    );
+  }
 
   return (
     <article className={`clip-card clip-card-${clip.kind}`}>
@@ -83,6 +115,7 @@ export default function ClipsPanel({
   onSend,
   onDelete,
   sendStatus,
+  density,
 }: ClipsPanelProps) {
   const now = useNow();
   const [message, setMessage] = useState("");
@@ -126,7 +159,7 @@ export default function ClipsPanel({
       {clips.length === 0 ? (
         <p className="auth-status">No clips yet. Send one from any device.</p>
       ) : (
-        <div className="clips-list">
+        <div className={density === "compact" ? "clips-list clips-list-compact" : "clips-list"}>
           {clips.map((clip) => (
             <ClipCard
               key={clip.id}
@@ -134,6 +167,7 @@ export default function ClipsPanel({
               now={now}
               sender={formatSender(clip.device_id, deviceId, deviceNames)}
               onDelete={() => onDelete(clip.id)}
+              compact={density === "compact"}
             />
           ))}
         </div>

@@ -1481,3 +1481,288 @@ input:focus-visible {
 .clipboard-setting input {
   margin-top: 2px;
 }
+
+/* ---------- Compact density: rows, image grid, clip chips ----------
+   Same palette, outlines and big corner radius as the sticker cards, at
+   roughly half the height: padding 10px, 28px icon, 14px title, 6px gaps. */
+.compact-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 2px 3px 6px 2px;
+}
+
+.compact-row {
+  position: relative;
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  gap: 4px;
+  padding: 0 6px 0 0;
+  border: 1.5px solid var(--flick-navy);
+  border-radius: var(--flick-radius-card);
+  background: var(--flick-white);
+  box-shadow: 0 2px 0 var(--flick-navy);
+  color: var(--flick-navy);
+}
+
+.compact-main {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 4px 8px 10px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: grab;
+  font: inherit;
+  text-align: left;
+}
+
+.compact-main:disabled {
+  cursor: default;
+}
+
+.compact-icon {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  place-items: center;
+  border: 1.5px solid var(--flick-navy);
+  border-radius: 9px;
+  background: var(--flick-fallback-tile);
+  font-size: 8px;
+  font-weight: var(--flick-font-weight-extrabold);
+  letter-spacing: 0.02em;
+}
+
+.compact-document .compact-icon {
+  background: var(--flick-document-tile);
+}
+
+.compact-archive .compact-icon,
+.compact-other .compact-icon {
+  background: var(--flick-archive-tile);
+}
+
+.compact-downloading .compact-icon {
+  background: var(--flick-downloading-card);
+}
+
+.compact-error {
+  border-color: var(--flick-error-outline);
+}
+
+.compact-text {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.compact-name {
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: var(--flick-font-weight-extrabold);
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.compact-pin {
+  width: 11px;
+  height: 11px;
+  margin-right: 4px;
+  vertical-align: -1px;
+  fill: var(--flick-yellow);
+  stroke: var(--flick-navy);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.4;
+}
+
+.compact-meta {
+  overflow: hidden;
+  color: var(--flick-muted);
+  font-size: 12px;
+  font-weight: var(--flick-font-weight-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.compact-more {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  place-items: center;
+  border: 1px solid var(--flick-navy);
+  border-radius: 50%;
+  background: var(--flick-cream);
+  color: var(--flick-navy);
+  cursor: pointer;
+  font-weight: var(--flick-font-weight-extrabold);
+  opacity: 0;
+}
+
+.compact-row:hover .compact-more,
+.compact-row:focus-within .compact-more,
+.compact-tile:hover .compact-more,
+.compact-tile:focus-within .compact-more,
+.compact-menu-open .compact-more {
+  opacity: 1;
+}
+
+.compact-retry {
+  min-height: 26px;
+  padding: 0 8px;
+  border: 1px solid var(--flick-navy);
+  border-radius: 999px;
+  background: var(--flick-yellow);
+  color: var(--flick-navy);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: var(--flick-font-weight-extrabold);
+}
+
+.compact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(78px, 1fr));
+  gap: 6px;
+}
+
+.compact-tile {
+  position: relative;
+  aspect-ratio: 1;
+}
+
+.compact-tile-main {
+  position: relative;
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  padding: 0;
+  border: 1.5px solid var(--flick-navy);
+  border-radius: var(--flick-radius-card);
+  background: var(--flick-image-tile);
+  box-shadow: 0 2px 0 var(--flick-navy);
+  color: var(--flick-navy);
+  cursor: grab;
+  font: inherit;
+}
+
+.compact-tile.compact-downloading .compact-tile-main {
+  background: var(--flick-downloading-card);
+}
+
+.compact-tile.compact-error .compact-tile-main {
+  border-color: var(--flick-error-outline);
+}
+
+.compact-tile-label {
+  font-size: 11px;
+  font-weight: var(--flick-font-weight-extrabold);
+}
+
+.compact-tile-time {
+  position: absolute;
+  right: 6px;
+  bottom: 5px;
+  left: 6px;
+  overflow: hidden;
+  font-size: 10px;
+  font-weight: var(--flick-font-weight-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.compact-tile-pin {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  width: 9px;
+  height: 9px;
+  border: 1.5px solid var(--flick-navy);
+  border-radius: 50%;
+  background: var(--flick-yellow);
+}
+
+.compact-tile-more {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 22px;
+  height: 22px;
+  font-size: 12px;
+}
+
+.clips-list-compact {
+  gap: 6px;
+}
+
+.clip-chip {
+  display: flex;
+  min-height: 34px;
+  align-items: center;
+  border: 1.5px solid var(--flick-navy);
+  border-radius: 999px;
+  background: var(--flick-lilac);
+  box-shadow: 0 2px 0 var(--flick-navy);
+  color: var(--flick-navy);
+}
+
+.clip-chip.clip-card-link {
+  background: var(--flick-mint);
+}
+
+.clip-chip-main {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 4px 6px 12px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.clip-chip-text {
+  overflow: hidden;
+  flex: 1;
+  font-size: 13px;
+  font-weight: var(--flick-font-weight-extrabold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.clip-chip-time {
+  flex: none;
+  font-size: 11px;
+  opacity: 0.75;
+}
+
+.clip-chip-delete {
+  width: 28px;
+  height: 28px;
+  margin-right: 3px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--flick-navy);
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: var(--flick-font-weight-extrabold);
+}
+
+.clip-chip-delete:hover {
+  background: var(--flick-cream);
+}

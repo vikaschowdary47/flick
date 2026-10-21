@@ -1,7 +1,10 @@
 import { AnimatePresence, motion } from "framer-motion";
 import type { ChangeEvent, RefObject } from "react";
+import CompactFileRow from "./CompactFileRow";
+import CompactImageTile from "./CompactImageTile";
 import FileCard from "./FileCard";
-import { CloudFile, formatSender } from "../types";
+import type { Density } from "../density";
+import { CloudFile, formatSender, getFileVisualType } from "../types";
 import type { PendingRemoval } from "../hooks/useFiles";
 import { useNow } from "../hooks/useNow";
 
@@ -14,6 +17,7 @@ interface FileListProps {
   pendingRemovals: PendingRemoval[];
   deviceId: string | null;
   deviceNames: Record<string, string>;
+  density: Density;
   onFileSelection: (event: ChangeEvent<HTMLInputElement>) => void;
   onPreview: (file: CloudFile) => void;
   onStartDrag: (file: CloudFile) => void;
@@ -32,6 +36,7 @@ export default function FileList({
   pendingRemovals,
   deviceId,
   deviceNames,
+  density,
   onFileSelection,
   onPreview,
   onStartDrag,
@@ -80,7 +85,19 @@ export default function FileList({
         onChange={onFileSelection}
         aria-label="Choose files to upload"
       />
-      {files.length > 0 && (
+      {files.length > 0 && density === "compact" && (
+        <CompactFiles
+          files={files}
+          now={now}
+          senderOf={(file) => formatSender(file.device_id, deviceId, deviceNames)}
+          onPreview={onPreview}
+          onStartDrag={onStartDrag}
+          onRemove={onRemove}
+          onTogglePin={onTogglePin}
+          onRetry={onRetryDownload}
+        />
+      )}
+      {files.length > 0 && density === "comfy" && (
         <motion.div layout className="files-list">
           <AnimatePresence initial={false}>
             {files.map((file, index) => (
@@ -155,5 +172,36 @@ export default function FileList({
         </div>
       )}
     </>
+  );
+}
+
+interface CompactFilesProps {
+  files: CloudFile[];
+  now: number;
+  senderOf: (file: CloudFile) => string;
+  onPreview: (file: CloudFile) => void;
+  onStartDrag: (file: CloudFile) => void;
+  onRemove: (file: CloudFile) => void;
+  onTogglePin: (file: CloudFile) => void;
+  onRetry: (file: CloudFile) => void;
+}
+
+// Compact layout: images as a grid of tiles, everything else as rows.
+function CompactFiles({ files, now, senderOf, ...actions }: CompactFilesProps) {
+  const images = files.filter((file) => getFileVisualType(file) === "image");
+  const others = files.filter((file) => getFileVisualType(file) !== "image");
+  return (
+    <div className="compact-list">
+      {images.length > 0 && (
+        <div className="compact-grid">
+          {images.map((file) => (
+            <CompactImageTile key={file.id} file={file} now={now} sender={senderOf(file)} {...actions} />
+          ))}
+        </div>
+      )}
+      {others.map((file) => (
+        <CompactFileRow key={file.id} file={file} now={now} sender={senderOf(file)} {...actions} />
+      ))}
+    </div>
   );
 }

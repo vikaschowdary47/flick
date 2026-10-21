@@ -120,6 +120,16 @@ export function getFileTileLabel(file: CloudFile): string {
 // Files are deleted server-side 24 hours after upload (expire-files function).
 export const FILE_LIFETIME_MS = 24 * 60 * 60 * 1000;
 
+// Compact rows: "18h left" / "40m left".
+export function formatTimeLeft(createdAt: string, now: number): string {
+  const remaining = new Date(createdAt).getTime() + FILE_LIFETIME_MS - now;
+  if (!Number.isFinite(remaining) || remaining <= 0) {
+    return "Expiring…";
+  }
+  const minutes = Math.ceil(remaining / 60_000);
+  return minutes < 60 ? `${minutes}m left` : `${Math.floor(minutes / 60)}h left`;
+}
+
 export function formatExpiry(createdAt: string, now: number): string {
   const remaining = new Date(createdAt).getTime() + FILE_LIFETIME_MS - now;
   if (!Number.isFinite(remaining) || remaining <= 0) {
