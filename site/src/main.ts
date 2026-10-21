@@ -93,10 +93,23 @@ function showFile(file: ShareResponse, linkId: string): void {
   }, 30_000);
 
   const button = document.querySelector<HTMLButtonElement>(".download-button");
-  button?.addEventListener("click", () => void startDownload(button, linkId));
+  button?.addEventListener("click", () => void startDownload(button, linkId, file));
 }
 
-async function startDownload(button: HTMLButtonElement, linkId: string): Promise<void> {
+function showDownloadStarted(file: ShareResponse, linkId: string): void {
+  shell(`
+    <section class="card success-card">
+      <div class="sticker" aria-hidden="true">✓</div>
+      <h1>Download started</h1>
+      <p class="success-message">✓ Download started — check your Downloads folder</p>
+      <button class="download-button" type="button">Download again</button>
+    </section>`);
+
+  const button = document.querySelector<HTMLButtonElement>(".download-button");
+  button?.addEventListener("click", () => void startDownload(button, linkId, file));
+}
+
+async function startDownload(button: HTMLButtonElement, linkId: string, file: ShareResponse): Promise<void> {
   button.disabled = true;
   button.replaceChildren();
   const spinner = document.createElement("span");
@@ -116,6 +129,7 @@ async function startDownload(button: HTMLButtonElement, linkId: string): Promise
       return;
     }
     window.location.assign(body.downloadUrl);
+    window.setTimeout(() => showDownloadStarted(file, linkId), 1_200);
   } catch {
     showError("Couldn’t reach Flick", "Check your connection and try again.");
   }
