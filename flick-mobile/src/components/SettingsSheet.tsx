@@ -6,6 +6,7 @@ import { useTheme, useThemedStyles } from "../design/ThemeProvider";
 import type { AppearancePreference, Palette, ThemeName } from "../design/theme";
 import { tokens } from "../design/tokens";
 import { DEVICE_NAME_MAX } from "../hooks/useDevice";
+import type { Density } from "../hooks/useProfileSettings";
 import { cacheSize, clearCache } from "../lib/cache";
 import { formatBytes } from "../lib/format";
 import type { Usage } from "../lib/limits";
@@ -21,6 +22,8 @@ type Props = {
   showClipboardSetting: boolean; // the clipboard feature flag
   clipboardSharing: boolean;
   onClipboardSharingChange: (on: boolean) => void;
+  density: Density;
+  onDensityChange: (density: Density) => void;
 };
 
 const APPEARANCES: { value: AppearancePreference; label: string }[] = [
@@ -29,12 +32,17 @@ const APPEARANCES: { value: AppearancePreference; label: string }[] = [
   { value: "dark", label: "Dark" },
 ];
 
+const DENSITIES: { value: Density; label: string }[] = [
+  { value: "comfy", label: "Comfy" },
+  { value: "compact", label: "Compact" },
+];
+
 const THEMES: { value: ThemeName; label: string }[] = [
   { value: "playful", label: "Playful" },
   { value: "classy", label: "Classy" },
 ];
 
-export function SettingsSheet({ visible, onClose, deviceName, onRenameDevice, usage, protectUris = [], showClipboardSetting, clipboardSharing, onClipboardSharingChange }: Props) {
+export function SettingsSheet({ visible, onClose, deviceName, onRenameDevice, usage, protectUris = [], showClipboardSetting, clipboardSharing, onClipboardSharingChange, density, onDensityChange }: Props) {
   const { appearance, setAppearance, themeName, setThemeName } = useTheme();
   const styles = useThemedStyles(makeStyles);
 
@@ -77,6 +85,7 @@ export function SettingsSheet({ visible, onClose, deviceName, onRenameDevice, us
         </Text>
         <Segmented label="Appearance" options={APPEARANCES} value={appearance} onChange={setAppearance} />
         <Segmented label="Theme" options={THEMES} value={themeName} onChange={setThemeName} />
+        <Segmented label="Density" options={DENSITIES} value={density} onChange={onDensityChange} />
         <View style={styles.group}>
           <Text style={styles.eyebrow}>THIS DEVICE</Text>
           <TextInput

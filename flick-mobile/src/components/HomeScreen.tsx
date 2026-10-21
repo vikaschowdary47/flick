@@ -5,7 +5,7 @@ import { useTheme, useThemedStyles } from "../design/ThemeProvider";
 import type { Palette } from "../design/theme";
 import { tokens } from "../design/tokens";
 import { useClips } from "../hooks/useClips";
-import { useClipboardSetting } from "../hooks/useClipboardSetting";
+import { useProfileSettings } from "../hooks/useProfileSettings";
 import { useConnectionStatus } from "../hooks/useConnectionStatus";
 import { useDevice } from "../hooks/useDevice";
 import { useUsage } from "../hooks/useUsage";
@@ -59,8 +59,8 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
   const [sourceOpen, setSourceOpen] = useState(false);
   // Clips: hidden, not fetched and not subscribed unless the clipboard
   // feature flag and the user's Clipboard sharing setting are both on.
-  const clipboardSetting = useClipboardSetting(userId);
-  const clipsOn = clipboardSetting.clipsActive;
+  const profile = useProfileSettings(userId);
+  const clipsOn = profile.clipsActive;
   const clips = useClips(userId, device.deviceId, clipsOn);
   const [tab, setTab] = useState<HomeTab>("files");
   const activeTab: HomeTab = clipsOn ? tab : "files";
@@ -306,9 +306,11 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
         onRenameDevice={device.rename}
         usage={usage.usage}
         protectUris={viewerUri ? [viewerUri] : []}
-        showClipboardSetting={clipboardSetting.showSetting}
-        clipboardSharing={clipboardSetting.sharingOn}
-        onClipboardSharingChange={clipboardSetting.setSharing}
+        showClipboardSetting={profile.showClipboardSetting}
+        clipboardSharing={profile.clipboardSharing}
+        onClipboardSharingChange={profile.setClipboardSharing}
+        density={profile.density}
+        onDensityChange={profile.setDensity}
       />
     </SafeAreaView>
   );
