@@ -7,7 +7,13 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "dev.flickit.app",
+      "entitlements": {
+        "com.apple.security.application-groups": [
+          "group.dev.flickit.app"
+        ]
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -16,7 +22,8 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "dev.flickit.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -33,7 +40,8 @@
           "cameraPermission": "Flick uses the camera when you tap Take photo, so you can send the picture to your other devices.",
           "microphonePermission": false
         }
-      ]
+      ],
+      "@bacons/apple-targets"
     ],
     "scheme": "flick"
   }
