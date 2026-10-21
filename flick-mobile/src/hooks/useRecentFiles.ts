@@ -2,7 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
 import type { FileRow } from "../lib/types";
 
-const LIMIT = 20;
+// Enough for a full day of files; the list is virtualized (CompactFilesList).
+const LIMIT = 200;
 
 export type RealtimeStatus = "connecting" | "subscribed" | "error" | "closed";
 
