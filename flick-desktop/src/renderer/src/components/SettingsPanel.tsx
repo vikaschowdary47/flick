@@ -60,9 +60,8 @@ function UsageBar({ label, used, max, text }: { label: string; used: number; max
   );
 }
 
-// Settings inside the menu bar popover: replaces the list (the header shows
-// "← Back"), so nothing floats over it or gets clipped. Density isn't here:
-// the popover is always compact (it's in the pop-out window's menu).
+// Settings inside the menu bar popover or floating panel: replaces the list
+// (the header shows "← Back"), so nothing floats over it or gets clipped.
 export default function SettingsPanel({
   email,
   usage,

@@ -518,6 +518,9 @@ export function setupWindowModeIpc(): void {
   ipcMain.handle("settings:set-show-as", (_event, showAs: unknown) => {
     if (showAs === "popover" || showAs === "panel") {
       updateSettings({ showAs });
+      if (mode !== "main" && getWindow()?.isVisible()) {
+        showPopover();
+      }
       refreshLinuxMenu();
     }
   });

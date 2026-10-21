@@ -133,7 +133,8 @@ export default function Widget({
       }),
     [],
   );
-  const showSettings = isPopover && settingsOpen;
+  const isPanel = windowMode === "panel";
+  const showSettings = (isPopover || isPanel) && settingsOpen;
   useEffect(() => onSettingsVisibleChange?.(showSettings), [showSettings, onSettingsVisibleChange]);
   // The popover (compact or taller) and the floating panel are always
   // compact; only the separate main window follows the Comfy/Compact setting.
@@ -238,7 +239,7 @@ export default function Widget({
         usage={usage}
         windowMode={windowMode}
         onPopOut={isPopover && expanded && !showSettings ? () => window.flick.openMainWindow() : undefined}
-        onOpenSettings={isPopover ? () => setSettingsOpen(true) : undefined}
+        onOpenSettings={isPopover || isPanel ? () => setSettingsOpen(true) : undefined}
         settingsOpen={showSettings}
         onBack={() => setSettingsOpen(false)}
         density={density}
@@ -322,7 +323,7 @@ export default function Widget({
         </>
         )}
       </section>
-      {isPopover && showSettings ? null : isPopover ? (
+      {showSettings ? null : isPopover ? (
         // Always visible: the list scrolls above it.
         <footer className="popover-footer">
           {expanded ? (
