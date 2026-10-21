@@ -9,6 +9,7 @@ import { useProfileSettings } from "../hooks/useProfileSettings";
 import { useConnectionStatus } from "../hooks/useConnectionStatus";
 import { useDevice } from "../hooks/useDevice";
 import { useUsage } from "../hooks/useUsage";
+import { useWidgetSnapshot } from "../hooks/useWidgetSnapshot";
 import { useNow } from "../hooks/useNow";
 import { useOpenFile } from "../hooks/useOpenFile";
 import { usePinFile } from "../hooks/usePinFile";
@@ -70,6 +71,20 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
     if (next === "clips") clips.clearNew();
   };
   const compact = profile.density === "compact";
+  // Home/Lock Screen widgets (development build only). Turned off per device
+  // in Settings once widget_mode exists; on by default.
+  const widgetSenderOf = useCallback(
+    (fromDevice: string | null) => formatSender(fromDevice, device.deviceId, device.names),
+    [device.deviceId, device.names],
+  );
+  useWidgetSnapshot({
+    files: recent.files,
+    clips: clips.clips,
+    senderOf: widgetSenderOf,
+    enabled: true,
+    showContentOnLockScreen: false,
+  });
+
   const tabs = clipsOn ? <Tabs tab={activeTab} onChange={changeTab} clipsDot={clips.hasNew} slim={compact} /> : null;
   // Compact: Settings / Sign out live in a ⋯ menu in the header.
   const [accountMenuY, setAccountMenuY] = useState<number | null>(null);

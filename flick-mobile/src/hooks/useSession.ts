@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
+import { widgetsBridge } from "../../modules/flick-widgets";
 import { clearCache } from "../lib/cache";
 import { supabase } from "../lib/supabase";
 
@@ -70,6 +71,7 @@ export function useSession() {
 
   const signOut = useCallback(async () => {
     clearCache(); // no downloaded copies stay behind after sign-out
+    void widgetsBridge.clear(); // widgets don't keep showing this account
     await supabase.auth.signOut();
   }, []);
 
