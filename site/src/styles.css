@@ -7,21 +7,155 @@
   font-synthesis: none;
 }
 
-* { box-sizing: border-box; }
-body { margin: 0; min-width: 320px; }
-.page-shell { min-height: 100vh; padding: 36px 20px 28px; display: grid; place-items: center; align-content: center; gap: 20px; background: radial-gradient(circle at 12% 18%, #ffd66b 0 5px, transparent 6px), radial-gradient(circle at 86% 28%, #8ee3c8 0 7px, transparent 8px), #fff8ee; }
-.brand { display: flex; align-items: center; gap: 9px; font-size: 25px; font-weight: 800; letter-spacing: -0.04em; }
-.brand-mark { display: grid; place-items: center; width: 34px; height: 34px; border: 3px solid #1b2140; border-radius: 11px; background: #f67381; box-shadow: 0 3px 0 #1b2140; font-size: 22px; }
-.card { width: min(100%, 480px); padding: 34px 30px 32px; border: 3px solid #1b2140; border-radius: 24px; background: #fff; box-shadow: 0 8px 0 rgba(27, 33, 64, 0.15); text-align: center; }
-.file-sticker, .sticker { display: grid; place-items: center; width: 64px; height: 64px; margin: 0 auto 20px; border: 3px solid #1b2140; border-radius: 20px; background: #ffd66b; box-shadow: 0 4px 0 #1b2140; font-size: 34px; font-weight: 800; }
-.eyebrow { margin: 0 0 10px; color: #6b6f8a; font-size: 12px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
-h1 { margin: 0; overflow-wrap: anywhere; font-size: clamp(24px, 7vw, 34px); line-height: 1.08; }
-.meta { display: flex; justify-content: center; gap: 10px; margin: 14px 0 26px; color: #6b6f8a; font-size: 16px; font-weight: 800; }
-.download-button { display: inline-flex; min-height: 52px; align-items: center; justify-content: center; padding: 0 34px; border: 3px solid #1b2140; border-radius: 999px; background: #f67381; box-shadow: 0 4px 0 #1b2140; color: #1b2140; font-size: 16px; font-weight: 800; text-decoration: none; }
-.download-button:hover { transform: translateY(-2px); box-shadow: 0 6px 0 #1b2140; }
-.error-card p, .loading-card p { margin: 14px auto 0; max-width: 320px; color: #6b6f8a; font-size: 16px; line-height: 1.45; }
-.banner { margin: 0; color: #6b6f8a; font-size: 14px; font-weight: 800; }
-.banner span { color: #f67381; }
-.spinner { width: 38px; height: 38px; margin: 0 auto 24px; border: 5px solid #ffd66b; border-top-color: #1b2140; border-radius: 50%; animation: spin 0.8s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-@media (max-width: 420px) { .card { padding: 28px 20px; } }
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  min-width: 320px;
+}
+.page-shell {
+  min-height: 100vh;
+  padding: 36px 20px 28px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 20px;
+  background: radial-gradient(circle at 12% 18%, #ffd66b 0 5px, transparent 6px),
+    radial-gradient(circle at 86% 28%, #8ee3c8 0 7px, transparent 8px), #fff8ee;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 25px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+.brand-mark {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 3px solid #1b2140;
+  border-radius: 11px;
+  background: #f67381;
+  box-shadow: 0 3px 0 #1b2140;
+  font-size: 22px;
+}
+.card {
+  width: min(100%, 480px);
+  padding: 34px 30px 32px;
+  border: 3px solid #1b2140;
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: 0 8px 0 rgba(27, 33, 64, 0.15);
+  text-align: center;
+}
+.file-sticker,
+.sticker {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 20px;
+  border: 3px solid #1b2140;
+  border-radius: 20px;
+  background: #ffd66b;
+  box-shadow: 0 4px 0 #1b2140;
+  font-size: 34px;
+  font-weight: 800;
+}
+.eyebrow {
+  margin: 0 0 10px;
+  color: #6b6f8a;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+h1 {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: clamp(24px, 7vw, 34px);
+  line-height: 1.08;
+}
+.meta {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 14px 0 26px;
+  color: #6b6f8a;
+  font-size: 16px;
+  font-weight: 800;
+}
+.download-button {
+  display: inline-flex;
+  min-height: 52px;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 0 34px;
+  border: 3px solid #1b2140;
+  border-radius: 999px;
+  background: #f67381;
+  box-shadow: 0 4px 0 #1b2140;
+  color: #1b2140;
+  cursor: pointer;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 800;
+  text-decoration: none;
+}
+.download-button:disabled {
+  cursor: wait;
+  opacity: 0.75;
+}
+.download-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 #1b2140;
+}
+.error-card p,
+.loading-card p {
+  margin: 14px auto 0;
+  max-width: 320px;
+  color: #6b6f8a;
+  font-size: 16px;
+  line-height: 1.45;
+}
+.banner {
+  margin: 0;
+  color: #6b6f8a;
+  font-size: 14px;
+  font-weight: 800;
+}
+.banner span {
+  color: #f67381;
+}
+.spinner {
+  width: 28px;
+  height: 28px;
+  margin: 0 auto 24px;
+  border: 4px solid #ffd66b;
+  border-top-color: #1b2140;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+.button-spinner {
+  width: 16px;
+  height: 16px;
+  border: 3px solid rgba(27, 33, 64, 0.3);
+  border-top-color: #1b2140;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (max-width: 420px) {
+  .card {
+    padding: 28px 20px;
+  }
+}

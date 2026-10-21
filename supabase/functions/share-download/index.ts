@@ -29,6 +29,14 @@ type ShareRow = {
   } | null;
 };
 
+type ShareMetadata = {
+  fileName: string;
+  size: number;
+  mimeType: string;
+  senderName: string;
+  expiresAt: string;
+};
+
 function json(body: unknown, status = 200, extraHeaders: Record<string, string> = {}): Response {
   return new Response(JSON.stringify(body), {
     status,
@@ -91,6 +99,20 @@ Deno.serve(async (request) => {
     return json({ error: "Link expired", expiresAt: new Date(expiresAt).toISOString() }, 410);
   }
 
+  const metadata: ShareMetadata = {
+    fileName: data.file.name,
+    size: data.file.size,
+    mimeType: "application/octet-stream",
+    senderName: data.file.device?.name ?? "A friend",
+    expiresAt: new Date(expiresAt).toISOString(),
+  };
+
+  // Metadata is safe to fetch when the page opens. Only the download action
+  // spends a rate-limit bucket and receives a short-lived signed URL.
+  if (new URL(request.url).searchParams.get("download") !== "1") {
+    return json(metadata);
+  }
+
   const { data: allowed, error: rateError } = await supabase.rpc("flick_share_link_rate_limit", {
     p_id_hash: idHash,
   });
@@ -111,11 +133,7 @@ Deno.serve(async (request) => {
   }
 
   return json({
-    fileName: data.file.name,
-    size: data.file.size,
-    mimeType: "application/octet-stream",
-    senderName: data.file.device?.name ?? "A friend",
-    expiresAt: new Date(expiresAt).toISOString(),
+    ...metadata,
     downloadUrl: signed.signedUrl,
   });
 });

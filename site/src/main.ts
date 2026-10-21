@@ -5,8 +5,9 @@ type ShareResponse = {
   size: number;
   senderName: string;
   expiresAt: string;
-  downloadUrl: string;
 };
+
+type DownloadResponse = ShareResponse & { downloadUrl: string };
 
 const SHARE_FUNCTION_URL =
   import.meta.env.VITE_SHARE_FUNCTION_URL ??
@@ -45,14 +46,44 @@ function showError(title: string, body: string): void {
   shell(`<section class="card error-card"><div class="sticker">✦</div><h1>${title}</h1><p>${body}</p></section>`);
 }
 
-function showFile(file: ShareResponse): void {
+function showLoading(): void {
+  const page = document.createElement("main");
+  page.className = "page-shell";
+
+  const brand = document.createElement("div");
+  brand.className = "brand";
+  brand.innerHTML = '<span class="brand-mark" aria-hidden="true">↗</span><span>flick</span>';
+
+  const card = document.createElement("section");
+  card.className = "card loading-card";
+  const spinner = document.createElement("span");
+  spinner.className = "spinner";
+  spinner.setAttribute("aria-hidden", "true");
+  const heading = document.createElement("h1");
+  heading.textContent = "Getting your file…";
+  const message = document.createElement("p");
+  message.textContent = "Just a second.";
+  card.append(spinner, heading, message);
+
+  const banner = document.createElement("p");
+  banner.className = "banner";
+  banner.append("Sent with Flick ");
+  const dash = document.createElement("span");
+  dash.textContent = "—";
+  banner.append(dash, " get it free");
+
+  page.append(brand, card, banner);
+  root.replaceChildren(page);
+}
+
+function showFile(file: ShareResponse, linkId: string): void {
   shell(`
     <section class="card file-card">
       <div class="file-sticker" aria-hidden="true">↓</div>
       <p class="eyebrow">A file from ${escapeHtml(file.senderName)}</p>
       <h1>${escapeHtml(file.fileName)}</h1>
       <p class="meta"><span>${formatBytes(file.size)}</span><span>·</span><span id="time-left">${timeLeft(file.expiresAt)}</span></p>
-      <a class="download-button" href="${escapeAttribute(file.downloadUrl)}">Download</a>
+      <button class="download-button" type="button">Download</button>
     </section>`);
   const time = document.querySelector<HTMLSpanElement>("#time-left");
   const timer = window.setInterval(() => {
@@ -60,14 +91,38 @@ function showFile(file: ShareResponse): void {
     time.textContent = timeLeft(file.expiresAt);
     if (time.textContent === "Expired") window.clearInterval(timer);
   }, 30_000);
+
+  const button = document.querySelector<HTMLButtonElement>(".download-button");
+  button?.addEventListener("click", () => void startDownload(button, linkId));
+}
+
+async function startDownload(button: HTMLButtonElement, linkId: string): Promise<void> {
+  button.disabled = true;
+  button.replaceChildren();
+  const spinner = document.createElement("span");
+  spinner.className = "button-spinner";
+  spinner.setAttribute("aria-hidden", "true");
+  button.append(spinner, "Preparing download…");
+
+  try {
+    const response = await fetch(`${SHARE_FUNCTION_URL}/${encodeURIComponent(linkId)}?download=1`);
+    const body = await response.json() as Partial<DownloadResponse> & { error?: string };
+    if (!response.ok || !body.downloadUrl) {
+      if (response.status === 404 || response.status === 410 || body.error === "Link expired") {
+        showError("This link has expired", "The file is no longer available.");
+      } else {
+        showError("Couldn’t download this file", "Please try again in a moment.");
+      }
+      return;
+    }
+    window.location.assign(body.downloadUrl);
+  } catch {
+    showError("Couldn’t reach Flick", "Check your connection and try again.");
+  }
 }
 
 function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character] ?? character);
-}
-
-function escapeAttribute(value: string): string {
-  return escapeHtml(value);
 }
 
 async function load(): Promise<void> {
@@ -76,11 +131,11 @@ async function load(): Promise<void> {
     showError("That link is missing", "Ask the sender to send the Flick link again.");
     return;
   }
-  shell(`<section class="card loading-card"><div class="spinner" aria-hidden="true" /><h1>Getting your file…</h1><p>Just a second.</p></section>`);
+  showLoading();
   try {
     const response = await fetch(`${SHARE_FUNCTION_URL}/${encodeURIComponent(id)}`);
     const body = await response.json() as Partial<ShareResponse> & { error?: string };
-    if (!response.ok || !body.fileName || !body.downloadUrl || !body.expiresAt) {
+    if (!response.ok || !body.fileName || !body.expiresAt) {
       if (response.status === 410 || body.error === "Link expired") {
         showError("This Flick link expired", "The file is no longer available.");
       } else {
@@ -88,7 +143,7 @@ async function load(): Promise<void> {
       }
       return;
     }
-    showFile(body as ShareResponse);
+    showFile(body as ShareResponse, id);
   } catch {
     showError("Couldn’t reach Flick", "Check your connection and try the link again.");
   }
