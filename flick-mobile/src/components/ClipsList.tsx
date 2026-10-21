@@ -12,7 +12,7 @@ import { ClipChip } from "./ClipChip";
 import { PillButton } from "./PillButton";
 
 type Props = {
-  header: ReactNode; // shared top (wordmark, heading, tabs)
+  header?: ReactNode; // shared top (wordmark, heading, tabs); none in compact
   clips: ClipRow[];
   error: string | null;
   now: number;

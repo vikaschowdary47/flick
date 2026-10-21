@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
+import { Animated, FlatList, InteractionManager, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme, useThemedStyles } from "../design/ThemeProvider";
 import type { Palette } from "../design/theme";
@@ -25,7 +25,7 @@ import { FileMenu, type FileMenuItem } from "./FileMenu";
 import { FileViewer } from "./FileViewer";
 import { Header } from "./Header";
 import { LimitScreen } from "./LimitScreen";
-import { EyeIcon, PinIcon, ShareIcon, TrashIcon } from "./Icons";
+import { EyeIcon, GearIcon, PinIcon, ShareIcon, SignOutIcon, TrashIcon } from "./Icons";
 import { PillButton } from "./PillButton";
 import { SettingsSheet } from "./SettingsSheet";
 import { SourceSheet } from "./SourceSheet";
@@ -69,7 +69,25 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
     setTab(next);
     if (next === "clips") clips.clearNew();
   };
-  const tabs = clipsOn ? <Tabs tab={activeTab} onChange={changeTab} clipsDot={clips.hasNew} /> : null;
+  const compact = profile.density === "compact";
+  const tabs = clipsOn ? <Tabs tab={activeTab} onChange={changeTab} clipsDot={clips.hasNew} slim={compact} /> : null;
+  // Compact: Settings / Sign out live in a ⋯ menu in the header.
+  const [accountMenuY, setAccountMenuY] = useState<number | null>(null);
+  // Compact: the big heading fades and slides up as the list scrolls.
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const fade = tokens.compact.headingFadeDistance;
+  const headingStyle = {
+    opacity: scrollY.interpolate({ inputRange: [0, fade], outputRange: [1, 0], extrapolate: "clamp" as const }),
+    transform: [
+      { translateY: scrollY.interpolate({ inputRange: [0, fade], outputRange: [0, -tokens.spacing.md], extrapolate: "clamp" as const }) },
+    ],
+  };
+  const compactTopBar = compact ? (
+    <View style={styles.compactTop}>
+      <Header status={connection.status} onMenu={(pageY) => setAccountMenuY(pageY)} />
+      {tabs}
+    </View>
+  ) : null;
 
   const activeLimit = uploadLimit ?? pinner.limitHit ?? (device.limitHit ? "devices" : null);
   // Limits and usage come from the server; refresh when they're about to show.
@@ -185,7 +203,20 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
       ]
     : [];
 
-  const filesHeader = (
+  const openError = remover.error ?? pinner.error ?? opener.error;
+  const filesHeader = compact ? (
+    <View style={styles.compactHeader}>
+      <Animated.Text accessibilityRole="header" style={[styles.heading, headingStyle]}>
+        Flick it to all your devices
+      </Animated.Text>
+      <UploadCard state={upload} onDismiss={reset} />
+      {openError && (
+        <Text accessibilityRole="alert" style={styles.openError}>
+          {openError}
+        </Text>
+      )}
+    </View>
+  ) : (
     <View style={styles.top}>
       <Header status={connection.status} />
       <Text accessibilityRole="header" style={styles.heading}>
@@ -211,16 +242,19 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
 
   return (
     <SafeAreaView style={styles.safe} edges={["top", "left", "right", "bottom"]}>
+      {compactTopBar}
       {activeTab === "clips" ? (
         <ClipsList
           header={
-            <>
-              <Header status={connection.status} />
-              <Text accessibilityRole="header" style={styles.heading}>
-                Flick it to all your devices
-              </Text>
-              {tabs}
-            </>
+            compact ? undefined : (
+              <>
+                <Header status={connection.status} />
+                <Text accessibilityRole="header" style={styles.heading}>
+                  Flick it to all your devices
+                </Text>
+                {tabs}
+              </>
+            )
           }
           clips={clips.clips}
           error={clips.error}
@@ -245,6 +279,7 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
           onMenu={openMenu}
           refreshing={refreshing}
           onRefresh={onRefresh}
+          scrollY={scrollY}
         />
       ) : (
       <FlatList
@@ -281,6 +316,7 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
           busy={upload.kind === "uploading"}
           accessibilityHint="Choose photos, a file, or take a photo to send to all your devices"
         />
+        {!compact && (
         <View style={styles.footerLinks}>
           <Pressable
             accessibilityRole="button"
@@ -299,6 +335,7 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
             <Text style={styles.signOutLabel}>Sign out</Text>
           </Pressable>
         </View>
+        )}
       </View>
       <FileMenu
         title={menu?.file.name ?? null}
@@ -323,6 +360,16 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
           pinner.clearLimit();
           device.clearLimit();
         }}
+      />
+      <FileMenu
+        title={accountMenuY === null ? null : "Account"}
+        anchorY={accountMenuY ?? 0}
+        items={[
+          { key: "settings", label: "Settings", icon: <GearIcon />, fill: "preview", // iOS can't present a modal while the menu's modal is closing.
+            onPress: () => InteractionManager.runAfterInteractions(() => setTimeout(() => setSettingsOpen(true), 250)) },
+          { key: "signout", label: "Sign out", icon: <SignOutIcon />, fill: "danger", onPress: onSignOut },
+        ]}
+        onClose={() => setAccountMenuY(null)}
       />
       <FileViewer
         viewer={opener.viewer}
@@ -367,6 +414,15 @@ const makeStyles = (c: Palette) =>
       paddingHorizontal: tokens.layout.screenPadding,
       paddingTop: tokens.spacing.sm,
       paddingBottom: tokens.spacing.lg,
+    },
+    compactTop: {
+      gap: tokens.compact.gap,
+      paddingHorizontal: tokens.layout.screenPadding,
+      paddingBottom: tokens.compact.gap,
+    },
+    compactHeader: {
+      gap: tokens.compact.padding,
+      marginBottom: tokens.compact.gap,
     },
     top: {
       gap: tokens.spacing.lg,

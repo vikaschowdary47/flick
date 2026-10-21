@@ -95,6 +95,8 @@ const compact = {
   sectionHeaderHeight: 30,
   moreChipHeight: 32,
   iconRadius: 9,
+  tabHeight: 32,
+  headingFadeDistance: 48, // scroll distance over which the big heading fades
 } as const;
 
 const spacing = {

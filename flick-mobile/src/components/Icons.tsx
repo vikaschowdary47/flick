@@ -56,3 +56,22 @@ export function ShareIcon({ size = tokens.layout.iconSize, color }: Props) {
     </Svg>
   );
 }
+
+export function GearIcon({ size = tokens.layout.iconSize, color }: Props) {
+  const ink = useInk(color);
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={ink} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+      <Circle cx={12} cy={12} r={3} />
+      <Path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1" />
+    </Svg>
+  );
+}
+
+export function SignOutIcon({ size = tokens.layout.iconSize, color }: Props) {
+  const ink = useInk(color);
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={ink} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4M15 8l4 4-4 4M19 12H9" />
+    </Svg>
+  );
+}

@@ -1,5 +1,6 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type ReactElement } from "react";
 import {
+  Animated,
   Platform,
   Pressable,
   RefreshControl,
@@ -8,8 +9,6 @@ import {
   Text,
   View,
   useWindowDimensions,
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
 } from "react-native";
 import { useTheme, useThemedStyles } from "../design/ThemeProvider";
 import type { Palette } from "../design/theme";
@@ -39,7 +38,7 @@ type Props = {
   onMenu: (file: FileRow, pageY: number) => void;
   refreshing: boolean;
   onRefresh: () => void;
-  onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
+  scrollY?: Animated.Value; // drives the shrinking header
 };
 
 const isImage = (file: FileRow) => (file.mime_type ?? "").startsWith("image/");
@@ -50,7 +49,7 @@ const isImage = (file: FileRow) => (file.mime_type ?? "").startsWith("image/");
 export type CompactFilesListHandle = { scrollToTop: () => void };
 
 export const CompactFilesList = forwardRef<CompactFilesListHandle, Props>(function CompactFilesList(
-  { files, header, empty, now, senderOf, openingId, selectedId, onMenu, refreshing, onRefresh, onScroll },
+  { files, header, empty, now, senderOf, openingId, selectedId, onMenu, refreshing, onRefresh, scrollY },
   ref,
 ) {
   const { palette } = useTheme();
@@ -59,6 +58,12 @@ export const CompactFilesList = forwardRef<CompactFilesListHandle, Props>(functi
   const [collapsed, setCollapsed] = useState<SectionKey[]>([]);
   const [expanded, setExpanded] = useState<SectionKey[]>([]);
   const listRef = useRef<SectionList<Item, Section>>(null);
+  // Scroll position for the header fade, tracked on the native side.
+  const fallbackScroll = useRef(new Animated.Value(0)).current;
+  const onScroll = useMemo(
+    () => Animated.event([{ nativeEvent: { contentOffset: { y: scrollY ?? fallbackScroll } } }], { useNativeDriver: true }),
+    [scrollY, fallbackScroll],
+  );
   useImperativeHandle(ref, () => ({
     scrollToTop: () => listRef.current?.getScrollResponder()?.scrollTo({ y: 0, animated: true }),
   }));
@@ -150,7 +155,7 @@ export const CompactFilesList = forwardRef<CompactFilesListHandle, Props>(functi
   );
 
   return (
-    <SectionList
+    <Animated.SectionList
       ref={listRef}
       sections={sections}
       keyExtractor={(item) => item.key}

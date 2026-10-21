@@ -9,10 +9,11 @@ type Props = {
   tab: HomeTab;
   onChange: (tab: HomeTab) => void;
   clipsDot: boolean; // a new clip arrived while on Files
+  slim?: boolean; // compact: 32pt tall (touch area stays 44pt)
 };
 
 // Files | Clips switch (only shown when clips are on).
-export function Tabs({ tab, onChange, clipsDot }: Props) {
+export function Tabs({ tab, onChange, clipsDot, slim }: Props) {
   const styles = useThemedStyles(makeStyles);
   const item = (value: HomeTab, label: string, dot: boolean) => {
     const selected = tab === value;
@@ -23,7 +24,8 @@ export function Tabs({ tab, onChange, clipsDot }: Props) {
         accessibilityState={{ selected }}
         accessibilityLabel={dot ? `${label}, new` : label}
         onPress={() => onChange(value)}
-        style={[styles.tab, selected && styles.selected]}
+        hitSlop={slim ? (tokens.layout.minTouchTarget - tokens.compact.tabHeight) / 2 : undefined}
+        style={[styles.tab, slim && styles.slim, selected && styles.selected]}
       >
         <Text style={[styles.label, selected && styles.selectedLabel]}>{label}</Text>
         {dot && <View style={styles.dot} />}
@@ -55,6 +57,9 @@ const makeStyles = (c: Palette) =>
       borderWidth: tokens.borderWidth.outline,
       borderColor: c.outline,
       backgroundColor: c.card,
+    },
+    slim: {
+      minHeight: tokens.compact.tabHeight,
     },
     selected: {
       backgroundColor: c.accent,
