@@ -17,6 +17,7 @@ Nothing was applied to the real Supabase project, deployed, pushed, or deleted.
 | B1 Widgets bridge + snapshot writer | `8d02bb3` | done | Swift module in modules/flick-widgets; platform-neutral buildSnapshot; no-op in Expo Go; clears on sign-out; iOS build verified |
 | B2 Home Screen widget (small, medium) | `c5ac064` | done | targets/widget (FlickWidgetExtension); thumbnails, deep links; build verified; screenshots rendered from the real views (docs/screenshots/widget-*.png) |
 | B3 Copy latest clip (iOS 17) | `ffca161` | partial | Button + App Intent built and rendered; whether iOS lets the widget write the clipboard can only be checked on a device with the widget placed — fallback (tap clip → app copies) is in place |
+| B4 Lock Screen widgets | `0a03fb6` | done | Inline / circular / rectangular; counts only unless Show content on Lock Screen is on; build verified; docs/screenshots/lock-*.png |
 
 ## Decisions I made on my own
 
