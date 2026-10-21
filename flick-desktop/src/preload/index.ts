@@ -79,6 +79,15 @@ contextBridge.exposeInMainWorld('flick', {
   startFileDrag: (fileId: string) => ipcRenderer.send('file:start-drag', fileId),
   endFileDrag: () => ipcRenderer.send('file:drag-ended'),
   notifyArrival: () => ipcRenderer.send('tray:arrival'),
+  getWindowMode: (): Promise<'popover' | 'panel' | 'main'> => ipcRenderer.invoke('window:get-mode'),
+  onWindowMode: (listener: (mode: 'popover' | 'panel' | 'main') => void): (() => void) => {
+    const handler = (_event: unknown, mode: unknown) =>
+      listener(mode === 'panel' || mode === 'main' ? mode : 'popover')
+    ipcRenderer.on('window:mode', handler)
+    return () => ipcRenderer.removeListener('window:mode', handler)
+  },
+  openMainWindow: () => ipcRenderer.send('window:open-main'),
+  hideWindow: () => ipcRenderer.send('window:hide'),
   setClipsActive: (active: boolean): Promise<void> =>
     ipcRenderer.invoke('clips:set-active', active),
   readClipboard: (): Promise<string> => ipcRenderer.invoke('clipboard:read'),

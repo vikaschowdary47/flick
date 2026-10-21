@@ -1,5 +1,6 @@
 import type { Usage } from "../limits";
 import type { Density } from "../density";
+import { useWindowMode } from "../hooks/useWindowMode";
 import { useReducedMotion } from "framer-motion";
 import { useState, type ChangeEvent, type MouseEvent, type ReactNode, type RefObject } from "react";
 import type { Session } from "@supabase/supabase-js";
@@ -51,6 +52,9 @@ interface WidgetProps {
   onClipboardSharingChange: (on: boolean) => void;
 }
 
+// The popover shows this many recent items (8 rows fit in the 580px popover).
+const POPOVER_ITEMS = 8;
+
 export default function Widget({
   accountMenuRef,
   authReady,
@@ -95,10 +99,14 @@ export default function Widget({
   const prefersReducedMotion = useReducedMotion();
   const [tab, setTab] = useState<"files" | "clips">("files");
   const activeTab = clipsPanel ? tab : "files";
+  const windowMode = useWindowMode();
+  // The popover and floating panel are always compact; the main window
+  // follows the Comfy/Compact setting.
+  const effectiveDensity: Density = windowMode === "main" ? density : "compact";
 
   return (
     <main
-      className={`widget${isDraggingFiles ? " drag-active" : ""}`}
+      className={`widget${isDraggingFiles ? " drag-active" : ""}${effectiveDensity === "compact" ? " widget-compact" : ""}${windowMode === "popover" ? " widget-popover" : ""}`}
       onClickCapture={onOutsideClick}
       onDragEnter={handleDragEnter}
       onDragOver={handleDragOver}
@@ -126,6 +134,7 @@ export default function Widget({
         deviceName={deviceName}
         onRenameDevice={onRenameDevice}
         usage={usage}
+        windowMode={windowMode}
         clipboardSharing={clipboardSharing}
         onClipboardSharingChange={onClipboardSharingChange}
         setIsAccountMenuOpen={setIsAccountMenuOpen}
@@ -172,7 +181,8 @@ export default function Widget({
           pendingRemovals={pendingRemovals}
           deviceId={deviceId}
           deviceNames={deviceNames}
-          density={density}
+          density={effectiveDensity}
+          recentOnly={windowMode === "popover" ? POPOVER_ITEMS : undefined}
           onFileSelection={handleFileSelection}
           onPreview={onPreviewFile}
           onStartDrag={onStartFileDrag}

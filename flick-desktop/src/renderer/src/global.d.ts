@@ -16,6 +16,10 @@ interface Window {
     startFileDrag: (fileId: string) => void
     endFileDrag: () => void
     notifyArrival: () => void
+    getWindowMode: () => Promise<'popover' | 'panel' | 'main'>
+    onWindowMode: (listener: (mode: 'popover' | 'panel' | 'main') => void) => () => void
+    openMainWindow: () => void
+    hideWindow: () => void
     setClipsActive: (active: boolean) => Promise<void>
     readClipboard: () => Promise<string>
     writeClipboard: (text: string) => Promise<void>

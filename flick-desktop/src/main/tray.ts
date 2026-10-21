@@ -2,6 +2,7 @@ import {
   app,
   type BrowserWindow,
   globalShortcut,
+  ipcMain,
   Menu,
   nativeImage,
   type NativeImage,
@@ -9,11 +10,12 @@ import {
   Tray,
 } from "electron";
 import { designTokens } from "../design/tokens";
-import { getSettings, updateSettings } from "./settings";
+import { type Bounds, getSettings, type ShowAs, updateSettings } from "./settings";
 
-// Menu bar (macOS) / system tray (Windows, Linux) mode: the widget opens as a
-// popover under the icon, hides when you click elsewhere, and stays alive
-// while hidden so files arriving in the background are already listed.
+// Menu bar (macOS) / system tray (Windows, Linux): the icon opens Flick as a
+// popover or a floating panel; "Open Flick" opens the resizable main window.
+// The window stays alive while hidden, so files arriving in the background
+// are already listed.
 
 const TOGGLE_SHORTCUT = "Alt+Shift+F"; // Option+Shift+F on a Mac
 const POPOVER_GAP = 6;
@@ -123,7 +125,25 @@ function trayImage(dot: boolean): NativeImage {
   return image;
 }
 
-// ---- popover -------------------------------------------------------------------
+// ---- window modes ------------------------------------------------------------
+// One window (it does the syncing, so there is only ever one) shown three ways:
+// - popover: under the tray icon, compact, ~8 recent items, hides on click-away
+// - panel:   always-on-top floating mini panel, movable, stays open
+// - main:    resizable window from "Open Flick", remembers its size
+export type WindowMode = "popover" | "panel" | "main";
+
+// 44px header + tabs + heading + 8 rows (48px + 6px gap) + "Open Flick" ≈ 580px.
+const POPOVER_SIZE = { width: 360, height: 600 };
+const PANEL_SIZE = { width: 320, height: 460 };
+const MAIN_SIZE = { width: 480, height: 640 };
+const MAIN_MIN = { width: 360, height: 420 };
+
+let mode: WindowMode = "popover";
+let saveTimer: NodeJS.Timeout | null = null;
+
+export function currentMode(): WindowMode {
+  return mode;
+}
 
 function positionUnderTray(window: BrowserWindow): void {
   if (!tray) {
@@ -151,17 +171,88 @@ function positionUnderTray(window: BrowserWindow): void {
   window.setPosition(x, y, false);
 }
 
-export function showPopover(): void {
+// Keep saved bounds on a screen that still exists.
+function onScreen(bounds: Bounds | null): Bounds | null {
+  if (!bounds) {
+    return null;
+  }
+  const area = screen.getDisplayMatching(bounds).workArea;
+  const visible =
+    bounds.x < area.x + area.width - 40 &&
+    bounds.x + bounds.width > area.x + 40 &&
+    bounds.y >= area.y - 10 &&
+    bounds.y < area.y + area.height - 40;
+  return visible ? bounds : null;
+}
+
+function applyMode(window: BrowserWindow, next: WindowMode): void {
+  mode = next;
+  const settings = getSettings();
+  if (next === "main") {
+    window.setAlwaysOnTop(false);
+    window.setResizable(true);
+    window.setMinimumSize(MAIN_MIN.width, MAIN_MIN.height);
+    const saved = onScreen(settings.mainBounds);
+    if (saved) {
+      window.setBounds(saved, false);
+    } else {
+      window.setSize(MAIN_SIZE.width, MAIN_SIZE.height, false);
+      window.center();
+    }
+  } else if (next === "panel") {
+    window.setAlwaysOnTop(true, "floating");
+    window.setResizable(true);
+    window.setMinimumSize(260, 300);
+    const saved = onScreen(settings.panelBounds);
+    if (saved) {
+      window.setBounds(saved, false);
+    } else {
+      window.setSize(PANEL_SIZE.width, PANEL_SIZE.height, false);
+      positionUnderTray(window);
+    }
+  } else {
+    window.setAlwaysOnTop(true, "pop-up-menu");
+    window.setMinimumSize(POPOVER_SIZE.width, POPOVER_SIZE.height);
+    window.setSize(POPOVER_SIZE.width, POPOVER_SIZE.height, false);
+    window.setResizable(false);
+    positionUnderTray(window);
+  }
+  window.webContents.send("window:mode", next);
+}
+
+// Remember the main window's / panel's bounds as the user moves or resizes it.
+function rememberBounds(window: BrowserWindow): void {
+  if (mode === "popover" || !window.isVisible()) {
+    return;
+  }
+  if (saveTimer) {
+    clearTimeout(saveTimer);
+  }
+  saveTimer = setTimeout(() => {
+    const bounds = window.getBounds();
+    updateSettings(mode === "main" ? { mainBounds: bounds } : { panelBounds: bounds });
+  }, 400);
+}
+
+function showIn(next: WindowMode): void {
   const window = getWindow();
   if (!window) {
     return;
   }
-  if (!getSettings().keepOnTop) {
-    positionUnderTray(window);
-  }
+  applyMode(window, next);
   window.show();
   window.focus();
   setArrivalDot(false);
+}
+
+// Tray click / Option+Shift+F: the user's choice of popover or panel.
+export function showPopover(): void {
+  showIn(getSettings().showAs);
+}
+
+// "Open Flick": the resizable main window.
+export function openMainWindow(): void {
+  showIn("main");
 }
 
 export function togglePopover(): void {
@@ -169,7 +260,8 @@ export function togglePopover(): void {
   if (!window) {
     return;
   }
-  if (window.isVisible() && window.isFocused()) {
+  const wanted = getSettings().showAs;
+  if (window.isVisible() && mode === wanted && (window.isFocused() || mode === "panel")) {
     window.hide();
   } else {
     showPopover();
@@ -184,7 +276,7 @@ function setArrivalDot(on: boolean): void {
   tray.setImage(trayImage(on));
 }
 
-// A file arrived: show the dot unless the popover is open in front.
+// A file arrived: show the dot unless Flick is open in front.
 export function noteArrival(): void {
   const window = getWindow();
   if (!window || !window.isVisible() || !window.isFocused()) {
@@ -192,10 +284,10 @@ export function noteArrival(): void {
   }
 }
 
-// While a card is being dragged out, clicking/dropping in another app
-// mustn't hide the popover mid-drag.
 let dragTimer: NodeJS.Timeout | null = null;
 
+// While a card is being dragged out, clicking/dropping in another app
+// mustn't hide the popover mid-drag.
 export function setDragInProgress(value: boolean): void {
   dragInProgress = value;
   if (dragTimer) {
@@ -210,29 +302,35 @@ export function setDragInProgress(value: boolean): void {
   }
 }
 
-function applyKeepOnTop(window: BrowserWindow): void {
-  // Both modes float above other windows while visible; "Keep on top" also
-  // stops the popover from hiding when you click elsewhere.
-  window.setAlwaysOnTop(true, getSettings().keepOnTop ? "floating" : "pop-up-menu");
-}
-
 function buildMenu(): Menu {
   const settings = getSettings();
   const canLaunchAtLogin = process.platform === "darwin" || process.platform === "win32";
+  const setShowAs = (showAs: ShowAs) => {
+    updateSettings({ showAs });
+    if (mode !== "main" && getWindow()?.isVisible()) {
+      showPopover();
+    }
+    refreshLinuxMenu();
+  };
   const template: Electron.MenuItemConstructorOptions[] = [
-    { label: "Open Flick", accelerator: TOGGLE_SHORTCUT, click: showPopover },
+    { label: "Open Flick", click: openMainWindow },
     { type: "separator" },
     {
-      label: "Keep on top",
-      type: "checkbox",
-      checked: settings.keepOnTop,
-      click: (item) => {
-        updateSettings({ keepOnTop: item.checked });
-        const window = getWindow();
-        if (window) {
-          applyKeepOnTop(window);
-        }
-      },
+      label: "Show from menu bar as",
+      submenu: [
+        {
+          label: "Menu bar popover",
+          type: "radio",
+          checked: settings.showAs === "popover",
+          click: () => setShowAs("popover"),
+        },
+        {
+          label: "Floating panel",
+          type: "radio",
+          checked: settings.showAs === "panel",
+          click: () => setShowAs("panel"),
+        },
+      ],
     },
     ...(canLaunchAtLogin
       ? [
@@ -251,6 +349,13 @@ function buildMenu(): Menu {
     { label: "Quit Flick", role: "quit" },
   ];
   return Menu.buildFromTemplate(template);
+}
+
+// Linux shows a fixed menu (no click events): rebuild it after changes.
+function refreshLinuxMenu(): void {
+  if (process.platform === "linux") {
+    tray?.setContextMenu(buildMenu());
+  }
 }
 
 // Other features (clips) can add items to the right-click menu.
@@ -279,19 +384,28 @@ export function setupTray(windowGetter: () => BrowserWindow | null): void {
   app.on("will-quit", () => globalShortcut.unregisterAll());
 }
 
-// Hook up a (re)created window: popover behavior on blur, hide instead of close.
+// Hook up the window: mode behavior on blur, remembered bounds, hide not close.
 export function attachWindow(window: BrowserWindow, isQuitting: () => boolean): void {
-  applyKeepOnTop(window);
   window.on("blur", () => {
-    if (!getSettings().keepOnTop && !dragInProgress && !window.webContents.isDevToolsOpened()) {
+    if (mode === "popover" && !dragInProgress && !window.webContents.isDevToolsOpened()) {
       window.hide();
     }
   });
   window.on("focus", () => setArrivalDot(false));
+  window.on("resize", () => rememberBounds(window));
+  window.on("move", () => rememberBounds(window));
   window.on("close", (event) => {
     if (!isQuitting()) {
       event.preventDefault();
       window.hide();
     }
   });
+  // Tell a freshly loaded page which mode it's in.
+  window.webContents.on("did-finish-load", () => window.webContents.send("window:mode", mode));
+}
+
+export function setupWindowModeIpc(): void {
+  ipcMain.handle("window:get-mode", () => mode);
+  ipcMain.on("window:open-main", () => openMainWindow());
+  ipcMain.on("window:hide", () => getWindow()?.hide());
 }

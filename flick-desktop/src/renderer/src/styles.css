@@ -1512,7 +1512,7 @@ input:focus-visible {
   flex: 1;
   align-items: center;
   gap: 10px;
-  padding: 8px 4px 8px 10px;
+  padding: 6px 4px 6px 10px;
   border: 0;
   background: transparent;
   color: inherit;
@@ -1586,6 +1586,7 @@ input:focus-visible {
 
 .compact-meta {
   overflow: hidden;
+  line-height: 1.2;
   color: var(--flick-muted);
   font-size: 12px;
   font-weight: var(--flick-font-weight-semibold);
@@ -1818,4 +1819,77 @@ input:focus-visible {
   font: inherit;
   font-size: 12px;
   font-weight: var(--flick-font-weight-extrabold);
+}
+
+.compact-grid-popover {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.window-close-button {
+  -webkit-app-region: no-drag;
+  display: grid;
+  width: 26px;
+  height: 26px;
+  order: 99;
+  place-items: center;
+  border: 1px solid var(--flick-navy);
+  border-radius: 50%;
+  background: var(--flick-cream);
+  color: var(--flick-navy);
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: var(--flick-font-weight-extrabold);
+  line-height: 1;
+}
+
+/* Compact chrome: smaller header and heading so more items fit. */
+.widget-compact .topbar {
+  min-height: 44px;
+  flex: 0 0 44px;
+  padding: 0 10px;
+}
+
+.widget-compact .brand-mark,
+.widget-compact .account-button {
+  width: 30px;
+  height: 30px;
+}
+
+.widget-compact .status-pill {
+  min-height: 24px;
+}
+
+.widget-compact .section-heading .eyebrow {
+  display: none;
+}
+
+.widget-compact .add-file-button {
+  width: 28px;
+  height: 28px;
+}
+
+.widget-compact .content {
+  padding: 0 10px 10px;
+}
+
+.widget-compact .section-heading {
+  margin: 0 0 6px;
+}
+
+.widget-compact .section-heading h1 {
+  font-size: 14px;
+}
+
+.widget-compact .home-tabs {
+  margin-bottom: 6px;
+}
+
+.widget-compact .home-tab {
+  min-height: 28px;
+  font-size: 13px;
+}
+
+/* The popover has no room for the drop hint; drag-and-drop still works. */
+.widget-popover .footer {
+  display: none;
 }

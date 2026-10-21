@@ -35,6 +35,7 @@ import {
   noteArrival,
   setDragInProgress,
   setupTray,
+  setupWindowModeIpc,
   showPopover,
 } from "./tray";
 
@@ -684,6 +685,7 @@ app
     }
     createWindow();
     setupTray(() => mainWindow);
+    setupWindowModeIpc();
     setupClips(() => mainWindow, showPopover);
 
     app.on("activate", () => {

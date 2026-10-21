@@ -20,6 +20,8 @@ interface FileListProps {
   deviceId: string | null;
   deviceNames: Record<string, string>;
   density: Density;
+  // Popover: just the newest few items, no sections, plus "Open Flick".
+  recentOnly?: number;
   onFileSelection: (event: ChangeEvent<HTMLInputElement>) => void;
   onPreview: (file: CloudFile) => void;
   onStartDrag: (file: CloudFile) => void;
@@ -39,6 +41,7 @@ export default function FileList({
   deviceId,
   deviceNames,
   density,
+  recentOnly,
   onFileSelection,
   onPreview,
   onStartDrag,
@@ -87,7 +90,20 @@ export default function FileList({
         onChange={onFileSelection}
         aria-label="Choose files to upload"
       />
-      {files.length > 0 && density === "compact" && (
+      {files.length > 0 && density === "compact" && recentOnly !== undefined && (
+        <RecentFiles
+          files={files}
+          limit={recentOnly}
+          now={now}
+          senderOf={(file) => formatSender(file.device_id, deviceId, deviceNames)}
+          onPreview={onPreview}
+          onStartDrag={onStartDrag}
+          onRemove={onRemove}
+          onTogglePin={onTogglePin}
+          onRetry={onRetryDownload}
+        />
+      )}
+      {files.length > 0 && density === "compact" && recentOnly === undefined && (
         <CompactFiles
           files={files}
           now={now}
@@ -260,6 +276,38 @@ function CompactFiles({ files, now, senderOf, ...actions }: CompactFilesProps) {
           </section>
         );
       })}
+    </div>
+  );
+}
+
+// Menu bar popover: the newest items (pinned first, as everywhere), images in
+// one small grid, then rows. "Open Flick" shows everything in the main window.
+function RecentFiles({
+  files,
+  limit,
+  now,
+  senderOf,
+  ...actions
+}: CompactFilesProps & { limit: number }) {
+  const shown = files.slice(0, limit);
+  const images = shown.filter((file) => getFileVisualType(file) === "image");
+  const others = shown.filter((file) => getFileVisualType(file) !== "image");
+  const hidden = files.length - shown.length;
+  return (
+    <div className="compact-list">
+      {images.length > 0 && (
+        <div className="compact-grid compact-grid-popover">
+          {images.map((file) => (
+            <CompactImageTile key={file.id} file={file} now={now} sender={senderOf(file)} {...actions} />
+          ))}
+        </div>
+      )}
+      {others.map((file) => (
+        <CompactFileRow key={file.id} file={file} now={now} sender={senderOf(file)} {...actions} />
+      ))}
+      <button type="button" className="compact-more-chip" onClick={() => window.flick.openMainWindow()}>
+        {hidden > 0 ? `+${hidden} more · Open Flick` : "Open Flick"}
+      </button>
     </div>
   );
 }

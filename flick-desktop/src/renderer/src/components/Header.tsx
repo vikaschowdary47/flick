@@ -17,6 +17,7 @@ interface HeaderProps {
   deviceName?: string | null;
   onRenameDevice?: (name: string) => Promise<string | null>;
   usage?: Usage | null;
+  windowMode?: "popover" | "panel" | "main";
   clipboardSharing?: boolean | null; // null/undefined hides it (flag off)
   onClipboardSharingChange?: (on: boolean) => void;
 }
@@ -33,6 +34,7 @@ export default function Header({
   deviceName = null,
   onRenameDevice,
   usage = null,
+  windowMode = "popover",
   clipboardSharing = null,
   onClipboardSharingChange,
 }: HeaderProps) {
@@ -79,6 +81,18 @@ export default function Header({
         <span className="brand-name">flick</span>
       </div>
       <div className="header-actions">
+        {windowMode !== "popover" && (
+          // Frameless window: our own close (hides; Flick keeps running in the menu bar).
+          <button
+            type="button"
+            className="window-close-button"
+            aria-label="Close window"
+            title="Close"
+            onClick={() => window.flick.hideWindow()}
+          >
+            ×
+          </button>
+        )}
         <span
           className={`status-pill ${
             !isOnline
