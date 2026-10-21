@@ -10,6 +10,7 @@ import { useConnectionStatus } from "../hooks/useConnectionStatus";
 import { useDevice } from "../hooks/useDevice";
 import { useUsage } from "../hooks/useUsage";
 import { useWidgetSnapshot } from "../hooks/useWidgetSnapshot";
+import { useDeepLinkTarget } from "../hooks/useDeepLinkTarget";
 import { useNow } from "../hooks/useNow";
 import { useOpenFile } from "../hooks/useOpenFile";
 import { usePinFile } from "../hooks/usePinFile";
@@ -84,6 +85,24 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
     enabled: true,
     showContentOnLockScreen: false,
   });
+
+  // Widget taps: flick://file/<id> opens that file's menu on the Files tab;
+  // flick://clip/<id> opens the Clips tab.
+  const deepLink = useDeepLinkTarget();
+  useEffect(() => {
+    const target = deepLink.target;
+    if (!target) return;
+    if (target.kind === "clip") {
+      if (clipsOn) changeTab("clips");
+      deepLink.consume();
+      return;
+    }
+    const file = recent.files.find((f) => f.id === target.id);
+    if (!file) return; // wait for the list to load (or it has expired)
+    setTab("files");
+    setMenu({ file, anchorY: tokens.layout.minTouchTarget * 4 });
+    deepLink.consume();
+  }, [deepLink.target, recent.files, clipsOn]);
 
   const tabs = clipsOn ? <Tabs tab={activeTab} onChange={changeTab} clipsDot={clips.hasNew} slim={compact} /> : null;
   // Compact: Settings / Sign out live in a ⋯ menu in the header.
