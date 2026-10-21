@@ -20,6 +20,7 @@ Nothing was applied to the real Supabase project, deployed, pushed, or deleted.
 | B4 Lock Screen widgets | `0a03fb6` | done | Inline / circular / rectangular; counts only unless Show content on Lock Screen is on; build verified; docs/screenshots/lock-*.png |
 | B5 Live Activity + Dynamic Island | `bdaf7b7` | partial | Built and rendered; starts when Flick goes to background with unseen files, ends on open, stale after 4h. Can't start while Flick is closed without push (out of scope). Real start/end needs your signed-in app on a device or Simulator |
 | B6 widget_mode + Settings toggles | `65e4cbe` | done | Migration file (tested on local Postgres) + iOS toggles; Android toggles deferred with Android (your later instruction: don't start Android) |
+| D1 Limits + 80% free-up-space prompt | `bcac866` | done | Server limits/config table existed (20261022 migration); added 80% banner + confirm listing oldest unpinned files, both apps; desktop screenshots |
 
 ## Decisions I made on my own
 
@@ -30,6 +31,7 @@ Nothing was applied to the real Supabase project, deployed, pushed, or deleted.
 - **The tray right-click menu keeps its own "Show from menu bar as" and "Launch at login"** in addition to the new panel.
 - **Widget screenshots are rendered from the real SwiftUI widget views** in a throwaway simulator app (not committed), because adding a widget to the Simulator's Home Screen needs manual taps. They use sample data, not your account.
 - **The widget target is named `FlickWidgetExtension`**, not `FlickWidgets`: that name is taken by the app's bridge module and the two Swift modules clashed at build time.
+- **"Free up space" removes after a confirm that lists the files**, oldest first, never pinned, down to 70% of the limit. One tap opens it, one tap removes; I didn't make it a single tap with no list, because it deletes files on every device.
 - **Widget defaults:** Home, Lock Screen and Live Activity on; Lock Screen content off; Android widget on; bubble off.
 - **Device rows are read with `select("*")`** so the app doesn't break before the `widget_mode` migration is applied.
 - **Android (section C) not started**, per your later message ("Do not start … Android"). B6 includes the Android keys in `widget_mode` but no Android UI.
