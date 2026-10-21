@@ -1853,6 +1853,7 @@ input:focus-visible {
 .widget-compact .account-button {
   width: 30px;
   height: 30px;
+  flex: 0 0 30px;
 }
 
 .widget-compact .status-pill {
@@ -1894,13 +1895,38 @@ input:focus-visible {
 .widget-popover .topbar {
   min-height: 36px;
   flex: 0 0 36px;
-  padding: 0 8px;
+  gap: 8px;
+  /* Room on the right for the avatar's ring and raised shadow. */
+  padding: 0 10px 0 8px;
 }
 
+/* Logo tile, status pill and avatar share one 28px height. */
 .widget-popover .brand-mark,
 .widget-popover .account-button {
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  box-shadow: 0 2px 0 var(--flick-navy);
+}
+
+.widget-popover .brand-mark svg,
+.widget-popover .account-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.widget-popover .status-pill {
+  height: 28px;
+  min-height: 28px;
+  padding: 0 10px;
+}
+
+.widget-popover .header-actions {
+  gap: 6px;
+}
+
+.widget-popover .account-button[aria-expanded="true"] {
+  transform: none;
 }
 
 .widget-popover .brand-name {
@@ -1911,15 +1937,11 @@ input:focus-visible {
   padding: 0 8px 8px;
 }
 
-/* Short when empty: no illustration, just the message and button. */
-.widget-popover .empty-illustration,
-.widget-popover .empty-drop-hint {
-  display: none;
-}
-
-.widget-popover .empty-files {
-  gap: 4px;
-  padding: 8px 0;
+/* Popover: the undo toast sits in the flow, never over the list. */
+.widget-popover .removal-toasts {
+  position: static;
+  max-width: none;
+  margin-top: 6px;
 }
 
 .popover-footer {
@@ -2015,4 +2037,125 @@ input:focus-visible {
   border-radius: 999px;
   background: var(--flick-cream);
   transform: translateX(-50%);
+}
+
+/* ---------- List states: loading, error, empty (one at a time) ---------- */
+.skeleton-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 2px 3px 6px 2px;
+}
+
+.skeleton-row {
+  display: flex;
+  height: 48px;
+  align-items: center;
+  gap: 10px;
+  padding: 0 10px;
+  border: 1.5px solid color-mix(in srgb, var(--flick-navy) 25%, transparent);
+  border-radius: var(--flick-radius-card);
+  background: var(--flick-white);
+}
+
+.skeleton-icon,
+.skeleton-line {
+  background: color-mix(in srgb, var(--flick-navy) 10%, transparent);
+  animation: skeleton-pulse 1.2s ease-in-out infinite;
+}
+
+.skeleton-icon {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  border-radius: 9px;
+}
+
+.skeleton-lines {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.skeleton-line {
+  height: 10px;
+  border-radius: 999px;
+}
+
+.skeleton-line-short {
+  width: 45%;
+}
+
+@keyframes skeleton-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-icon,
+  .skeleton-line {
+    animation: none;
+  }
+}
+
+.load-error-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1.5px solid var(--flick-error-outline);
+  border-radius: var(--flick-radius-card);
+  background: var(--flick-white);
+  box-shadow: 0 2px 0 var(--flick-navy);
+  color: var(--flick-navy);
+}
+
+.load-error-card p {
+  flex: 1;
+  margin: 0;
+  font-size: 13px;
+  font-weight: var(--flick-font-weight-semibold);
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.load-error-retry {
+  flex: none;
+  min-height: 28px;
+  padding: 0 12px;
+  border: 1.5px solid var(--flick-navy);
+  border-radius: 999px;
+  background: var(--flick-yellow);
+  color: var(--flick-navy);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: var(--flick-font-weight-extrabold);
+}
+
+.popover-empty {
+  display: flex;
+  min-height: 40px;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  color: var(--flick-muted);
+  font-size: 13px;
+  font-weight: var(--flick-font-weight-semibold);
+}
+
+.popover-empty-icon {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  place-items: center;
+  border: 1.5px solid var(--flick-navy);
+  border-radius: 9px;
+  background: var(--flick-coral);
+  box-shadow: 0 2px 0 var(--flick-navy);
+  color: var(--flick-navy);
+  font-weight: var(--flick-font-weight-extrabold);
 }

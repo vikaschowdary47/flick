@@ -43,6 +43,8 @@ interface WidgetProps {
   showConfetti: boolean;
   arrivalPulse: number;
   uploadError: string;
+  loadError: string;
+  onRetryLoad: () => void;
   // Clips tab content; null when clips are off (flag or setting).
   clipsPanel: ReactNode | null;
   clipsDot: boolean;
@@ -90,6 +92,8 @@ export default function Widget({
   showConfetti,
   arrivalPulse,
   uploadError,
+  loadError,
+  onRetryLoad,
   clipsPanel,
   clipsDot,
   onOpenClips,
@@ -124,8 +128,16 @@ export default function Widget({
         if (!content) {
           return;
         }
+        // Natural content height from where its last child ends (scrollHeight
+        // can't shrink below the current box, so the popover would never shrink).
+        const box = content.getBoundingClientRect();
+        let bottom = 0;
+        for (const child of Array.from(content.children)) {
+          bottom = Math.max(bottom, child.getBoundingClientRect().bottom - box.top + content.scrollTop);
+        }
+        const padding = parseFloat(getComputedStyle(content).paddingBottom) || 0;
         const chrome = widget.offsetHeight - content.clientHeight; // header, footer, borders
-        window.flick.reportPopoverHeight(chrome + content.scrollHeight);
+        window.flick.reportPopoverHeight(chrome + bottom + padding);
       });
     };
     const resize = new ResizeObserver(measure);
@@ -221,6 +233,8 @@ export default function Widget({
           isLoadingFiles={isLoadingFiles}
           isUploading={isUploading}
           uploadError={uploadError}
+          loadError={loadError}
+          onRetryLoad={onRetryLoad}
           pendingRemovals={pendingRemovals}
           deviceId={deviceId}
           deviceNames={deviceNames}

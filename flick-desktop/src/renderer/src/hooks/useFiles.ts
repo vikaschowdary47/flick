@@ -18,6 +18,10 @@ export function useFiles(session: Session | null, deviceId: string | null = null
   const [isLoadingFiles, setIsLoadingFiles] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const [limitHit, setLimitHit] = useState<LimitKind | null>(null);
+  // Loading the list failed (separate from upload errors, so the empty state
+  // never shows for a failed load). Includes the Supabase detail in dev builds.
+  const [loadError, setLoadError] = useState("");
+  const reloadRef = useRef<() => void>(() => {});
   const [isUploading, setIsUploading] = useState(false);
   const [isDraggingFiles, setIsDraggingFiles] = useState(false);
   const [arrivalPulse, setArrivalPulse] = useState(0);
@@ -271,6 +275,7 @@ export function useFiles(session: Session | null, deviceId: string | null = null
           throw error;
         }
         if (isMounted) {
+          setLoadError("");
           for (const row of data) {
             queueFile(row);
           }
@@ -288,9 +293,25 @@ export function useFiles(session: Session | null, deviceId: string | null = null
           });
         }
       } catch (error: unknown) {
+        // The real Supabase error (message, code, details, hint) for debugging.
         console.error("Could not load this user's Flick files:", error);
         if (isMounted) {
-          setUploadError("Could not load your files. Please try again.");
+          const detail =
+            typeof error === "object" && error !== null
+              ? [
+                  (error as { message?: unknown }).message,
+                  (error as { code?: unknown }).code && `code ${String((error as { code?: unknown }).code)}`,
+                  (error as { details?: unknown }).details,
+                  (error as { hint?: unknown }).hint,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")
+              : String(error);
+          setLoadError(
+            import.meta.env.DEV && detail
+              ? `Could not load your files. (${detail})`
+              : "Could not load your files.",
+          );
         }
       } finally {
         if (isMounted) {
@@ -298,6 +319,11 @@ export function useFiles(session: Session | null, deviceId: string | null = null
         }
       }
     }
+
+    reloadRef.current = () => {
+      setIsLoadingFiles(true);
+      refreshFiles();
+    };
 
     function refreshFiles(): void {
       if (loadingRowsPromise) {
@@ -389,6 +415,7 @@ export function useFiles(session: Session | null, deviceId: string | null = null
 
     setFiles([]);
     setUploadError("");
+    setLoadError("");
     setIsLoadingFiles(true);
 
     return () => {
@@ -784,6 +811,8 @@ export function useFiles(session: Session | null, deviceId: string | null = null
     togglePin,
     undoRemove,
     uploadError,
+    loadError,
+    retryLoad: () => reloadRef.current(),
     limitHit,
     clearLimit: () => setLimitHit(null),
   };

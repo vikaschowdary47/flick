@@ -135,7 +135,8 @@ export type WindowMode = "popover" | "panel" | "main";
 // The popover sizes itself to its content (the page reports its height),
 // between these bounds: a quick dropdown, not a window.
 const POPOVER_WIDTH = 360;
-const POPOVER_MIN_HEIGHT = 200;
+// Low enough that the one-line empty state isn't padded with blank space.
+const POPOVER_MIN_HEIGHT = 140;
 const POPOVER_MAX_HEIGHT = 440;
 const POPOVER_MAX_SHARE = 0.45; // of the screen's work area height
 let popoverContentHeight = POPOVER_MIN_HEIGHT;

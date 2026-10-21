@@ -16,6 +16,8 @@ interface FileListProps {
   isLoadingFiles: boolean;
   isUploading: boolean;
   uploadError: string;
+  loadError: string;
+  onRetryLoad: () => void;
   pendingRemovals: PendingRemoval[];
   deviceId: string | null;
   deviceNames: Record<string, string>;
@@ -37,6 +39,8 @@ export default function FileList({
   isLoadingFiles,
   isUploading,
   uploadError,
+  loadError,
+  onRetryLoad,
   pendingRemovals,
   deviceId,
   deviceNames,
@@ -56,86 +60,93 @@ export default function FileList({
     fileInputRef.current?.click();
   }
 
+  const popover = recentOnly !== undefined;
+  // Exactly one of these shows. A failed load never shows the empty state.
+  const view: "loading" | "error" | "empty" | "list" =
+    files.length > 0 ? "list" : isLoadingFiles ? "loading" : loadError ? "error" : "empty";
+  const senderOf = (file: CloudFile) => formatSender(file.device_id, deviceId, deviceNames);
+  const itemActions = {
+    onPreview,
+    onStartDrag,
+    onRemove,
+    onTogglePin,
+    onRetry: onRetryDownload,
+  };
+
   return (
     <>
-      <div className="section-heading">
-        <div>
-          <p className="eyebrow">ON THIS MAC</p>
-          <h1 id="incoming-heading">
-            {files.length > 0
-              ? `${files.length} ${files.length === 1 ? "file" : "files"} landed`
-              : isLoadingFiles
-                ? "A moment…"
-                : "Nothing yet"}
-          </h1>
-        </div>
-        <div className="file-actions">
-          <button
-            className="add-file-button"
-            type="button"
+      {!popover && (
+        <>
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">ON THIS MAC</p>
+              <h1 id="incoming-heading">
+                {view === "list"
+                  ? `${files.length} ${files.length === 1 ? "file" : "files"} landed`
+                  : view === "loading"
+                    ? "A moment…"
+                    : view === "error"
+                      ? "Couldn’t load"
+                      : "Nothing yet"}
+              </h1>
+            </div>
+            <div className="file-actions">
+              <button
+                className="add-file-button"
+                type="button"
+                aria-label="Choose files to upload"
+                title="Choose files to upload"
+                disabled={isUploading}
+                onClick={handleChooseFiles}
+              >
+                +
+              </button>
+            </div>
+          </div>
+          <input
+            ref={fileInputRef}
+            className="visually-hidden"
+            type="file"
+            multiple
+            onChange={onFileSelection}
             aria-label="Choose files to upload"
-            title="Choose files to upload"
-            disabled={isUploading}
-            onClick={handleChooseFiles}
-          >
-            +
+          />
+        </>
+      )}
+
+      {view === "loading" && (
+        <div className="skeleton-list" role="status" aria-label="Loading your files">
+          {[0, 1, 2].map((index) => (
+            <div key={index} className="skeleton-row" aria-hidden="true">
+              <span className="skeleton-icon" />
+              <span className="skeleton-lines">
+                <span className="skeleton-line" />
+                <span className="skeleton-line skeleton-line-short" />
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {view === "error" && (
+        <div className="load-error-card" role="alert">
+          <p>{loadError}</p>
+          <button type="button" className="load-error-retry" onClick={onRetryLoad}>
+            Retry
           </button>
         </div>
-      </div>
-      <input
-        ref={fileInputRef}
-        className="visually-hidden"
-        type="file"
-        multiple
-        onChange={onFileSelection}
-        aria-label="Choose files to upload"
-      />
-      {files.length > 0 && density === "compact" && recentOnly !== undefined && (
-        <RecentFiles
-          files={files}
-          limit={recentOnly}
-          now={now}
-          senderOf={(file) => formatSender(file.device_id, deviceId, deviceNames)}
-          onPreview={onPreview}
-          onStartDrag={onStartDrag}
-          onRemove={onRemove}
-          onTogglePin={onTogglePin}
-          onRetry={onRetryDownload}
-        />
       )}
-      {files.length > 0 && density === "compact" && recentOnly === undefined && (
-        <CompactFiles
-          files={files}
-          now={now}
-          senderOf={(file) => formatSender(file.device_id, deviceId, deviceNames)}
-          onPreview={onPreview}
-          onStartDrag={onStartDrag}
-          onRemove={onRemove}
-          onTogglePin={onTogglePin}
-          onRetry={onRetryDownload}
-        />
+
+      {view === "empty" && popover && (
+        <p className="popover-empty">
+          <span className="popover-empty-icon" aria-hidden="true">
+            ↗
+          </span>
+          Nothing yet — flick something from your phone
+        </p>
       )}
-      {files.length > 0 && density === "comfy" && (
-        <motion.div layout className="files-list">
-          <AnimatePresence initial={false}>
-            {files.map((file, index) => (
-              <FileCard
-                file={file}
-                index={index}
-                now={now}
-                sender={formatSender(file.device_id, deviceId, deviceNames)}
-                key={file.id}
-                onPreview={onPreview}
-                onStartDrag={onStartDrag}
-                onRemove={onRemove}
-                onTogglePin={onTogglePin}
-                onRetry={onRetryDownload}
-              />
-            ))}
-          </AnimatePresence>
-        </motion.div>
-      )}
-      {files.length === 0 && !isLoadingFiles && (
+
+      {view === "empty" && !popover && (
         <div className="empty-files">
           <div className="empty-illustration" aria-hidden="true">
             <span className="empty-sparkle empty-sparkle-one">✦</span>
@@ -158,12 +169,41 @@ export default function FileList({
           <span className="empty-drop-hint">or drag and drop a file here</span>
         </div>
       )}
-      {files.length === 0 && isLoadingFiles && (
-        <p className="auth-status" role="status">
-          Loading your files…
+
+      {view === "list" && density === "compact" && popover && (
+        <RecentFiles files={files} limit={recentOnly} now={now} senderOf={senderOf} {...itemActions} />
+      )}
+      {view === "list" && density === "compact" && !popover && (
+        <CompactFiles files={files} now={now} senderOf={senderOf} {...itemActions} />
+      )}
+      {view === "list" && density === "comfy" && (
+        <motion.div layout className="files-list">
+          <AnimatePresence initial={false}>
+            {files.map((file, index) => (
+              <FileCard
+                file={file}
+                index={index}
+                now={now}
+                sender={senderOf(file)}
+                key={file.id}
+                onPreview={onPreview}
+                onStartDrag={onStartDrag}
+                onRemove={onRemove}
+                onTogglePin={onTogglePin}
+                onRetry={onRetryDownload}
+              />
+            ))}
+          </AnimatePresence>
+        </motion.div>
+      )}
+
+      {/* A refresh that fails while files are listed: a line, not the card. */}
+      {view === "list" && loadError && (
+        <p className="auth-error" role="alert">
+          {loadError}
         </p>
       )}
-      {files.length > 0 && isUploading && (
+      {view === "list" && isUploading && (
         <p className="auth-status" role="status">
           Uploading…
         </p>

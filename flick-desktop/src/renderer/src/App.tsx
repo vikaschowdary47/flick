@@ -108,6 +108,8 @@ export default function App() {
       showConfetti={fileState.showConfetti}
       arrivalPulse={fileState.arrivalPulse}
       uploadError={fileState.uploadError}
+      loadError={fileState.loadError}
+      onRetryLoad={fileState.retryLoad}
       usage={usage.usage}
       clipsPanel={
         clipboardSetting.clipsActive ? (
