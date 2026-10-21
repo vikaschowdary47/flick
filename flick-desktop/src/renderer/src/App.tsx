@@ -20,7 +20,8 @@ export default function App() {
   const activeLimit = fileState.limitHit ?? (device.limitHit ? "devices" : null);
   // Limits and usage come from the server; refresh when they're about to show.
   const { density, setDensity } = useDensity(auth.session);
-  const usage = useUsage(auth.isAccountMenuOpen || activeLimit !== null);
+  const [settingsVisible, setSettingsVisible] = useState(false);
+  const usage = useUsage(settingsVisible || auth.isAccountMenuOpen || activeLimit !== null);
   // Clips: nothing is fetched, subscribed or bound unless the clipboard
   // feature flag and the user's Clipboard sharing setting are both on.
   const flags = useFeatureFlags(auth.session);
@@ -112,6 +113,7 @@ export default function App() {
       onRetryLoad={fileState.retryLoad}
       usage={usage.usage}
       clipsCount={clips.clips.length}
+      onSettingsVisibleChange={setSettingsVisible}
       clipsPanel={
         clipboardSetting.clipsActive ? (view) => (
           <ClipsPanel

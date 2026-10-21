@@ -21,6 +21,11 @@ interface HeaderProps {
   windowMode?: "popover" | "panel" | "main";
   // Expanded popover: pop out into the separate resizable window.
   onPopOut?: () => void;
+  // Popover: the avatar opens the settings panel instead of a dropdown,
+  // and while it's open the header shows "← Back".
+  onOpenSettings?: () => void;
+  settingsOpen?: boolean;
+  onBack?: () => void;
   density?: Density;
   onDensityChange?: (density: Density) => void;
   clipboardSharing?: boolean | null; // null/undefined hides it (flag off)
@@ -41,6 +46,9 @@ export default function Header({
   usage = null,
   windowMode = "popover",
   onPopOut,
+  onOpenSettings,
+  settingsOpen = false,
+  onBack,
   density = "compact",
   onDensityChange,
   clipboardSharing = null,
@@ -66,6 +74,11 @@ export default function Header({
 
   return (
     <header className="topbar">
+      {settingsOpen && onBack ? (
+        <button type="button" className="back-button" onClick={onBack}>
+          ← Back
+        </button>
+      ) : (
       <div className="brand">
         <motion.div
           className="brand-mark"
@@ -88,6 +101,7 @@ export default function Header({
         </motion.div>
         <span className="brand-name">flick</span>
       </div>
+      )}
       <div className="header-actions">
         {onPopOut && (
           <button
@@ -135,7 +149,9 @@ export default function Header({
             aria-expanded={isAccountMenuOpen}
             aria-controls={isAccountMenuOpen ? "account-menu" : undefined}
             title="Account"
-            onClick={() => setIsAccountMenuOpen((isOpen) => !isOpen)}
+            onClick={() =>
+              onOpenSettings ? onOpenSettings() : setIsAccountMenuOpen((isOpen) => !isOpen)
+            }
           >
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <circle cx="12" cy="8" r="3.5" />

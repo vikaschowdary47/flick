@@ -20,6 +20,9 @@ interface Window {
     onWindowMode: (listener: (mode: 'popover' | 'panel' | 'main') => void) => () => void
     openMainWindow: () => void
     hideWindow: () => void
+    getAppSettings: () => Promise<{ showAs: 'popover' | 'panel'; canLaunchAtLogin: boolean; launchAtLogin: boolean }>
+    setShowAs: (showAs: 'popover' | 'panel') => Promise<void>
+    setLaunchAtLogin: (on: boolean) => Promise<void>
     reportPopoverHeight: (height: number, expanded: boolean) => void
     onPopoverExpanded: (listener: (expanded: boolean) => void) => () => void
     setClipsActive: (active: boolean) => Promise<void>

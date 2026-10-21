@@ -203,6 +203,9 @@ function fitPopover(window: BrowserWindow, animate = false): void {
     );
     if (t >= 1) {
       cancelResize();
+      // Content may have changed size mid-animation (e.g. settings loading):
+      // settle on the latest reported height.
+      fitPopover(window);
     }
   }, 1000 / 60);
 }
@@ -501,6 +504,24 @@ export function attachWindow(window: BrowserWindow, isQuitting: () => boolean): 
 
 export function setupWindowModeIpc(): void {
   ipcMain.handle("window:get-mode", () => mode);
+  // Settings panel in the popover: the per-device app settings.
+  ipcMain.handle("settings:get-app", () => ({
+    showAs: getSettings().showAs,
+    canLaunchAtLogin: process.platform === "darwin" || process.platform === "win32",
+    launchAtLogin: app.getLoginItemSettings().openAtLogin,
+  }));
+  ipcMain.handle("settings:set-show-as", (_event, showAs: unknown) => {
+    if (showAs === "popover" || showAs === "panel") {
+      updateSettings({ showAs });
+      refreshLinuxMenu();
+    }
+  });
+  ipcMain.handle("settings:set-launch-at-login", (_event, on: unknown) => {
+    if (typeof on === "boolean" && (process.platform === "darwin" || process.platform === "win32")) {
+      app.setLoginItemSettings({ openAtLogin: on });
+      refreshLinuxMenu();
+    }
+  });
   // The popover page reports its natural height whenever its list changes.
   // The page reports its natural height and layout after every change. A
   // layout change (Open Flick / Show less) animates; anything else snaps.

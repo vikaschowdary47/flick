@@ -97,7 +97,15 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     deviceName={null}
     deviceNames={{}}
     onRenameDevice={async () => null}
-    usage={null}
+    usage={{
+      plan: "free",
+      pinsUsed: 1,
+      maxPins: 3,
+      storageUsedBytes: 420 * 1024 * 1024, // 84%: shows the coral bar
+      maxStorageMb: 500,
+      devicesUsed: 3,
+      maxDevices: 4,
+    }}
     onOutsideClick={noop}
     onPreviewFile={noop}
     onStartFileDrag={noop}
@@ -139,7 +147,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     onOpenClips={noop}
     density="compact"
     onDensityChange={noop}
-    clipboardSharing={null}
+    clipboardSharing={state === "mixed" ? true : null}
     onClipboardSharingChange={noop}
   />,
 );

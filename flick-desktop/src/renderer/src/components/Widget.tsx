@@ -7,6 +7,7 @@ import type { Session } from "@supabase/supabase-js";
 import type { CloudFile } from "../types";
 import type { PendingRemoval } from "../hooks/useFiles";
 import FileList, { popoverSelection } from "./FileList";
+import SettingsPanel from "./SettingsPanel";
 import Header from "./Header";
 
 interface WidgetProps {
@@ -50,6 +51,8 @@ interface WidgetProps {
   // many clips to show and forces compact chips.
   clipsPanel: ((view: { popover: boolean; limit?: number }) => ReactNode) | null;
   clipsCount: number;
+  // Lets the app load usage while the popover's settings panel is open.
+  onSettingsVisibleChange?: (visible: boolean) => void;
   clipsDot: boolean;
   onOpenClips: () => void;
   density: Density;
@@ -99,6 +102,7 @@ export default function Widget({
   onRetryLoad,
   clipsPanel,
   clipsCount,
+  onSettingsVisibleChange,
   clipsDot,
   onOpenClips,
   density,
@@ -116,7 +120,21 @@ export default function Widget({
   // "Open Flick" expands the popover in place (the main process animates the
   // resize); click-away or "Show less" brings back the compact popover.
   const [expanded, setExpanded] = useState(false);
-  useEffect(() => window.flick.onPopoverExpanded(setExpanded), []);
+  // Popover settings panel (replaces the list). Hiding the popover resets
+  // both, so the next open shows the compact file list.
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  useEffect(
+    () =>
+      window.flick.onPopoverExpanded((next) => {
+        setExpanded(next);
+        if (!next) {
+          setSettingsOpen(false);
+        }
+      }),
+    [],
+  );
+  const showSettings = isPopover && settingsOpen;
+  useEffect(() => onSettingsVisibleChange?.(showSettings), [showSettings, onSettingsVisibleChange]);
   // The popover (compact or taller) and the floating panel are always
   // compact; only the separate main window follows the Comfy/Compact setting.
   const effectiveDensity: Density = windowMode === "main" ? density : "compact";
@@ -127,8 +145,9 @@ export default function Widget({
         ? Math.max(0, clipsCount - POPOVER_ITEMS)
         : popoverSelection(files, POPOVER_ITEMS).hidden
       : 0;
-  const expandedRef = useRef(expanded);
-  expandedRef.current = expanded;
+  // The settings panel sizes like the taller popover (same max height).
+  const expandedRef = useRef(expanded || showSettings);
+  expandedRef.current = expanded || showSettings;
 
   // Popover: report the natural height (header + all content + footer) so
   // the main process can size the window to it; the list scrolls past the cap.
@@ -172,7 +191,7 @@ export default function Widget({
       resize.disconnect();
       mutations.disconnect();
     };
-  }, [isPopover, expanded]);
+  }, [isPopover, expanded, showSettings]);
 
   return (
     <main
@@ -206,7 +225,10 @@ export default function Widget({
         onRenameDevice={onRenameDevice}
         usage={usage}
         windowMode={windowMode}
-        onPopOut={isPopover && expanded ? () => window.flick.openMainWindow() : undefined}
+        onPopOut={isPopover && expanded && !showSettings ? () => window.flick.openMainWindow() : undefined}
+        onOpenSettings={isPopover ? () => setSettingsOpen(true) : undefined}
+        settingsOpen={showSettings}
+        onBack={() => setSettingsOpen(false)}
         density={density}
         onDensityChange={onDensityChange}
         clipboardSharing={clipboardSharing}
@@ -216,6 +238,16 @@ export default function Widget({
         arrivalPulse={arrivalPulse}
       />
       <section className="content" aria-labelledby="incoming-heading">
+        {showSettings ? (
+          <SettingsPanel
+            email={session.user.email ?? null}
+            usage={usage}
+            clipboardSharing={clipboardSharing}
+            onClipboardSharingChange={onClipboardSharingChange}
+            onSignOut={handleSignOut}
+          />
+        ) : (
+        <>
         {clipsPanel && (
           <div className="home-tabs" role="tablist">
             <button
@@ -272,8 +304,10 @@ export default function Widget({
           onUndoRemove={onUndoRemove}
         />
         )}
+        </>
+        )}
       </section>
-      {isPopover ? (
+      {isPopover && showSettings ? null : isPopover ? (
         // Always visible: the list scrolls above it.
         <footer className="popover-footer">
           {expanded ? (

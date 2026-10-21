@@ -2329,3 +2329,183 @@ input:focus-visible {
     animation-duration: 1ms;
   }
 }
+
+/* ---------- Popover settings panel ---------- */
+.settings-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 2px 2px 6px;
+  animation: settings-in 160ms ease-out;
+}
+
+@keyframes settings-in {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .settings-panel {
+    animation: none;
+  }
+}
+
+.settings-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1.5px solid var(--flick-navy);
+  border-radius: 14px;
+  background: var(--flick-white);
+  color: var(--flick-navy);
+}
+
+.settings-row {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.settings-email {
+  margin: 0;
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: var(--flick-font-weight-extrabold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settings-label {
+  margin: 0;
+  font-size: 13px;
+  font-weight: var(--flick-font-weight-extrabold);
+}
+
+.settings-help {
+  margin: 2px 0 0;
+  color: var(--flick-muted);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.usage-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.usage-bar-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 3px;
+  color: var(--flick-muted);
+  font-size: 11px;
+  font-weight: var(--flick-font-weight-semibold);
+}
+
+.usage-bar-track {
+  height: 6px;
+  overflow: hidden;
+  border: 1px solid var(--flick-navy);
+  border-radius: 999px;
+  background: var(--flick-cream);
+}
+
+.usage-bar-fill {
+  display: block;
+  height: 100%;
+  background: var(--flick-mint);
+}
+
+.usage-bar-high .usage-bar-fill {
+  background: var(--flick-coral);
+}
+
+.toggle {
+  position: relative;
+  width: 38px;
+  height: 22px;
+  flex: none;
+  padding: 0;
+  border: 1.5px solid var(--flick-navy);
+  border-radius: 999px;
+  background: var(--flick-cream);
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+.toggle[aria-checked="true"] {
+  background: var(--flick-coral);
+}
+
+.toggle-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 15px;
+  height: 15px;
+  border: 1.5px solid var(--flick-navy);
+  border-radius: 50%;
+  background: var(--flick-white);
+  transition: transform 120ms ease;
+}
+
+.toggle[aria-checked="true"] .toggle-knob {
+  transform: translateX(16px);
+}
+
+.settings-segments {
+  display: flex;
+  gap: 6px;
+}
+
+.settings-segment {
+  flex: 1;
+  min-height: 28px;
+  border: 1.5px solid var(--flick-navy);
+  border-radius: 999px;
+  background: var(--flick-white);
+  color: var(--flick-navy);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: var(--flick-font-weight-extrabold);
+}
+
+.settings-segment[aria-checked="true"] {
+  background: var(--flick-coral);
+}
+
+.settings-sign-out {
+  align-self: center;
+  padding: 6px 10px;
+  border: 0;
+  background: transparent;
+  color: var(--flick-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: var(--flick-font-weight-semibold);
+  text-decoration: underline;
+}
+
+.back-button {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  gap: 4px;
+  padding: 0 10px;
+  border: 1.5px solid var(--flick-navy);
+  border-radius: 999px;
+  background: var(--flick-white);
+  color: var(--flick-navy);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: var(--flick-font-weight-extrabold);
+  -webkit-app-region: no-drag;
+}

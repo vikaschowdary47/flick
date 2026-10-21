@@ -88,6 +88,10 @@ contextBridge.exposeInMainWorld('flick', {
   },
   openMainWindow: () => ipcRenderer.send('window:open-main'),
   hideWindow: () => ipcRenderer.send('window:hide'),
+  getAppSettings: (): Promise<{ showAs: 'popover' | 'panel'; canLaunchAtLogin: boolean; launchAtLogin: boolean }> =>
+    ipcRenderer.invoke('settings:get-app'),
+  setShowAs: (showAs: 'popover' | 'panel'): Promise<void> => ipcRenderer.invoke('settings:set-show-as', showAs),
+  setLaunchAtLogin: (on: boolean): Promise<void> => ipcRenderer.invoke('settings:set-launch-at-login', on),
   reportPopoverHeight: (height: number, expanded: boolean) =>
     ipcRenderer.send('popover:content-height', height, expanded),
   onPopoverExpanded: (listener: (expanded: boolean) => void): (() => void) => {
