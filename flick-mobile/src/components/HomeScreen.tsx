@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Animated, FlatList, InteractionManager, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
+import { Animated, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme, useThemedStyles } from "../design/ThemeProvider";
 import type { Palette } from "../design/theme";
@@ -43,6 +43,17 @@ type Props = {
   email: string | null;
   onSignOut: () => void;
 };
+
+function requestIdle(callback: () => void): void {
+  const idle = (globalThis as typeof globalThis & {
+    requestIdleCallback?: (callback: () => void) => number;
+  }).requestIdleCallback;
+  if (idle) {
+    idle(callback);
+  } else {
+    setTimeout(callback, 250);
+  }
+}
 
 export function HomeScreen({ userId, email, onSignOut }: Props) {
   const { palette } = useTheme();
@@ -428,7 +439,7 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
         anchorY={accountMenuY ?? 0}
         items={[
           { key: "settings", label: "Settings", icon: <GearIcon />, fill: "preview", // iOS can't present a modal while the menu's modal is closing.
-            onPress: () => InteractionManager.runAfterInteractions(() => setTimeout(() => setSettingsOpen(true), 250)) },
+            onPress: () => requestIdle(() => setSettingsOpen(true)) },
           { key: "signout", label: "Sign out", icon: <SignOutIcon />, fill: "danger", onPress: onSignOut },
         ]}
         onClose={() => setAccountMenuY(null)}
