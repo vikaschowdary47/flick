@@ -10,7 +10,6 @@ import {
 import { execFile } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { hostname } from "node:os";
-import { createServer, type Server } from "node:http";
 import {
   mkdir,
   readFile,
@@ -58,6 +57,39 @@ let ignoredPaths = new Set<string>();
 let fileMutationQueue: Promise<void> = Promise.resolve();
 
 const registryPath = join(app.getPath("userData"), "files.json");
+const AUTH_CALLBACK_PREFIX = "flick://auth-callback";
+let pendingAuthCallback: string | null = null;
+
+function isAuthCallbackUrl(value: string): boolean {
+  return value.startsWith(AUTH_CALLBACK_PREFIX);
+}
+
+function flushAuthCallback(): void {
+  if (!pendingAuthCallback || !mainWindow || mainWindow.webContents.isLoadingMainFrame()) {
+    return;
+  }
+  const callback = pendingAuthCallback;
+  pendingAuthCallback = null;
+  mainWindow.webContents.send("auth:callback", callback);
+}
+
+function handleAuthCallback(value: string): void {
+  if (!isAuthCallbackUrl(value)) {
+    return;
+  }
+  pendingAuthCallback = value;
+  flushAuthCallback();
+  mainWindow?.show();
+  mainWindow?.focus();
+}
+
+function registerProtocol(): void {
+  if (isDevelopment && process.argv[1]) {
+    app.setAsDefaultProtocolClient("flick", process.execPath, [resolve(process.argv[1])]);
+  } else {
+    app.setAsDefaultProtocolClient("flick");
+  }
+}
 
 function createDemoFileIcon(): NativeImage {
   const size = 64;
@@ -506,63 +538,6 @@ function createWindow(): void {
   });
 }
 
-// Google sign-in (OAuth with PKCE) uses a loopback redirect: a tiny HTTP
-// server on 127.0.0.1 receives ?code=… from the system browser and hands it to
-// the renderer, which exchanges it with Supabase. Only one flow at a time.
-const LOOPBACK_TIMEOUT_MS = 5 * 60 * 1000;
-let loopback: { server: Server; code: Promise<string> } | null = null;
-
-function closeLoopback(): void {
-  loopback?.server.close();
-  loopback = null;
-}
-
-function startLoopback(): Promise<string> {
-  closeLoopback();
-  return new Promise((resolveStart, rejectStart) => {
-    let settle: { resolve: (code: string) => void; reject: (error: Error) => void };
-    const code = new Promise<string>((resolve, reject) => {
-      settle = { resolve, reject };
-    });
-    code.catch(() => {}); // handled by whoever awaits it
-    const server = createServer((request, response) => {
-      const url = new URL(request.url ?? "/", "http://127.0.0.1");
-      if (url.pathname !== "/auth/callback") {
-        response.writeHead(404).end();
-        return;
-      }
-      const received = url.searchParams.get("code");
-      const failure = url.searchParams.get("error_description");
-      response.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
-      response.end(
-        `<!doctype html><meta charset="utf-8"><title>Flick</title><body style="font-family:system-ui;background:${designTokens.colors.cream};color:${designTokens.colors.navy};display:grid;place-items:center;height:100vh;margin:0"><h2>${received ? "You're signed in. You can close this tab." : "Sign-in didn't finish. You can close this tab and try again."}</h2></body>`,
-      );
-      if (received) {
-        settle.resolve(received);
-      } else {
-        settle.reject(new Error(failure ?? "Google sign-in was cancelled."));
-      }
-      setTimeout(closeLoopback, 1000);
-    });
-    server.on("error", rejectStart);
-    server.listen(0, "127.0.0.1", () => {
-      const address = server.address();
-      if (!address || typeof address === "string") {
-        rejectStart(new Error("Could not start the sign-in listener."));
-        return;
-      }
-      setTimeout(() => {
-        if (loopback?.server === server) {
-          settle.reject(new Error("Google sign-in timed out."));
-          closeLoopback();
-        }
-      }, LOOPBACK_TIMEOUT_MS);
-      loopback = { server, code };
-      resolveStart(`http://127.0.0.1:${address.port}/auth/callback`);
-    });
-  });
-}
-
 // Default device name from the system ("Vikas's MacBook Pro"), used once
 // when this computer registers itself in Supabase.
 function computerName(): Promise<string> {
@@ -590,22 +565,12 @@ ipcMain.handle("device:default", async (event) => {
   return { name: (await computerName()) || "Computer", platform };
 });
 
-ipcMain.handle("auth:loopback-start", async (event) => {
-  assertMainWindow(event);
-  return startLoopback();
-});
-
-ipcMain.handle("auth:loopback-wait", async (event, authUrl: unknown) => {
+ipcMain.handle("auth:open-external", async (event, authUrl: unknown) => {
   assertMainWindow(event);
   if (typeof authUrl !== "string" || !authUrl.startsWith("https://")) {
     throw new TypeError("A valid sign-in URL is required.");
   }
-  const current = loopback;
-  if (!current) {
-    throw new Error("Sign-in listener isn't running.");
-  }
   await shell.openExternal(authUrl);
-  return current.code;
 });
 
 ipcMain.on("file:start-drag", (event, fileId: unknown) => {
@@ -675,36 +640,59 @@ ipcMain.handle("files:preview", async (event, fileId: unknown) => {
   }
 });
 
-app
-  .whenReady()
-  .then(async () => {
-    await loadFiles();
-    demoFileIcon = createDemoFileIcon();
-    if (demoFileIcon.isEmpty()) {
-      throw new Error("Could not create the demo file drag icon.");
-    }
-    createWindow();
-    setupTray(() => mainWindow);
-    setupWindowModeIpc();
-    setupClips(() => mainWindow, showPopover);
+const hasSingleInstanceLock = app.requestSingleInstanceLock();
 
-    app.on("activate", () => {
-      if (BrowserWindow.getAllWindows().length === 0) {
-        createWindow();
-      }
-    });
-  })
-  .catch((error: unknown) => {
-    console.error("Failed to start Flick desktop:", error);
-    app.quit();
+if (!hasSingleInstanceLock) {
+  app.quit();
+} else {
+  app.on("second-instance", (_event, commandLine) => {
+    const callback = commandLine.find(isAuthCallbackUrl);
+    if (callback) handleAuthCallback(callback);
   });
 
-app.on("before-quit", () => {
-  isQuitting = true;
-});
-
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
-    app.quit();
+  if (process.platform === "darwin") {
+    app.on("open-url", (event, url) => {
+      event.preventDefault();
+      handleAuthCallback(url);
+    });
   }
-});
+
+  app
+    .whenReady()
+    .then(async () => {
+      registerProtocol();
+      await loadFiles();
+      demoFileIcon = createDemoFileIcon();
+      if (demoFileIcon.isEmpty()) {
+        throw new Error("Could not create the demo file drag icon.");
+      }
+      createWindow();
+      mainWindow?.webContents.on("did-finish-load", flushAuthCallback);
+      setupTray(() => mainWindow);
+      setupWindowModeIpc();
+      setupClips(() => mainWindow, showPopover);
+
+      const initialCallback = process.argv.find(isAuthCallbackUrl);
+      if (initialCallback) handleAuthCallback(initialCallback);
+
+      app.on("activate", () => {
+        if (BrowserWindow.getAllWindows().length === 0) {
+          createWindow();
+        }
+      });
+    })
+    .catch((error: unknown) => {
+      console.error("Failed to start Flick desktop:", error);
+      app.quit();
+    });
+
+  app.on("before-quit", () => {
+    isQuitting = true;
+  });
+
+  app.on("window-all-closed", () => {
+    if (process.platform !== "darwin") {
+      app.quit();
+    }
+  });
+}

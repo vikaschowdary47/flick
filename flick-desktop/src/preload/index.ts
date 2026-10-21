@@ -8,6 +8,19 @@ import type {
 type FilesDroppedListener = (result: DroppedFilesResult) => void
 
 const filesDroppedListeners = new Set<FilesDroppedListener>()
+const authCallbackListeners = new Set<(url: string) => void>()
+const pendingAuthCallbacks: string[] = []
+
+ipcRenderer.on('auth:callback', (_event, value: unknown) => {
+  if (typeof value !== 'string' || !value.startsWith('flick://auth-callback')) {
+    return
+  }
+  if (authCallbackListeners.size === 0) {
+    pendingAuthCallbacks.push(value)
+    return
+  }
+  for (const listener of Array.from(authCallbackListeners)) listener(value)
+})
 
 function isFileCard(value: unknown): value is FileCard {
   return (
@@ -111,7 +124,13 @@ contextBridge.exposeInMainWorld('flick', {
   },
   getDefaultDevice: (): Promise<{ name: string; platform: string }> =>
     ipcRenderer.invoke('device:default'),
-  startAuthLoopback: (): Promise<string> => ipcRenderer.invoke('auth:loopback-start'),
-  waitForAuthCode: (authUrl: string): Promise<string> =>
-    ipcRenderer.invoke('auth:loopback-wait', authUrl),
+  openAuthUrl: (authUrl: string): Promise<void> =>
+    ipcRenderer.invoke('auth:open-external', authUrl),
+  onAuthCallback: (listener: (url: string) => void): (() => void) => {
+    authCallbackListeners.add(listener)
+    while (pendingAuthCallbacks.length > 0) {
+      listener(pendingAuthCallbacks.shift() as string)
+    }
+    return () => authCallbackListeners.delete(listener)
+  },
 })

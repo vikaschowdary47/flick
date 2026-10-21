@@ -1,10 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
+import * as AppleAuthentication from "expo-apple-authentication";
+import * as Crypto from "expo-crypto";
 import type { Session } from "@supabase/supabase-js";
 import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
 import { widgetsBridge } from "../../modules/flick-widgets";
 import { clearCache } from "../lib/cache";
 import { supabase } from "../lib/supabase";
+
+export const APPLE_SIGN_IN_ENABLED = process.env.EXPO_PUBLIC_ENABLE_APPLE_SIGN_IN === "true";
 
 export function useSession() {
   const [session, setSession] = useState<Session | null>(null);
@@ -41,8 +45,7 @@ export function useSession() {
   // (ASWebAuthenticationSession on iOS). Returns an error message or null.
   const signInWithGoogle = useCallback(async () => {
     try {
-      // flick://auth/callback in a build, exp://<ip>:8081/--/auth/callback in Expo Go.
-      const redirectTo = Linking.createURL("auth/callback");
+      const redirectTo = "flick://auth-callback";
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: { redirectTo, skipBrowserRedirect: true },
@@ -50,7 +53,7 @@ export function useSession() {
       if (error || !data?.url) return friendlyAuthError(error?.message ?? "No sign-in link");
 
       const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
-      if (result.type !== "success") return null; // closed the sheet
+      if (result.type !== "success") return "Google sign-in was cancelled.";
 
       const { queryParams } = Linking.parse(result.url);
       const code = typeof queryParams?.code === "string" ? queryParams.code : null;
@@ -65,9 +68,36 @@ export function useSession() {
     }
   }, []);
 
-  // TODO(apple-sign-in): add signInWithApple here once the Apple developer
-  // account exists (expo-apple-authentication + supabase.auth.signInWithIdToken
-  // with provider "apple"), and enable the Apple provider in Supabase.
+  const signInWithApple = useCallback(async () => {
+    if (!APPLE_SIGN_IN_ENABLED) return "Apple sign-in is not enabled yet.";
+    try {
+      const rawNonce = Crypto.randomUUID();
+      const hashedNonce = await Crypto.digestStringAsync(
+        Crypto.CryptoDigestAlgorithm.SHA256,
+        rawNonce,
+        { encoding: Crypto.CryptoEncoding.HEX },
+      );
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+        nonce: hashedNonce,
+      });
+      if (!credential.identityToken) return "Apple sign-in did not return an identity token.";
+      const { error } = await supabase.auth.signInWithIdToken({
+        provider: "apple",
+        token: credential.identityToken,
+        nonce: rawNonce,
+      });
+      return error ? friendlyAuthError(error.message) : null;
+    } catch (err: unknown) {
+      if (err && typeof err === "object" && "code" in err && err.code === "ERR_REQUEST_CANCELED") {
+        return "Apple sign-in was cancelled.";
+      }
+      return friendlyAuthError(err instanceof Error ? err.message : String(err));
+    }
+  }, []);
 
   const signOut = useCallback(async () => {
     clearCache(); // no downloaded copies stay behind after sign-out
@@ -75,12 +105,13 @@ export function useSession() {
     await supabase.auth.signOut();
   }, []);
 
-  return { session, loading, signIn, signInWithGoogle, signOut };
+  return { session, loading, signIn, signInWithGoogle, signInWithApple, signOut };
 }
 
 function friendlyAuthError(message: string): string {
   if (/invalid login credentials/i.test(message)) return "That email or password didn't match.";
   if (/network|fetch/i.test(message)) return "Can't reach Flick right now. Check your connection.";
   if (/email not confirmed/i.test(message)) return "Confirm your email first, then try again.";
+  if (/cancel|dismiss|closed|access_denied/i.test(message)) return "Sign-in was cancelled.";
   return message;
 }

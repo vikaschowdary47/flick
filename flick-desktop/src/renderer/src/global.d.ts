@@ -29,8 +29,8 @@ interface Window {
     readClipboard: () => Promise<string>
     writeClipboard: (text: string) => Promise<void>
     onSendClipboardText: (listener: (text: string) => void) => () => void
-    startAuthLoopback: () => Promise<string>
+    openAuthUrl: (authUrl: string) => Promise<void>
+    onAuthCallback: (listener: (url: string) => void) => () => void
     getDefaultDevice: () => Promise<{ name: string; platform: string }>
-    waitForAuthCode: (authUrl: string) => Promise<string>
   }
 }

@@ -11,7 +11,7 @@ import { SignInScreen } from "./src/components/SignInScreen";
 import { ThemeProvider, useTheme, useThemedStyles } from "./src/design/ThemeProvider";
 import type { Palette } from "./src/design/theme";
 import { FeatureFlagsProvider } from "./src/hooks/useFeatureFlags";
-import { useSession } from "./src/hooks/useSession";
+import { APPLE_SIGN_IN_ENABLED, useSession } from "./src/hooks/useSession";
 
 export default function App() {
   return (
@@ -25,7 +25,7 @@ export default function App() {
 
 function Root() {
   const [fontsLoaded] = useFonts({ Nunito_600SemiBold, Nunito_800ExtraBold });
-  const { session, loading, signIn, signInWithGoogle, signOut } = useSession();
+  const { session, loading, signIn, signInWithGoogle, signInWithApple, signOut } = useSession();
   const { palette, scheme } = useTheme();
   const styles = useThemedStyles(makeStyles);
 
@@ -41,7 +41,12 @@ function Root() {
           <HomeScreen userId={session.user.id} email={session.user.email ?? null} onSignOut={signOut} />
         </FeatureFlagsProvider>
       ) : (
-        <SignInScreen onSignIn={signIn} onSignInWithGoogle={signInWithGoogle} />
+        <SignInScreen
+          onSignIn={signIn}
+          onSignInWithGoogle={signInWithGoogle}
+          onSignInWithApple={signInWithApple}
+          appleSignInEnabled={APPLE_SIGN_IN_ENABLED}
+        />
       )}
     </>
   );

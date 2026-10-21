@@ -106,7 +106,7 @@ export function useSession() {
   }
 
   // Google via Supabase OAuth with PKCE: the system browser signs in and
-  // redirects to a loopback listener in the main process with ?code=….
+  // returns to the already-running app through flick://auth-callback.
   async function handleGoogleSignIn(): Promise<void> {
     if (!supabase) {
       return;
@@ -114,7 +114,7 @@ export function useSession() {
     setIsSigningIn(true);
     setAuthError("");
     try {
-      const redirectTo = await window.flick.startAuthLoopback();
+      const redirectTo = "flick://auth-callback";
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: { redirectTo, skipBrowserRedirect: true },
@@ -122,7 +122,35 @@ export function useSession() {
       if (error || !data.url) {
         throw error ?? new Error("Could not start Google sign-in.");
       }
-      const code = await window.flick.waitForAuthCode(data.url);
+      const callbackUrl = await new Promise<string>((resolve, reject) => {
+        let finished = false;
+        let unsubscribe: (() => void) | null = null;
+        const timeout = window.setTimeout(() => {
+          finished = true;
+          unsubscribe?.();
+          reject(new Error("Google sign-in timed out."));
+        }, 5 * 60 * 1000);
+        const finish = (callback: () => void) => {
+          if (finished) return;
+          finished = true;
+          window.clearTimeout(timeout);
+          unsubscribe?.();
+          callback();
+        };
+        unsubscribe = window.flick.onAuthCallback((url) => {
+          finish(() => resolve(url));
+        });
+        if (finished) unsubscribe();
+      });
+      const callback = new URL(callbackUrl);
+      const callbackError = callback.searchParams.get("error_description") ?? callback.searchParams.get("error");
+      if (callbackError) {
+        throw new Error(callbackError);
+      }
+      const code = callback.searchParams.get("code");
+      if (!code) {
+        throw new Error("Google sign-in didn't finish. Try again.");
+      }
       const { error: exchangeError } =
         await supabase.auth.exchangeCodeForSession(code);
       if (exchangeError) {
@@ -131,16 +159,12 @@ export function useSession() {
     } catch (error: unknown) {
       console.error("Could not sign in with Google:", error);
       setAuthError(
-        error instanceof Error ? error.message : "Could not sign in with Google.",
+        error instanceof Error ? friendlyAuthError(error.message) : "Could not sign in with Google.",
       );
     } finally {
       setIsSigningIn(false);
     }
   }
-
-  // TODO(apple-sign-in): add handleAppleSignIn once the Apple developer account
-  // exists (provider "apple" through the same loopback flow), and enable the
-  // Apple provider in Supabase.
 
   async function handleSignOut(): Promise<void> {
     setIsAccountMenuOpen(false);
@@ -191,4 +215,10 @@ export function useSession() {
     setIsAccountMenuOpen,
     setPassword,
   };
+}
+
+function friendlyAuthError(message: string): string {
+  if (/cancel|dismiss|closed|access_denied/i.test(message)) return "Google sign-in was cancelled.";
+  if (/network|fetch/i.test(message)) return "Can't reach Flick right now. Check your connection.";
+  return message || "Could not sign in with Google.";
 }

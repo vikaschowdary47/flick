@@ -17,9 +17,11 @@ import { PillButton } from "./PillButton";
 type Props = {
   onSignIn: (email: string, password: string) => Promise<string | null>;
   onSignInWithGoogle: () => Promise<string | null>;
+  onSignInWithApple: () => Promise<string | null>;
+  appleSignInEnabled: boolean;
 };
 
-export function SignInScreen({ onSignIn, onSignInWithGoogle }: Props) {
+export function SignInScreen({ onSignIn, onSignInWithGoogle, onSignInWithApple, appleSignInEnabled }: Props) {
   const { palette } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const [email, setEmail] = useState("");
@@ -42,6 +44,14 @@ export function SignInScreen({ onSignIn, onSignInWithGoogle }: Props) {
     setBusy(true);
     setError(null);
     const message = await onSignInWithGoogle();
+    setBusy(false);
+    if (message) setError(message);
+  }
+
+  async function apple() {
+    setBusy(true);
+    setError(null);
+    const message = await onSignInWithApple();
     setBusy(false);
     if (message) setError(message);
   }
@@ -104,9 +114,14 @@ export function SignInScreen({ onSignIn, onSignInWithGoogle }: Props) {
             onPress={google}
             disabled={busy}
           />
-          {/* TODO(apple-sign-in): "Continue with Apple" button goes here once the
-              Apple developer account is set up (required by App Store review
-              when Google sign-in is offered). */}
+          {Platform.OS === "ios" && appleSignInEnabled && (
+            <PillButton
+              label="Continue with Apple"
+              variant="secondary"
+              onPress={apple}
+              disabled={busy}
+            />
+          )}
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
