@@ -21,6 +21,7 @@ Nothing was applied to the real Supabase project, deployed, pushed, or deleted.
 | B5 Live Activity + Dynamic Island | `bdaf7b7` | partial | Built and rendered; starts when Flick goes to background with unseen files, ends on open, stale after 4h. Can't start while Flick is closed without push (out of scope). Real start/end needs your signed-in app on a device or Simulator |
 | B6 widget_mode + Settings toggles | `65e4cbe` | done | Migration file (tested on local Postgres) + iOS toggles; Android toggles deferred with Android (your later instruction: don't start Android) |
 | D1 Limits + 80% free-up-space prompt | `bcac866` | done | Server limits/config table existed (20261022 migration); added 80% banner + confirm listing oldest unpinned files, both apps; desktop screenshots |
+| D2 Limit notice + waitlist opt-in | `11d0aa9` | done | Existed (waitlist table + limit screens); new wording in both apps; fixed the popover clipping the limit screen (found by screenshot) |
 
 ## Decisions I made on my own
 
