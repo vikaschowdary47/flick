@@ -20,6 +20,7 @@ import { formatExpiry, formatSender } from "../lib/format";
 import type { FileRow } from "../lib/types";
 import { FileCard, PinBadge } from "./FileCard";
 import { ClipsList } from "./ClipsList";
+import { CompactFilesList, type CompactFilesListHandle } from "./CompactFilesList";
 import { FileMenu, type FileMenuItem } from "./FileMenu";
 import { FileViewer } from "./FileViewer";
 import { Header } from "./Header";
@@ -96,6 +97,20 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
     [recent.files, remover.isHidden],
   );
 
+  // Compact rows/tiles: tap or long-press opens the same menu as the cards.
+  const openingId = opener.openingId;
+  const openMenu = useCallback(
+    (file: FileRow, pageY: number) => {
+      if (openingId !== file.id) setMenu({ file, anchorY: pageY });
+    },
+    [openingId],
+  );
+  const senderOf = useCallback(
+    (file: FileRow) => formatSender(file.device_id, device.deviceId, device.names),
+    [device.deviceId, device.names],
+  );
+  const compactListRef = useRef<CompactFilesListHandle>(null);
+
   const renderItem = useCallback(
     ({ item, index }: { item: FileRow; index: number }) => {
       const opening = opener.openingId === item.id;
@@ -170,6 +185,30 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
       ]
     : [];
 
+  const filesHeader = (
+    <View style={styles.top}>
+      <Header status={connection.status} />
+      <Text accessibilityRole="header" style={styles.heading}>
+        Flick it to all your devices
+      </Text>
+      {tabs}
+      <UploadCard state={upload} onDismiss={reset} />
+      <Text accessibilityRole="header" style={styles.eyebrow}>
+        RECENTLY SENT
+      </Text>
+      {(remover.error ?? pinner.error ?? opener.error) && (
+        <Text accessibilityRole="alert" style={styles.openError}>
+          {remover.error ?? pinner.error ?? opener.error}
+        </Text>
+      )}
+    </View>
+  );
+  const filesEmpty = (
+    <Text style={styles.empty}>
+      {recent.loading ? "Loading…" : recent.error ?? "Nothing yet. Flick something over!"}
+    </Text>
+  );
+
   return (
     <SafeAreaView style={styles.safe} edges={["top", "left", "right", "bottom"]}>
       {activeTab === "clips" ? (
@@ -193,6 +232,20 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
           onRefresh={clips.refresh}
           density={profile.density}
         />
+      ) : profile.density === "compact" ? (
+        <CompactFilesList
+          ref={compactListRef}
+          files={visibleFiles}
+          header={filesHeader}
+          empty={filesEmpty}
+          now={now}
+          senderOf={senderOf}
+          openingId={opener.openingId}
+          selectedId={menu?.file.id ?? null}
+          onMenu={openMenu}
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+        />
       ) : (
       <FlatList
         ref={listRef}
@@ -205,29 +258,8 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.text} />
         }
-        ListHeaderComponent={
-          <View style={styles.top}>
-            <Header status={connection.status} />
-            <Text accessibilityRole="header" style={styles.heading}>
-              Flick it to all your devices
-            </Text>
-            {tabs}
-            <UploadCard state={upload} onDismiss={reset} />
-            <Text accessibilityRole="header" style={styles.eyebrow}>
-              RECENTLY SENT
-            </Text>
-            {(remover.error ?? pinner.error ?? opener.error) && (
-              <Text accessibilityRole="alert" style={styles.openError}>
-                {remover.error ?? pinner.error ?? opener.error}
-              </Text>
-            )}
-          </View>
-        }
-        ListEmptyComponent={
-          <Text style={styles.empty}>
-            {recent.loading ? "Loading…" : recent.error ?? "Nothing yet. Flick something over!"}
-          </Text>
-        }
+        ListHeaderComponent={filesHeader}
+        ListEmptyComponent={filesEmpty}
       />
       )}
 
@@ -282,7 +314,10 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
         thisDeviceId={device.deviceId}
         onRemoveDevice={device.removeDevice}
         // Back to their files, so they can delete or unpin old ones.
-        onFreeUpSpace={() => listRef.current?.scrollToOffset({ offset: 0, animated: true })}
+        onFreeUpSpace={() => {
+          listRef.current?.scrollToOffset({ offset: 0, animated: true });
+          compactListRef.current?.scrollToTop();
+        }}
         onClose={() => {
           clearLimit();
           pinner.clearLimit();
