@@ -11,6 +11,7 @@ import { useDevice } from "../hooks/useDevice";
 import { useUsage } from "../hooks/useUsage";
 import { useWidgetSnapshot } from "../hooks/useWidgetSnapshot";
 import { useDeepLinkTarget } from "../hooks/useDeepLinkTarget";
+import * as Clipboard from "expo-clipboard";
 import { useNow } from "../hooks/useNow";
 import { useOpenFile } from "../hooks/useOpenFile";
 import { usePinFile } from "../hooks/usePinFile";
@@ -93,7 +94,18 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
     const target = deepLink.target;
     if (!target) return;
     if (target.kind === "clip") {
-      if (clipsOn) changeTab("clips");
+      if (!clipsOn) {
+        deepLink.consume();
+        return;
+      }
+      changeTab("clips");
+      if (target.copy) {
+        // From the widget: copy that clip (the widget's own Copy button
+        // can't always reach the clipboard).
+        const clip = clips.clips.find((c) => c.id === target.id);
+        if (!clip) return; // wait for clips to load
+        void Clipboard.setStringAsync(clip.content);
+      }
       deepLink.consume();
       return;
     }
@@ -102,7 +114,7 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
     setTab("files");
     setMenu({ file, anchorY: tokens.layout.minTouchTarget * 4 });
     deepLink.consume();
-  }, [deepLink.target, recent.files, clipsOn]);
+  }, [deepLink.target, recent.files, clipsOn, clips.clips]);
 
   const tabs = clipsOn ? <Tabs tab={activeTab} onChange={changeTab} clipsDot={clips.hasNew} slim={compact} /> : null;
   // Compact: Settings / Sign out live in a ⋯ menu in the header.

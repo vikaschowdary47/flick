@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import * as Linking from "expo-linking";
 
-export type DeepLinkTarget = { kind: "file" | "clip"; id: string };
+export type DeepLinkTarget = { kind: "file" | "clip"; id: string; copy: boolean };
 
 // flick://file/<id> and flick://clip/<id> (from the widgets). Returns the
 // latest target; call `consume` once it's been handled.
@@ -11,11 +11,11 @@ export function useDeepLinkTarget() {
 
   useEffect(() => {
     if (!url) return;
-    const { hostname, path } = Linking.parse(url);
+    const { hostname, path, queryParams } = Linking.parse(url);
     // "flick://file/<id>" parses as host "file", path "<id>".
     const kind = hostname === "file" || hostname === "clip" ? hostname : null;
     const id = path?.split("/").filter(Boolean)[0];
-    if (kind && id) setTarget({ kind, id });
+    if (kind && id) setTarget({ kind, id, copy: queryParams?.copy === "1" });
   }, [url]);
 
   return { target, consume: () => setTarget(null) };

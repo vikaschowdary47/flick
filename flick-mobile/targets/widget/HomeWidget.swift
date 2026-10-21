@@ -59,7 +59,9 @@ struct ItemRow: View {
   let now: Date
 
   var body: some View {
-    Link(destination: URL(string: item.url)!) {
+    // Clip rows ask the app to copy on open (works even if the widget's
+    // own Copy button can't reach the clipboard).
+    Link(destination: URL(string: item.kind == "clip" ? item.url + "?copy=1" : item.url)!) {
       HStack(spacing: 8) {
         ItemIcon(item: item)
         VStack(alignment: .leading, spacing: 1) {
@@ -134,11 +136,17 @@ struct FlickHomeView: View {
       Text(latest.title)
         .font(.system(size: 13, weight: .heavy, design: .rounded))
         .lineLimit(2)
-      Text(timeLeft(latest, now: entry.date))
-        .font(.system(size: 11, weight: .semibold, design: .rounded))
-        .foregroundStyle(.secondary)
+      HStack {
+        Text(timeLeft(latest, now: entry.date))
+          .font(.system(size: 11, weight: .semibold, design: .rounded))
+          .foregroundStyle(.secondary)
+        Spacer(minLength: 0)
+        if latest.kind == "clip" {
+          CopyClipButton(compact: true)
+        }
+      }
     }
-    .widgetURL(URL(string: latest.url))
+    .widgetURL(URL(string: latest.kind == "clip" ? latest.url + "?copy=1" : latest.url))
   }
 
   // Up to 3 rows (a 4th with Copy latest clip comes with the iOS 17 button).
@@ -147,9 +155,13 @@ struct FlickHomeView: View {
       HStack {
         Text("flick").font(.system(size: 14, weight: .heavy, design: .rounded))
         Spacer()
-        Text("\(plural(entry.snapshot.fileCount, "file")) · \(plural(entry.snapshot.clipCount, "clip"))")
-          .font(.system(size: 11, weight: .semibold, design: .rounded))
-          .foregroundStyle(.secondary)
+        if entry.snapshot.latestClip != nil {
+          CopyClipButton()
+        } else {
+          Text("\(plural(entry.snapshot.fileCount, "file")) · \(plural(entry.snapshot.clipCount, "clip"))")
+            .font(.system(size: 11, weight: .semibold, design: .rounded))
+            .foregroundStyle(.secondary)
+        }
       }
       ForEach(items.prefix(3)) { item in
         ItemRow(item: item, now: entry.date)
