@@ -13,6 +13,9 @@
         "com.apple.security.application-groups": [
           "group.dev.flickit.app"
         ]
+      },
+      "infoPlist": {
+        "NSSupportsLiveActivities": true
       }
     },
     "android": {

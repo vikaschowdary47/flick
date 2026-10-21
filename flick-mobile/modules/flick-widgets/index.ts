@@ -10,6 +10,8 @@ type FlickWidgetsNative = {
   pruneThumbnails(keep: string[]): Promise<void>;
   reloadWidgets(): void;
   clear(): Promise<void>;
+  startLiveActivity(count: number, deviceName: string): Promise<void>;
+  endLiveActivity(): Promise<void>;
 };
 
 const native = Platform.OS === "ios" ? requireOptionalNativeModule<FlickWidgetsNative>("FlickWidgets") : null;
@@ -28,4 +30,7 @@ export const widgetsBridge = {
   pruneThumbnails: (keep: string[]) => native?.pruneThumbnails(keep) ?? Promise.resolve(),
   reloadWidgets: () => native?.reloadWidgets(),
   clear: () => native?.clear() ?? Promise.resolve(),
+  startLiveActivity: (count: number, deviceName: string) =>
+    native?.startLiveActivity(count, deviceName) ?? Promise.resolve(),
+  endLiveActivity: () => native?.endLiveActivity() ?? Promise.resolve(),
 };

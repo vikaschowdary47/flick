@@ -1,5 +1,14 @@
+import ActivityKit
 import ExpoModulesCore
 import WidgetKit
+
+// Must match FlickActivityAttributes in targets/widget/LiveActivity.swift.
+struct FlickActivityAttributes: ActivityAttributes {
+  public struct ContentState: Codable, Hashable {
+    var count: Int
+    var deviceName: String
+  }
+}
 
 // Bridge between the React Native app and the Flick widgets.
 // The app writes a small JSON snapshot (latest files and clips) and
@@ -64,12 +73,36 @@ public class FlickWidgetsModule: Module {
       WidgetCenter.shared.reloadAllTimelines()
     }
 
+    // Live Activity "N new files from <device>". Must be called while the
+    // app is in the foreground (or just leaving it); iOS refuses otherwise.
+    // Stale after 4 hours; iOS ends activities after 8 hours at most.
+    AsyncFunction("startLiveActivity") { (count: Int, deviceName: String) in
+      guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
+      let state = FlickActivityAttributes.ContentState(count: count, deviceName: deviceName)
+      let content = ActivityContent(state: state, staleDate: Date().addingTimeInterval(4 * 3600))
+      if let running = Activity<FlickActivityAttributes>.activities.first {
+        await running.update(content)
+      } else {
+        _ = try Activity.request(attributes: FlickActivityAttributes(), content: content)
+      }
+    }
+
+    // The files have been seen: remove it right away.
+    AsyncFunction("endLiveActivity") {
+      for activity in Activity<FlickActivityAttributes>.activities {
+        await activity.end(nil, dismissalPolicy: .immediate)
+      }
+    }
+
     // Wipe everything on sign-out so widgets don't show the last account.
     AsyncFunction("clear") {
       guard let container = Self.container else { return }
       try? FileManager.default.removeItem(at: container.appendingPathComponent("snapshot.json"))
       if let thumbs = Self.thumbsDirectory {
         try? FileManager.default.removeItem(at: thumbs)
+      }
+      for activity in Activity<FlickActivityAttributes>.activities {
+        await activity.end(nil, dismissalPolicy: .immediate)
       }
       WidgetCenter.shared.reloadAllTimelines()
     }

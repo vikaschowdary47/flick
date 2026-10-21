@@ -10,6 +10,7 @@ import { useConnectionStatus } from "../hooks/useConnectionStatus";
 import { useDevice } from "../hooks/useDevice";
 import { useUsage } from "../hooks/useUsage";
 import { useWidgetSnapshot } from "../hooks/useWidgetSnapshot";
+import { useLiveActivity } from "../hooks/useLiveActivity";
 import { useDeepLinkTarget } from "../hooks/useDeepLinkTarget";
 import * as Clipboard from "expo-clipboard";
 import { useNow } from "../hooks/useNow";
@@ -85,6 +86,12 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
     senderOf: widgetSenderOf,
     enabled: true,
     showContentOnLockScreen: false,
+  });
+  useLiveActivity({
+    files: recent.files,
+    thisDeviceId: device.deviceId,
+    deviceNames: device.names,
+    enabled: true,
   });
 
   // Widget taps: flick://file/<id> opens that file's menu on the Files tab;
