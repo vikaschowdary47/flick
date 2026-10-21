@@ -65,7 +65,7 @@ export default function CompactFileRow({
   const visualType = getFileVisualType(file);
   const isReady = file.downloadState === "ready" && Boolean(file.localFileId);
   const note = stateNote(file);
-  const meta = [formatFileSize(file.size), note ?? formatTimeLeft(file.created_at, now), sender]
+  const meta = [formatFileSize(file.size), note ?? formatTimeLeft(file, now), sender]
     .filter(Boolean)
     .join(" · ");
 

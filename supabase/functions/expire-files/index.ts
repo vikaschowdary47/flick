@@ -1,7 +1,8 @@
 // Supabase Edge Function: expire-files
 //
 // Deletes Flick files older than 24 hours:
-//   1. finds expired rows in public.files,
+//   1. finds expired rows in public.files — never pinned ones, and for files
+//      that were unpinned, 24 hours counts from the unpin (unpinned_at),
 //   2. deletes their objects from the flick-files bucket via the Storage API,
 //   3. deletes the rows (the apps see the DELETE over Realtime and drop the card).
 //
@@ -68,7 +69,11 @@ Deno.serve(async (request) => {
     const { data: rows, error: selectError } = await supabase
       .from("files")
       .select("id, storage_path, thumb_path")
+      // Pinned files never expire.
+      .eq("pinned", false)
       .lt("created_at", cutoff)
+      // Unpinning restarts the 24 hours: also past the cutoff since the unpin.
+      .or(`unpinned_at.is.null,unpinned_at.lt.${cutoff}`)
       .order("created_at", { ascending: true })
       .limit(BATCH_SIZE)
       .returns<ExpiredRow[]>();

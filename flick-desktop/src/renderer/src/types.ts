@@ -9,6 +9,7 @@ export interface CloudFileRow {
   delivered_at: string | null;
   pinned?: boolean;
   pinned_at?: string | null;
+  unpinned_at?: string | null; // last unpin: restarts the 24 hours
   device_id?: string | null; // sender
   thumb_path?: string | null; // ~200px JPEG for images
 }
@@ -121,23 +122,50 @@ export function getFileTileLabel(file: CloudFile): string {
 // Files are deleted server-side 24 hours after upload (expire-files function).
 export const FILE_LIFETIME_MS = 24 * 60 * 60 * 1000;
 
-// Compact rows: "18h left" / "40m left".
-export function formatTimeLeft(createdAt: string, now: number): string {
-  const remaining = new Date(createdAt).getTime() + FILE_LIFETIME_MS - now;
-  if (!Number.isFinite(remaining) || remaining <= 0) {
+// Expiry: pinned files never expire; otherwise 24 hours from the later of
+// upload and last unpin (unpinning restarts the timer). Matches expire-files.
+interface Expiring {
+  created_at: string;
+  pinned?: boolean;
+  unpinned_at?: string | null;
+}
+
+export function expiresAt(file: Expiring): number {
+  if (file.pinned) {
+    return Number.POSITIVE_INFINITY;
+  }
+  const start = Math.max(
+    new Date(file.created_at).getTime(),
+    file.unpinned_at ? new Date(file.unpinned_at).getTime() : 0,
+  );
+  return start + FILE_LIFETIME_MS;
+}
+
+function minutesLeft(file: Expiring, now: number): number | null {
+  const remaining = expiresAt(file) - now;
+  return !Number.isFinite(remaining) || remaining <= 0 ? null : Math.ceil(remaining / 60_000);
+}
+
+// Compact rows: "Pinned" / "18h left" / "40m left".
+export function formatTimeLeft(file: Expiring, now: number): string {
+  if (file.pinned) {
+    return "Pinned";
+  }
+  const minutes = minutesLeft(file, now);
+  if (minutes === null) {
     return "Expiring…";
   }
-  const minutes = Math.ceil(remaining / 60_000);
   return minutes < 60 ? `${minutes}m left` : `${Math.floor(minutes / 60)}h left`;
 }
 
-export function formatExpiry(createdAt: string, now: number): string {
-  const remaining = new Date(createdAt).getTime() + FILE_LIFETIME_MS - now;
-  if (!Number.isFinite(remaining) || remaining <= 0) {
+// Cards: "Pinned" / "Expires in 18h".
+export function formatExpiry(file: Expiring, now: number): string {
+  if (file.pinned) {
+    return "Pinned";
+  }
+  const minutes = minutesLeft(file, now);
+  if (minutes === null) {
     return "Expiring…";
   }
-  const minutes = Math.ceil(remaining / 60_000);
-  return minutes < 60
-    ? `Expires in ${minutes}m`
-    : `Expires in ${Math.floor(minutes / 60)}h`;
+  return minutes < 60 ? `Expires in ${minutes}m` : `Expires in ${Math.floor(minutes / 60)}h`;
 }

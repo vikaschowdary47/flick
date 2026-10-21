@@ -36,7 +36,7 @@ export default function CompactImageTile({
   }, [file.thumb_path]);
   const isReady = file.downloadState === "ready" && Boolean(file.localFileId);
   const note = stateNote(file);
-  const label = [file.name, formatFileSize(file.size), note ?? formatTimeLeft(file.created_at, now), sender]
+  const label = [file.name, formatFileSize(file.size), note ?? formatTimeLeft(file, now), sender]
     .filter(Boolean)
     .join(" · ");
 
@@ -68,7 +68,7 @@ export default function CompactImageTile({
           <span className="compact-tile-label">{getFileTileLabel(file)}</span>
         )}
         {file.pinned && <span className="compact-tile-pin" aria-hidden="true" />}
-        <span className="compact-tile-time">{note ?? formatTimeLeft(file.created_at, now)}</span>
+        <span className="compact-tile-time">{note ?? formatTimeLeft(file, now)}</span>
       </button>
       <button
         ref={menu.menuButtonRef}

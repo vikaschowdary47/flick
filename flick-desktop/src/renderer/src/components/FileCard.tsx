@@ -200,7 +200,7 @@ export default function FileCard({
             <span className="meta-divider" aria-hidden="true">
               ·
             </span>
-            <span className="file-expiry">{formatExpiry(file.created_at, now)}</span>
+            <span className="file-expiry">{formatExpiry(file, now)}</span>
             {sender && (
               <>
                 <span className="meta-divider" aria-hidden="true">

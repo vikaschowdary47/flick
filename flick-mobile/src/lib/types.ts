@@ -9,6 +9,7 @@ export type FileRow = {
   delivered_at: string | null;
   pinned: boolean;
   pinned_at: string | null;
+  unpinned_at?: string | null; // last unpin: restarts the 24 hours
   device_id: string | null; // sender
   thumb_path: string | null; // ~200px JPEG for images
 };

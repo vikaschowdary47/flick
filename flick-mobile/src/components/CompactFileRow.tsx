@@ -21,7 +21,7 @@ type Props = {
 export const CompactFileRow = memo(function CompactFileRow({ file, now, sender, opening, selected, onMenu }: Props) {
   const { palette } = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const meta = [formatBytes(file.size), opening ? "Downloading…" : formatTimeLeft(file.created_at, now), sender]
+  const meta = [formatBytes(file.size), opening ? "Downloading…" : formatTimeLeft(file, now), sender]
     .filter(Boolean)
     .join(" · ");
   return (

@@ -2,7 +2,7 @@
 // Platform-neutral: iOS writes it to the App Group (modules/flick-widgets);
 // the Android widget will reuse the same shape.
 import { siteName, type ClipRow } from "./clips";
-import { FILE_LIFETIME_MS, formatBytes } from "./format";
+import { expiresAt, formatBytes, isExpired } from "./format";
 import type { FileRow } from "./types";
 
 export const SNAPSHOT_VERSION = 1;
@@ -63,7 +63,7 @@ export function buildSnapshot(input: {
   now?: number;
 }): WidgetSnapshot {
   const now = input.now ?? Date.now();
-  const live = input.files.filter((file) => new Date(file.created_at).getTime() + FILE_LIFETIME_MS > now);
+  const live = input.files.filter((file) => !isExpired(file, now));
   const liveClips = input.clips.filter((clip) => new Date(clip.expires_at).getTime() > now);
 
   const fileItems: SnapshotItem[] = live.map((file) => ({
@@ -74,7 +74,8 @@ export function buildSnapshot(input: {
     subtitle: formatBytes(file.size),
     sender: input.senderOf(file.device_id),
     createdAt: file.created_at,
-    expiresAt: new Date(new Date(file.created_at).getTime() + FILE_LIFETIME_MS).toISOString(),
+    // Pinned files don't expire: a far-future date keeps them on the widget.
+    expiresAt: file.pinned ? "9999-12-31T00:00:00.000Z" : new Date(expiresAt(file)).toISOString(),
     pinned: file.pinned,
     thumb: input.thumbs[file.id] ?? null,
     url: `flick://file/${file.id}`,

@@ -263,9 +263,8 @@ export function useFiles(session: Session | null, deviceId: string | null = null
         const [{ data, error }] = await Promise.all([
           client
             .from("files")
-            .select(
-              "id,user_id,name,size,mime_type,storage_path,created_at,delivered_at,pinned,pinned_at,device_id,thumb_path",
-            )
+            // All columns: works before and after new columns are added.
+            .select("*")
             .eq("user_id", userId)
             .order("created_at", { ascending: false })
             .returns<CloudFileRow[]>(),
@@ -384,6 +383,7 @@ export function useFiles(session: Session | null, deviceId: string | null = null
                       ...file,
                       pinned: Boolean(row.pinned),
                       pinned_at: row.pinned_at ?? null,
+                      unpinned_at: row.unpinned_at ?? null,
                     }
                   : file,
               )
@@ -489,11 +489,9 @@ export function useFiles(session: Session | null, deviceId: string | null = null
               device_id: deviceId, // the sender, for "from <device>"
               thumb_path: thumbPath,
             })
-            .select(
-              "id,user_id,name,size,mime_type,storage_path,created_at,delivered_at,pinned,pinned_at,device_id,thumb_path",
-            )
-            .single()
-            .returns<CloudFileRow>();
+            // All columns: works before and after new columns are added.
+            .select("*")
+            .single<CloudFileRow>();
 
           if (rowError) {
             throw rowError;
@@ -742,11 +740,19 @@ export function useFiles(session: Session | null, deviceId: string | null = null
       return;
     }
     const pinned = !file.pinned;
-    const apply = (value: boolean, pinnedAt: string | null) =>
+    const apply = (value: boolean, pinnedAt: string | null, unpinnedAt?: string | null) =>
       setFiles((current) =>
         current
           .map((item) =>
-            item.id === file.id ? { ...item, pinned: value, pinned_at: pinnedAt } : item,
+            item.id === file.id
+              ? {
+                  ...item,
+                  pinned: value,
+                  pinned_at: pinnedAt,
+                  // Unpinning restarts the 24 hours (the server sets the real time).
+                  unpinned_at: unpinnedAt ?? (value ? item.unpinned_at : new Date().toISOString()),
+                }
+              : item,
           )
           .sort(compareFiles),
       );
@@ -756,10 +762,10 @@ export function useFiles(session: Session | null, deviceId: string | null = null
       .from("files")
       .update({ pinned })
       .eq("id", file.id)
-      .select("pinned,pinned_at")
+      .select("*")
       .maybeSingle();
     if (error || !data) {
-      apply(Boolean(file.pinned), file.pinned_at ?? null);
+      apply(Boolean(file.pinned), file.pinned_at ?? null, file.unpinned_at ?? null);
       if (limitFromError(error) === "pins") {
         setLimitHit("pins");
       } else {
@@ -767,7 +773,7 @@ export function useFiles(session: Session | null, deviceId: string | null = null
       }
       return;
     }
-    apply(Boolean(data.pinned), data.pinned_at ?? null);
+    apply(Boolean(data.pinned), data.pinned_at ?? null, data.unpinned_at ?? null);
   }
 
   async function previewFile(file: CloudFile): Promise<void> {

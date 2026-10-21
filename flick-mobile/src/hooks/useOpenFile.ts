@@ -5,7 +5,7 @@ import { getContentUriAsync } from "expo-file-system/legacy";
 import * as IntentLauncher from "expo-intent-launcher";
 import * as Sharing from "expo-sharing";
 import { cachedCopy, fileCacheDir, pruneCache, touchCachedCopy } from "../lib/cache";
-import { FILE_LIFETIME_MS } from "../lib/format";
+import { isExpired } from "../lib/format";
 import { resolveMimeType } from "../lib/mime";
 import { FILES_BUCKET, supabase } from "../lib/supabase";
 import type { FileRow } from "../lib/types";
@@ -60,7 +60,7 @@ export function useOpenFile() {
     const mimeType = resolveMimeType(file.mime_type, file.name);
     let fresh: File | null = null; // a download in progress, removed if it fails
     try {
-      if (Date.now() > new Date(file.created_at).getTime() + FILE_LIFETIME_MS) {
+      if (isExpired(file, Date.now())) {
         throw new ExpiredError();
       }
 

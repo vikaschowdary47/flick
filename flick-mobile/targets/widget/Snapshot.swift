@@ -107,6 +107,7 @@ enum FlickColor {
 }
 
 func timeLeft(_ item: SnapshotItem, now: Date) -> String {
+  if item.pinned { return "Pinned" } // pinned files don't expire
   guard let expires = SharedStore.iso(item.expiresAt) else { return "" }
   let minutes = Int(ceil(expires.timeIntervalSince(now) / 60))
   if minutes <= 0 { return "Expiring…" }

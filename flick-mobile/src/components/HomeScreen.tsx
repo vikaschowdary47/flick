@@ -217,7 +217,7 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
                 : [
                     formatSender(item.device_id, device.deviceId, device.names),
                     item.delivered_at ? "Landed" : "Waiting for your devices",
-                    formatExpiry(item.created_at, now),
+                    formatExpiry(item, now),
                   ]
                     .filter(Boolean)
                     .join(" · ")
