@@ -94,10 +94,28 @@ public class FlickWidgetsModule: Module {
       }
     }
 
+    // The share extension ("Flick it") uploads with the app's session: the
+    // app keeps a copy here (tokens, project URL, publishable key, device id).
+    // The extension may refresh it and write it back; the app adopts that.
+    AsyncFunction("writeSession") { (json: String) in
+      guard let url = Self.container?.appendingPathComponent("session.json") else {
+        throw Exception(name: "NoAppGroup", description: "App Group container unavailable")
+      }
+      try Data(json.utf8).write(to: url, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
+    }
+
+    AsyncFunction("readSession") { () -> String? in
+      guard let url = Self.container?.appendingPathComponent("session.json"),
+        let data = try? Data(contentsOf: url)
+      else { return nil }
+      return String(data: data, encoding: .utf8)
+    }
+
     // Wipe everything on sign-out so widgets don't show the last account.
     AsyncFunction("clear") {
       guard let container = Self.container else { return }
       try? FileManager.default.removeItem(at: container.appendingPathComponent("snapshot.json"))
+      try? FileManager.default.removeItem(at: container.appendingPathComponent("session.json"))
       if let thumbs = Self.thumbsDirectory {
         try? FileManager.default.removeItem(at: thumbs)
       }

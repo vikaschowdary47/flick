@@ -12,6 +12,8 @@ type FlickWidgetsNative = {
   clear(): Promise<void>;
   startLiveActivity(count: number, deviceName: string): Promise<void>;
   endLiveActivity(): Promise<void>;
+  writeSession(json: string): Promise<void>;
+  readSession(): Promise<string | null>;
 };
 
 const native = Platform.OS === "ios" ? requireOptionalNativeModule<FlickWidgetsNative>("FlickWidgets") : null;
@@ -33,4 +35,6 @@ export const widgetsBridge = {
   startLiveActivity: (count: number, deviceName: string) =>
     native?.startLiveActivity(count, deviceName) ?? Promise.resolve(),
   endLiveActivity: () => native?.endLiveActivity() ?? Promise.resolve(),
+  writeSession: (json: string) => native?.writeSession(json) ?? Promise.resolve(),
+  readSession: () => native?.readSession() ?? Promise.resolve(null as string | null),
 };

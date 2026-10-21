@@ -11,6 +11,7 @@ import { useDevice } from "../hooks/useDevice";
 import { useUsage } from "../hooks/useUsage";
 import { useWidgetSnapshot } from "../hooks/useWidgetSnapshot";
 import { useLiveActivity } from "../hooks/useLiveActivity";
+import { useShareSession } from "../hooks/useShareSession";
 import { useDeepLinkTarget } from "../hooks/useDeepLinkTarget";
 import * as Clipboard from "expo-clipboard";
 import { useNow } from "../hooks/useNow";
@@ -89,6 +90,8 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
     lockEnabled: device.widgetMode.lock,
     showContentOnLockScreen: device.widgetMode.lock_content,
   });
+  // "Flick it" share extension: keep its copy of the session current.
+  useShareSession(device.deviceId);
   useLiveActivity({
     files: recent.files,
     thisDeviceId: device.deviceId,
