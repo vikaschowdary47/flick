@@ -19,6 +19,8 @@ interface HeaderProps {
   onRenameDevice?: (name: string) => Promise<string | null>;
   usage?: Usage | null;
   windowMode?: "popover" | "panel" | "main";
+  // Expanded popover: pop out into the separate resizable window.
+  onPopOut?: () => void;
   density?: Density;
   onDensityChange?: (density: Density) => void;
   clipboardSharing?: boolean | null; // null/undefined hides it (flag off)
@@ -38,6 +40,7 @@ export default function Header({
   onRenameDevice,
   usage = null,
   windowMode = "popover",
+  onPopOut,
   density = "compact",
   onDensityChange,
   clipboardSharing = null,
@@ -86,6 +89,19 @@ export default function Header({
         <span className="brand-name">flick</span>
       </div>
       <div className="header-actions">
+        {onPopOut && (
+          <button
+            type="button"
+            className="window-close-button popout-button"
+            aria-label="Pop out into a separate window"
+            title="Pop out into a window"
+            onClick={onPopOut}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M14 4h6v6M20 4l-8 8M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4" />
+            </svg>
+          </button>
+        )}
         {windowMode !== "popover" && (
           // Frameless window: our own close (hides; Flick keeps running in the menu bar).
           <button

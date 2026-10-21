@@ -24,6 +24,8 @@ interface FileListProps {
   density: Density;
   // Popover: just the newest few items, no sections, plus "Open Flick".
   recentOnly?: number;
+  // Popover "+N" image tile: expand the popover to show everything.
+  onShowMore?: () => void;
   onFileSelection: (event: ChangeEvent<HTMLInputElement>) => void;
   onPreview: (file: CloudFile) => void;
   onStartDrag: (file: CloudFile) => void;
@@ -46,6 +48,7 @@ export default function FileList({
   deviceNames,
   density,
   recentOnly,
+  onShowMore,
   onFileSelection,
   onPreview,
   onStartDrag,
@@ -171,7 +174,7 @@ export default function FileList({
       )}
 
       {view === "list" && density === "compact" && popover && (
-        <RecentFiles files={files} limit={recentOnly} now={now} senderOf={senderOf} {...itemActions} />
+        <RecentFiles files={files} limit={recentOnly} now={now} senderOf={senderOf} onShowMore={onShowMore} {...itemActions} />
       )}
       {view === "list" && density === "compact" && !popover && (
         <CompactFiles files={files} now={now} senderOf={senderOf} {...itemActions} />
@@ -337,8 +340,10 @@ function RecentFiles({
   limit,
   now,
   senderOf,
-  ...actions
-}: CompactFilesProps & { limit: number }) {
+  onShowMore,
+  ...rest
+}: CompactFilesProps & { limit: number; onShowMore?: () => void }) {
+  const actions = rest;
   const { shown } = popoverSelection(files, limit);
   const images = shown.filter((file) => getFileVisualType(file) === "image");
   const others = shown.filter((file) => getFileVisualType(file) !== "image");
@@ -356,7 +361,7 @@ function RecentFiles({
               type="button"
               className="compact-tile-more-images"
               aria-label={`${images.length - tiles.length} more images. Open Flick`}
-              onClick={() => window.flick.openMainWindow()}
+              onClick={onShowMore}
             >
               +{images.length - tiles.length}
             </button>

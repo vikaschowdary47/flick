@@ -2,7 +2,7 @@ import type { Usage } from "../limits";
 import type { Density } from "../density";
 import { useWindowMode } from "../hooks/useWindowMode";
 import { useReducedMotion } from "framer-motion";
-import { useLayoutEffect, useRef, useState, type ChangeEvent, type MouseEvent, type ReactNode, type RefObject } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ChangeEvent, type MouseEvent, type ReactNode, type RefObject } from "react";
 import type { Session } from "@supabase/supabase-js";
 import type { CloudFile } from "../types";
 import type { PendingRemoval } from "../hooks/useFiles";
@@ -108,9 +108,18 @@ export default function Widget({
   const windowMode = useWindowMode();
   // The popover and floating panel are always compact; the main window
   // follows the Comfy/Compact setting.
-  const effectiveDensity: Density = windowMode === "main" ? density : "compact";
   const isPopover = windowMode === "popover";
-  const popoverHidden = isPopover ? popoverSelection(files, POPOVER_ITEMS).hidden : 0;
+  // "Open Flick" expands the popover in place (the main process animates the
+  // resize); click-away or "Show less" brings back the compact popover.
+  const [expanded, setExpanded] = useState(false);
+  useEffect(() => window.flick.onPopoverExpanded(setExpanded), []);
+  const showFull = !isPopover || expanded;
+  // The compact popover and the floating panel are always compact; the main
+  // window and the expanded popover follow the Comfy/Compact setting.
+  const effectiveDensity: Density = windowMode === "main" || (isPopover && expanded) ? density : "compact";
+  const popoverHidden = isPopover && !expanded ? popoverSelection(files, POPOVER_ITEMS).hidden : 0;
+  const expandedRef = useRef(expanded);
+  expandedRef.current = expanded;
 
   // Popover: report the natural height (header + all content + footer) so
   // the main process can size the window to it; the list scrolls past the cap.
@@ -137,7 +146,7 @@ export default function Widget({
         }
         const padding = parseFloat(getComputedStyle(content).paddingBottom) || 0;
         const chrome = widget.offsetHeight - content.clientHeight; // header, footer, borders
-        window.flick.reportPopoverHeight(chrome + bottom + padding);
+        window.flick.reportPopoverHeight(chrome + bottom + padding, expandedRef.current);
       });
     };
     const resize = new ResizeObserver(measure);
@@ -154,12 +163,12 @@ export default function Widget({
       resize.disconnect();
       mutations.disconnect();
     };
-  }, [isPopover]);
+  }, [isPopover, expanded]);
 
   return (
     <main
       ref={widgetRef}
-      className={`widget${isDraggingFiles ? " drag-active" : ""}${effectiveDensity === "compact" ? " widget-compact" : ""}${windowMode === "popover" ? " widget-popover" : ""}`}
+      className={`widget${isDraggingFiles ? " drag-active" : ""}${effectiveDensity === "compact" ? " widget-compact" : ""}${isPopover ? " widget-popover" : ""}${isPopover && expanded ? " widget-expanded" : ""}`}
       onClickCapture={onOutsideClick}
       onDragEnter={handleDragEnter}
       onDragOver={handleDragOver}
@@ -188,6 +197,7 @@ export default function Widget({
         onRenameDevice={onRenameDevice}
         usage={usage}
         windowMode={windowMode}
+        onPopOut={isPopover && expanded ? () => window.flick.openMainWindow() : undefined}
         density={density}
         onDensityChange={onDensityChange}
         clipboardSharing={clipboardSharing}
@@ -239,7 +249,8 @@ export default function Widget({
           deviceId={deviceId}
           deviceNames={deviceNames}
           density={effectiveDensity}
-          recentOnly={windowMode === "popover" ? POPOVER_ITEMS : undefined}
+          recentOnly={showFull ? undefined : POPOVER_ITEMS}
+          onShowMore={() => setExpanded(true)}
           onFileSelection={handleFileSelection}
           onPreview={onPreviewFile}
           onStartDrag={onStartFileDrag}
@@ -253,9 +264,15 @@ export default function Widget({
       {isPopover ? (
         // Always visible: the list scrolls above it.
         <footer className="popover-footer">
-          <button type="button" className="popover-open" onClick={() => window.flick.openMainWindow()}>
-            {popoverHidden > 0 ? `Open Flick · +${popoverHidden} more` : "Open Flick"}
-          </button>
+          {expanded ? (
+            <button type="button" className="popover-open" onClick={() => setExpanded(false)}>
+              Show less
+            </button>
+          ) : (
+            <button type="button" className="popover-open" onClick={() => setExpanded(true)}>
+              {popoverHidden > 0 ? `Open Flick · +${popoverHidden} more` : "Open Flick"}
+            </button>
+          )}
         </footer>
       ) : (
         <footer className="footer">

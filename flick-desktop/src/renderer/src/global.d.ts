@@ -20,7 +20,8 @@ interface Window {
     onWindowMode: (listener: (mode: 'popover' | 'panel' | 'main') => void) => () => void
     openMainWindow: () => void
     hideWindow: () => void
-    reportPopoverHeight: (height: number) => void
+    reportPopoverHeight: (height: number, expanded: boolean) => void
+    onPopoverExpanded: (listener: (expanded: boolean) => void) => () => void
     setClipsActive: (active: boolean) => Promise<void>
     readClipboard: () => Promise<string>
     writeClipboard: (text: string) => Promise<void>

@@ -38,6 +38,13 @@ const sample: CloudFile[] = [
   file(3, "notes.txt", "text/plain", 6),
 ];
 
+// state=many: 20 files across Pinned / Today / Earlier, some of them images.
+const many: CloudFile[] = Array.from({ length: 20 }, (_, i) =>
+  i % 4 === 0
+    ? file(i, `photo-${i + 1}.jpg`, "image/jpeg", i * 1.1, i === 0)
+    : file(i, `document-${i + 1}.pdf`, "application/pdf", i * 1.1),
+);
+
 const noop = () => {};
 const session = { user: { id: "preview", email: "you@example.com" } } as unknown as Session;
 
@@ -46,7 +53,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     accountMenuRef={createRef<HTMLDivElement>()}
     authReady
     fileInputRef={createRef<HTMLInputElement>()}
-    files={state === "files" ? sample : []}
+    files={state === "files" ? sample : state === "many" ? many : []}
     handleDragEnter={noop}
     handleDragLeave={noop}
     handleDragOver={noop}

@@ -88,7 +88,13 @@ contextBridge.exposeInMainWorld('flick', {
   },
   openMainWindow: () => ipcRenderer.send('window:open-main'),
   hideWindow: () => ipcRenderer.send('window:hide'),
-  reportPopoverHeight: (height: number) => ipcRenderer.send('popover:content-height', height),
+  reportPopoverHeight: (height: number, expanded: boolean) =>
+    ipcRenderer.send('popover:content-height', height, expanded),
+  onPopoverExpanded: (listener: (expanded: boolean) => void): (() => void) => {
+    const handler = (_event: unknown, expanded: unknown) => listener(expanded === true)
+    ipcRenderer.on('popover:expanded', handler)
+    return () => ipcRenderer.removeListener('popover:expanded', handler)
+  },
   setClipsActive: (active: boolean): Promise<void> =>
     ipcRenderer.invoke('clips:set-active', active),
   readClipboard: (): Promise<string> => ipcRenderer.invoke('clipboard:read'),

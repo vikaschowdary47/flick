@@ -2159,3 +2159,27 @@ input:focus-visible {
   color: var(--flick-navy);
   font-weight: var(--flick-font-weight-extrabold);
 }
+
+.popout-button svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: var(--flick-navy);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.2;
+}
+
+.widget-popover .popout-button {
+  width: 28px;
+  height: 28px;
+}
+
+/* Expanded popover: the heading stays, but no "+" button (drop files to upload). */
+.widget-popover .file-actions {
+  display: none;
+}
+
+.widget-expanded .section-heading {
+  margin: 4px 0 6px;
+}

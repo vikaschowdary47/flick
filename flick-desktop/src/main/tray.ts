@@ -139,25 +139,80 @@ const POPOVER_WIDTH = 360;
 const POPOVER_MIN_HEIGHT = 140;
 const POPOVER_MAX_HEIGHT = 440;
 const POPOVER_MAX_SHARE = 0.45; // of the screen's work area height
+// "Open Flick" expands the same popover in place, up to this size.
+const EXPANDED_WIDTH = 420;
+const EXPANDED_MAX_HEIGHT = 680;
+const EXPANDED_MAX_SHARE = 0.8;
+const RESIZE_MS = 180;
 let popoverContentHeight = POPOVER_MIN_HEIGHT;
+let popoverExpanded = false;
+let resizeTimer: NodeJS.Timeout | null = null;
 const PANEL_SIZE = { width: 320, height: 460 };
 const MAIN_SIZE = { width: 480, height: 640 };
 const MAIN_MIN = { width: 360, height: 420 };
 
 let mode: WindowMode = "popover";
 
-function popoverHeight(window: BrowserWindow): number {
+// Popover size: content height, between the minimum and the cap for the
+// current state (compact or expanded), never taller than the screen allows.
+function popoverSize(window: BrowserWindow): { width: number; height: number } {
   const area = screen.getDisplayMatching(window.getBounds()).workArea;
-  const max = Math.min(POPOVER_MAX_HEIGHT, Math.floor(area.height * POPOVER_MAX_SHARE));
-  return Math.max(POPOVER_MIN_HEIGHT, Math.min(max, Math.ceil(popoverContentHeight)));
+  const max = popoverExpanded
+    ? Math.min(EXPANDED_MAX_HEIGHT, Math.floor(area.height * EXPANDED_MAX_SHARE))
+    : Math.min(POPOVER_MAX_HEIGHT, Math.floor(area.height * POPOVER_MAX_SHARE));
+  const usable = area.height - POPOVER_GAP * 2;
+  const height = Math.min(usable, Math.max(POPOVER_MIN_HEIGHT, Math.min(max, Math.ceil(popoverContentHeight))));
+  return { width: popoverExpanded ? EXPANDED_WIDTH : POPOVER_WIDTH, height };
 }
 
-// Resize to the reported content height and re-anchor under the icon (which
-// also keeps it on screen).
-function fitPopover(window: BrowserWindow): void {
+function cancelResize(): void {
+  if (resizeTimer) {
+    clearInterval(resizeTimer);
+    resizeTimer = null;
+  }
+}
+
+// Size the popover to its content and re-anchor it under the icon. With
+// `animate`, tween there over ~180ms (ease-out) so it grows from the icon.
+function fitPopover(window: BrowserWindow, animate = false): void {
+  const { width, height } = popoverSize(window);
+  const target = anchoredBounds(width, height);
   window.setMinimumSize(POPOVER_WIDTH, POPOVER_MIN_HEIGHT);
-  window.setSize(POPOVER_WIDTH, popoverHeight(window), false);
-  positionUnderTray(window);
+  if (!target) {
+    window.setSize(width, height, false);
+    return;
+  }
+  cancelResize();
+  const from = window.getBounds();
+  if (!animate || !window.isVisible()) {
+    window.setBounds(target, false);
+    return;
+  }
+  const start = Date.now();
+  resizeTimer = setInterval(() => {
+    const t = Math.min(1, (Date.now() - start) / RESIZE_MS);
+    const ease = 1 - (1 - t) ** 3;
+    const mix = (a: number, b: number) => Math.round(a + (b - a) * ease);
+    window.setBounds(
+      {
+        x: mix(from.x, target.x),
+        y: mix(from.y, target.y),
+        width: mix(from.width, target.width),
+        height: mix(from.height, target.height),
+      },
+      false,
+    );
+    if (t >= 1) {
+      cancelResize();
+    }
+  }, 1000 / 60);
+}
+
+// Ask the page to switch layouts ("Open Flick" from the tray menu, or the
+// reset on hide). The page renders, measures, and reports back with
+// popover:content-height, which does the resize.
+function requestPopoverExpanded(expanded: boolean): void {
+  getWindow()?.webContents.send("popover:expanded", expanded);
 }
 let saveTimer: NodeJS.Timeout | null = null;
 
@@ -165,11 +220,13 @@ export function currentMode(): WindowMode {
   return mode;
 }
 
-function positionUnderTray(window: BrowserWindow): void {
+// Where a window of this size goes: under the tray icon when the bar is at
+// the top (macOS, most Linux), above it when the taskbar is at the bottom
+// (Windows default), always inside the work area.
+function anchoredBounds(width: number, height: number): Bounds | null {
   if (!tray) {
-    return;
+    return null;
   }
-  const [width, height] = window.getSize();
   const icon = tray.getBounds();
   // Linux (AppIndicator) often reports empty bounds: fall back to the cursor.
   const anchor =
@@ -180,15 +237,20 @@ function positionUnderTray(window: BrowserWindow): void {
           return { x: point.x, y: point.y, bottom: point.y };
         })();
   const area = screen.getDisplayNearestPoint({ x: Math.round(anchor.x), y: Math.round(anchor.y) }).workArea;
-
-  // Under the icon when the bar is at the top (macOS, most Linux), above it
-  // when the taskbar is at the bottom (Windows default).
   const iconInTopHalf = anchor.y < area.y + area.height / 2;
   let x = Math.round(anchor.x - width / 2);
   let y = iconInTopHalf ? Math.round(anchor.bottom + POPOVER_GAP) : Math.round(anchor.y - height - POPOVER_GAP);
   x = Math.max(area.x + POPOVER_GAP, Math.min(x, area.x + area.width - width - POPOVER_GAP));
   y = Math.max(area.y + POPOVER_GAP, Math.min(y, area.y + area.height - height - POPOVER_GAP));
-  window.setPosition(x, y, false);
+  return { x, y, width, height };
+}
+
+function positionUnderTray(window: BrowserWindow): void {
+  const [width, height] = window.getSize();
+  const bounds = anchoredBounds(width, height);
+  if (bounds) {
+    window.setPosition(bounds.x, bounds.y, false);
+  }
 }
 
 // Keep saved bounds on a screen that still exists.
@@ -331,7 +393,13 @@ function buildMenu(): Menu {
     refreshLinuxMenu();
   };
   const template: Electron.MenuItemConstructorOptions[] = [
-    { label: "Open Flick", click: openMainWindow },
+    {
+      label: "Open Flick",
+      click: () => {
+        showIn("popover");
+        requestPopoverExpanded(true);
+      },
+    },
     { type: "separator" },
     {
       label: "Show from menu bar as",
@@ -409,6 +477,14 @@ export function attachWindow(window: BrowserWindow, isQuitting: () => boolean): 
       window.hide();
     }
   });
+  // The next tray click opens the compact popover again.
+  window.on("hide", () => {
+    cancelResize();
+    if (popoverExpanded) {
+      popoverExpanded = false;
+      requestPopoverExpanded(false);
+    }
+  });
   window.on("focus", () => setArrivalDot(false));
   window.on("resize", () => rememberBounds(window));
   window.on("move", () => rememberBounds(window));
@@ -425,14 +501,23 @@ export function attachWindow(window: BrowserWindow, isQuitting: () => boolean): 
 export function setupWindowModeIpc(): void {
   ipcMain.handle("window:get-mode", () => mode);
   // The popover page reports its natural height whenever its list changes.
-  ipcMain.on("popover:content-height", (_event, height: unknown) => {
+  // The page reports its natural height and layout after every change. A
+  // layout change (Open Flick / Show less) animates; anything else snaps.
+  ipcMain.on("popover:content-height", (_event, height: unknown, expanded: unknown) => {
     if (typeof height !== "number" || !Number.isFinite(height)) {
       return;
     }
-    popoverContentHeight = height;
     const window = getWindow();
-    if (window && mode === "popover") {
-      fitPopover(window);
+    const toggled = (expanded === true) !== popoverExpanded;
+    popoverContentHeight = height;
+    popoverExpanded = expanded === true;
+    if (!window || mode !== "popover") {
+      return;
+    }
+    if (toggled) {
+      fitPopover(window, true);
+    } else if (!resizeTimer) {
+      fitPopover(window); // mid-animation, the tween already heads there
     }
   });
   ipcMain.on("window:open-main", () => openMainWindow());
