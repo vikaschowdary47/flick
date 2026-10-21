@@ -17,6 +17,11 @@ create index if not exists share_links_owner_created_idx
 create index if not exists share_links_file_id_idx
   on public.share_links (file_id);
 
+-- Reuse the existing Notify-me flow for the current 50 MB share-link cap.
+alter table public.waitlist drop constraint if exists waitlist_limit_hit_check;
+alter table public.waitlist
+  add constraint waitlist_limit_hit_check check (limit_hit in ('pins', 'storage', 'devices', 'sharing'));
+
 alter table public.share_links enable row level security;
 revoke all on table public.share_links from public, anon;
 grant select, insert, update, delete on table public.share_links to authenticated;

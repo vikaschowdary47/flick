@@ -54,6 +54,12 @@ function copy(limit: LimitKind, usage: Usage | null): { title: string; body: str
       body: "Delete a few old files to make room for new ones.",
     };
   }
+  if (limit === "sharing") {
+    return {
+      title: "Share links are for files up to 50 MB",
+      body: "Flick links use the same 50 MB file limit. We’ll let you know when larger links are available.",
+    };
+  }
   const max = usage?.maxDevices;
   return {
     title: max !== undefined ? `You're signed in on ${max} of ${max} devices` : "Too many devices",
@@ -144,7 +150,7 @@ export function LimitScreen({
         </ScrollView>
 
         <View style={styles.actions}>
-          {limit !== "devices" && (
+          {limit !== "devices" && limit !== "sharing" && (
             <PillButton
               label="Free up space"
               size="large"

@@ -122,6 +122,9 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     }}
     onOutsideClick={noop}
     onPreviewFile={noop}
+    onShareLink={noop}
+    onRevokeShareLink={noop}
+    hasShareLink={() => false}
     onStartFileDrag={noop}
     onRemoveFile={noop}
     onTogglePin={noop}
@@ -132,6 +135,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     showConfetti={false}
     arrivalPulse={0}
     uploadError=""
+    shareStatus=""
     loadError={
       state === "error"
         ? "Could not load your files. (permission denied for table files · code 42501)"

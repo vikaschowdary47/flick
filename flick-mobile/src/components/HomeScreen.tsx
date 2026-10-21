@@ -12,6 +12,7 @@ import { useUsage } from "../hooks/useUsage";
 import { useWidgetSnapshot } from "../hooks/useWidgetSnapshot";
 import { useLiveActivity } from "../hooks/useLiveActivity";
 import { useShareSession } from "../hooks/useShareSession";
+import { useShareLinks } from "../hooks/useShareLinks";
 import { useDeepLinkTarget } from "../hooks/useDeepLinkTarget";
 import * as Clipboard from "expo-clipboard";
 import { useNow } from "../hooks/useNow";
@@ -70,6 +71,7 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
   const now = useNow();
   const remover = useRemoveFile(recent.refresh);
   const pinner = usePinFile(recent.refresh);
+  const shareLinks = useShareLinks(userId);
   // The card whose menu is open, and where it was touched.
   const [menu, setMenu] = useState<{ file: FileRow; anchorY: number } | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -158,7 +160,7 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
     </View>
   ) : null;
 
-  const activeLimit = uploadLimit ?? pinner.limitHit ?? (device.limitHit ? "devices" : null);
+  const activeLimit = shareLinks.limitHit ?? uploadLimit ?? pinner.limitHit ?? (device.limitHit ? "devices" : null);
   // Limits and usage come from the server; refresh when they're about to show.
   // Always loaded (cheap) and refreshed as files change, for the 80% prompt.
   const totalBytes = recent.files.reduce((sum, file) => sum + file.size, 0);
@@ -257,6 +259,22 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
           onPress: () => opener.share(menu.file),
         },
         {
+          key: "share-link",
+          label: "Share link",
+          icon: <ShareIcon />,
+          fill: "share",
+          onPress: () => void shareLinks.create(menu.file),
+        },
+        ...(shareLinks.hasShareLink(menu.file)
+          ? [{
+              key: "revoke-share",
+              label: "Revoke link",
+              icon: <TrashIcon />,
+              fill: "danger" as const,
+              onPress: () => void shareLinks.revoke(menu.file),
+            }]
+          : []),
+        {
           key: "pin",
           label: menu.file.pinned ? "Unpin" : "Pin",
           icon: <PinIcon />,
@@ -274,7 +292,7 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
       ]
     : [];
 
-  const openError = remover.error ?? pinner.error ?? opener.error;
+  const openError = shareLinks.status || remover.error || pinner.error || opener.error;
   const filesHeader = compact ? (
     <View style={styles.compactHeader}>
       <Animated.Text accessibilityRole="header" style={[styles.heading, headingStyle]}>
@@ -300,9 +318,9 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
       <Text accessibilityRole="header" style={styles.eyebrow}>
         RECENTLY SENT
       </Text>
-      {(remover.error ?? pinner.error ?? opener.error) && (
+      {openError && (
         <Text accessibilityRole="alert" style={styles.openError}>
-          {remover.error ?? pinner.error ?? opener.error}
+          {openError}
         </Text>
       )}
     </View>
@@ -430,6 +448,7 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
         }}
         onClose={() => {
           clearLimit();
+          shareLinks.clearLimit();
           pinner.clearLimit();
           device.clearLimit();
         }}

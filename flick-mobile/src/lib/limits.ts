@@ -2,7 +2,7 @@
 // (supabase/migrations/20261022120000_plan_limits.sql). The apps only read
 // them (get_usage) to word messages, so they can change without an update.
 
-export type LimitKind = "pins" | "storage" | "devices";
+export type LimitKind = "pins" | "storage" | "devices" | "sharing";
 
 export type Usage = {
   plan: string;

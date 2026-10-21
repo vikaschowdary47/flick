@@ -11,13 +11,15 @@ import { useFeatureFlags } from "./hooks/useFeatureFlags";
 import { useFiles } from "./hooks/useFiles";
 import { useUsage } from "./hooks/useUsage";
 import { useSession } from "./hooks/useSession";
+import { useShareLinks } from "./hooks/useShareLinks";
 import { supabase } from "./supabase";
 
 export default function App() {
   const auth = useSession();
   const device = useDevice(auth.session, () => void auth.handleSignOut());
   const fileState = useFiles(auth.session, device.deviceId);
-  const activeLimit = fileState.limitHit ?? (device.limitHit ? "devices" : null);
+  const shareLinks = useShareLinks(auth.session);
+  const activeLimit = shareLinks.limitHit ? "sharing" : fileState.limitHit ?? (device.limitHit ? "devices" : null);
   // Limits and usage come from the server; refresh when they're about to show.
   const { density, setDensity } = useDensity(auth.session);
   // Always loaded (cheap), refreshed as files change, for the 80% prompt.
@@ -101,6 +103,9 @@ export default function App() {
       onPreviewFile={fileState.previewFile}
       onStartFileDrag={fileState.startFileDrag}
       onRemoveFile={fileState.removeFromWidget}
+      onShareLink={shareLinks.create}
+      onRevokeShareLink={shareLinks.revoke}
+      hasShareLink={shareLinks.hasShareLink}
       onTogglePin={fileState.togglePin}
       onRetryDownload={fileState.retryDownload}
       onUndoRemove={fileState.undoRemove}
@@ -109,6 +114,7 @@ export default function App() {
       showConfetti={fileState.showConfetti}
       arrivalPulse={fileState.arrivalPulse}
       uploadError={fileState.uploadError}
+      shareStatus={shareLinks.status}
       loadError={fileState.loadError}
       onRetryLoad={fileState.retryLoad}
       usage={usage.usage}
@@ -146,6 +152,7 @@ export default function App() {
       paymentsEnabled={flags.payments}
       onClose={() => {
         fileState.clearLimit();
+        shareLinks.clearLimit();
         device.clearLimit();
       }}
     />

@@ -12,6 +12,9 @@ export default function CompactImageTile({
   now,
   sender,
   onPreview,
+  onShareLink,
+  onRevokeShareLink,
+  hasShareLink,
   onStartDrag,
   onRemove,
   onTogglePin,
@@ -97,6 +100,9 @@ export default function CompactImageTile({
           canPreview={isReady}
           pinned={Boolean(file.pinned)}
           onPreview={() => onPreview(file)}
+          onShareLink={() => onShareLink(file)}
+          onRevokeShareLink={() => onRevokeShareLink(file)}
+          shareLinkActive={hasShareLink(file)}
           onTogglePin={() => onTogglePin(file)}
           onDelete={() => onRemove(file)}
           onClose={menu.close}

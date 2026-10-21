@@ -48,6 +48,12 @@ function copy(limit: LimitKind, usage: Usage | null): { title: string; body: str
       body: "Delete a few old files to make room for new ones.",
     };
   }
+  if (limit === "sharing") {
+    return {
+      title: "Share links are for files up to 50 MB",
+      body: "Flick links use the same 50 MB file limit. We’ll let you know when larger links are available.",
+    };
+  }
   return {
     title: usage
       ? `You're signed in on ${usage.maxDevices} of ${usage.maxDevices} devices`
@@ -155,7 +161,7 @@ export default function LimitScreen({
         )}
 
         <div className="limit-actions">
-          {limit !== "devices" && (
+          {limit !== "devices" && limit !== "sharing" && (
             // The widget list is right behind this screen: close it to delete or unpin.
             <button type="button" className="sign-in-button" onClick={close}>
               Free up space

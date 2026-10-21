@@ -7,6 +7,9 @@ interface FileMenuProps {
   canPreview: boolean;
   pinned: boolean;
   onPreview: () => void;
+  onShareLink: () => void;
+  onRevokeShareLink: () => void;
+  shareLinkActive: boolean;
   onTogglePin: () => void;
   onDelete: () => void;
   // restoreFocus: put focus back on the ⋯ button (keyboard close).
@@ -21,6 +24,9 @@ export default function FileMenu({
   canPreview,
   pinned,
   onPreview,
+  onShareLink,
+  onRevokeShareLink,
+  shareLinkActive,
   onTogglePin,
   onDelete,
   onClose,
@@ -119,6 +125,17 @@ export default function FileMenu({
           <path d="M9 4h6l-1 6 3 3H7l3-3-1-6ZM12 13v7" />
         </svg>
         {pinned ? "Unpin" : "Pin"}
+      </button>
+      <button
+        type="button"
+        role="menuitem"
+        className="file-menu-item"
+        onClick={() => choose(shareLinkActive ? onRevokeShareLink : onShareLink)}
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3v12M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6" />
+        </svg>
+        {shareLinkActive ? "Revoke link" : "Share link"}
       </button>
       <button
         type="button"

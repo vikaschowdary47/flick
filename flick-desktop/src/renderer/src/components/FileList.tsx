@@ -18,6 +18,7 @@ interface FileListProps {
   isLoadingFiles: boolean;
   isUploading: boolean;
   uploadError: string;
+  shareStatus: string;
   loadError: string;
   usage?: Usage | null; // for the 80% storage prompt
   onRetryLoad: () => void;
@@ -31,6 +32,9 @@ interface FileListProps {
   onShowMore?: () => void;
   onFileSelection: (event: ChangeEvent<HTMLInputElement>) => void;
   onPreview: (file: CloudFile) => void;
+  onShareLink: (file: CloudFile) => void;
+  onRevokeShareLink: (file: CloudFile) => void;
+  hasShareLink: (file: CloudFile) => boolean;
   onStartDrag: (file: CloudFile) => void;
   onRemove: (file: CloudFile) => void;
   onTogglePin: (file: CloudFile) => void;
@@ -44,6 +48,7 @@ export default function FileList({
   isLoadingFiles,
   isUploading,
   uploadError,
+  shareStatus,
   loadError,
   usage = null,
   onRetryLoad,
@@ -55,6 +60,9 @@ export default function FileList({
   onShowMore,
   onFileSelection,
   onPreview,
+  onShareLink,
+  onRevokeShareLink,
+  hasShareLink,
   onStartDrag,
   onRemove,
   onTogglePin,
@@ -75,6 +83,9 @@ export default function FileList({
   const pendingIds = new Set(pendingRemovals.map((removal) => removal.id));
   const itemActions = {
     onPreview,
+    onShareLink,
+    onRevokeShareLink,
+    hasShareLink,
     onStartDrag,
     onRemove,
     onTogglePin,
@@ -203,6 +214,9 @@ export default function FileList({
                 sender={senderOf(file)}
                 key={file.id}
                 onPreview={onPreview}
+                onShareLink={onShareLink}
+                onRevokeShareLink={onRevokeShareLink}
+                hasShareLink={hasShareLink}
                 onStartDrag={onStartDrag}
                 onRemove={onRemove}
                 onTogglePin={onTogglePin}
@@ -227,6 +241,11 @@ export default function FileList({
       {uploadError && (
         <p className="auth-error" role="alert">
           {uploadError}
+        </p>
+      )}
+      {shareStatus && (
+        <p className="auth-status" role="status">
+          {shareStatus}
         </p>
       )}
       {density === "comfy" && pendingRemovals.length > 0 && (
@@ -254,6 +273,9 @@ interface CompactFilesProps {
   now: number;
   senderOf: (file: CloudFile) => string;
   onPreview: (file: CloudFile) => void;
+  onShareLink: (file: CloudFile) => void;
+  onRevokeShareLink: (file: CloudFile) => void;
+  hasShareLink: (file: CloudFile) => boolean;
   onStartDrag: (file: CloudFile) => void;
   onRemove: (file: CloudFile) => void;
   onTogglePin: (file: CloudFile) => void;

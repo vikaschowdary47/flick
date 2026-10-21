@@ -36,6 +36,9 @@ interface WidgetProps {
   onPreviewFile: (file: CloudFile) => void;
   onStartFileDrag: (file: CloudFile) => void;
   onRemoveFile: (file: CloudFile) => void;
+  onShareLink: (file: CloudFile) => void;
+  onRevokeShareLink: (file: CloudFile) => void;
+  hasShareLink: (file: CloudFile) => boolean;
   onTogglePin: (file: CloudFile) => void;
   onRetryDownload: (file: CloudFile) => void;
   onUndoRemove: (fileId: string) => void;
@@ -44,6 +47,7 @@ interface WidgetProps {
   showConfetti: boolean;
   arrivalPulse: number;
   uploadError: string;
+  shareStatus: string;
   loadError: string;
   onRetryLoad: () => void;
   // Clips tab content; null when clips are off (flag or setting).
@@ -90,6 +94,9 @@ export default function Widget({
   onPreviewFile,
   onStartFileDrag,
   onRemoveFile,
+  onShareLink,
+  onRevokeShareLink,
+  hasShareLink,
   onTogglePin,
   onRetryDownload,
   onUndoRemove,
@@ -98,6 +105,7 @@ export default function Widget({
   showConfetti,
   arrivalPulse,
   uploadError,
+  shareStatus,
   loadError,
   onRetryLoad,
   clipsPanel,
@@ -301,6 +309,7 @@ export default function Widget({
           isLoadingFiles={isLoadingFiles}
           isUploading={isUploading}
           uploadError={uploadError}
+          shareStatus={shareStatus}
           loadError={loadError}
           usage={usage}
           onRetryLoad={onRetryLoad}
@@ -315,6 +324,9 @@ export default function Widget({
           onPreview={onPreviewFile}
           onStartDrag={onStartFileDrag}
           onRemove={onRemoveFile}
+          onShareLink={onShareLink}
+          onRevokeShareLink={onRevokeShareLink}
+          hasShareLink={hasShareLink}
           onTogglePin={onTogglePin}
           onRetryDownload={onRetryDownload}
           onUndoRemove={onUndoRemove}

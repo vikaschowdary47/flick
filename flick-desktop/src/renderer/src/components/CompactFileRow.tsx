@@ -13,6 +13,9 @@ export interface CompactItemProps {
   now: number;
   sender: string; // "from …" or empty
   onPreview: (file: CloudFile) => void;
+  onShareLink: (file: CloudFile) => void;
+  onRevokeShareLink: (file: CloudFile) => void;
+  hasShareLink: (file: CloudFile) => boolean;
   onStartDrag: (file: CloudFile) => void;
   onRemove: (file: CloudFile) => void;
   onTogglePin: (file: CloudFile) => void;
@@ -42,6 +45,9 @@ export default function CompactFileRow({
   now,
   sender,
   onPreview,
+  onShareLink,
+  onRevokeShareLink,
+  hasShareLink,
   onStartDrag,
   onRemove,
   onTogglePin,
@@ -125,6 +131,9 @@ export default function CompactFileRow({
           canPreview={isReady}
           pinned={Boolean(file.pinned)}
           onPreview={() => onPreview(file)}
+          onShareLink={() => onShareLink(file)}
+          onRevokeShareLink={() => onRevokeShareLink(file)}
+          shareLinkActive={hasShareLink(file)}
           onTogglePin={() => onTogglePin(file)}
           onDelete={() => onRemove(file)}
           onClose={menu.close}
