@@ -1,0 +1,57 @@
+# Morning report
+
+Work done overnight on the list you left (A → B → D → F plans). Updated after every commit.
+Nothing was applied to the real Supabase project, deployed, pushed, or deleted.
+
+## Status
+
+| Item | Commit | Status | Note |
+|---|---|---|---|
+| A1 Open Flick grows the same popover | `017077b` | done | Same width/view, grows downward ~180ms, top pinned; Show less; pop-out icon |
+| A3 Footer counts active tab | `1b1cae7` | done | Clips tab counts clips, Files tab counts files |
+| A4 Compact clip chips, tab outline | `1b1cae7` | done | 40px chips; single-border selected tab |
+| A5 Inline undo strip | `b692d14` | done | 28px strip in place, tile overlay, toast only for Comfy |
+| A2 Smaller tiles + real thumbnails | `017077b` (tiles), `5f499a1` (thumbnails) | partial | 5 tiles/row (~64px) done. No thumbnail bug found: every image in the DB was uploaded *before* the thumbnail code existed (newest JPG 06:38 UTC, thumbnail commit 06:44 UTC). Desktop thumbnail generation verified in the real renderer (1600×1200 → 200×150 JPEG, 1.5 KB). A real upload + display needs your sign-in — see test list |
+| A7 Settings panel in the popover | `9704b5e` | done | Replaces the list with ← Back; grows to fit (456px here, nothing clipped); usage bars (coral ≥80%); themed toggles; no density in popover |
+| A6 Pinned file shows "Expiring…" | — | blocked (needs you) | Display is correct: the file is 3 days past expiry because the expiry job fails (see "Found while working" #1). Pinned files expire like others by design. No code change |
+
+## Decisions I made on my own
+
+- **Popover minimum height 140px** (was 200px): with a one-line empty state, 200px left ~70px of blank space.
+- **Dev-only `FLICK_KEEP_POPOVER=1`** stops the popover hiding on blur in development, so automated screenshots work. Ignored in packaged builds.
+- **A dev-only preview page** (`flick-desktop/src/renderer/dev-preview.html`) renders the real widget with sample data. Production builds only bundle `index.html`.
+- **Settings panel sizes like the taller popover** (cap min(680px, 80% of screen)), since it's the same "grows downward" rule.
+- **The tray right-click menu keeps its own "Show from menu bar as" and "Launch at login"** in addition to the new panel.
+- **Comfy cards keep the floating undo toast;** only compact layouts (popover, panel, compact window) use the inline strip.
+
+## Found while working — needs you
+
+1. **File expiry is not running at all.** Every hourly call to `expire-files` returns `401 {"error":"Unauthorized"}`.
+   The cron job reads the Vault secret `flick_expire_files_secret`, which doesn't exist. Vault has `flick_project_url`
+   and a secret whose *name* is your publishable key (`sb_publishable_…`), so `vault.create_secret(value, name)`
+   was probably called with the wrong value. That's why the 3-day-old pinned `Flick-Demo.html` shows "Expiring…".
+   Fix (you need the value you used for `supabase secrets set CRON_SECRET=…`, or set a new one in both places):
+   ```sql
+   -- in the SQL editor
+   select vault.create_secret('<same value as the function''s CRON_SECRET>', 'flick_expire_files_secret');
+   -- optional cleanup of the mis-named secret (check it first):
+   -- delete from vault.secrets where name like 'sb_publishable_%';
+   ```
+   Then check: `select status_code, content from net._http_response order by created desc limit 1;` → 200 after the next hour.
+2. **Thumbnails: none have been stored yet** (0 objects under `*/thumbs/` in storage; the newest JPG, uploaded 06:38 today, has no `thumb_path`). See A2 below.
+
+## Migrations / deploys for you to run (in order)
+
+_(none new yet)_
+
+## What to test
+
+_(filled in at the end)_
+
+## Screenshots
+
+In `docs/screenshots/`: popover loading / error / empty / files, compact vs expanded, clips compact / taller, undo, settings.
+
+## Worth reviewing first
+
+_(filled in at the end)_
