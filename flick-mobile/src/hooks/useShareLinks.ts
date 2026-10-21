@@ -63,6 +63,10 @@ export function useShareLinks(userId: string) {
       setLimitHit("sharing");
       return;
     }
+    if (activeByFile[file.id]) {
+      setStatus("This file already has an active share link. Revoke it first.");
+      return;
+    }
     try {
       const rawId = await randomLinkId();
       const idHash = await hashLinkId(rawId);
@@ -78,7 +82,7 @@ export function useShareLinks(userId: string) {
     } catch (error: unknown) {
       setStatus(error instanceof Error && error.message ? error.message : "Couldn’t create the share link.");
     }
-  }, [userId]);
+  }, [activeByFile, userId]);
 
   const revoke = useCallback(async (file: FileRow) => {
     const linkId = activeByFile[file.id];

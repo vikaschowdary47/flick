@@ -67,6 +67,10 @@ export function useShareLinks(session: Session | null) {
       setLimitHit(true);
       return;
     }
+    if (activeByFile[file.id]) {
+      setStatus("This file already has an active share link. Revoke it first.");
+      return;
+    }
     if (!session || !supabase) {
       setStatus("Sign in before creating a share link.");
       return;
@@ -93,7 +97,7 @@ export function useShareLinks(session: Session | null) {
       const message = error instanceof Error ? error.message : String(error);
       setStatus(message || "Couldn’t create the share link.");
     }
-  }, [session]);
+  }, [activeByFile, session]);
 
   const revoke = useCallback(async (file: CloudFile) => {
     const linkId = activeByFile[file.id];
