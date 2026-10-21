@@ -121,4 +121,5 @@ All in `docs/screenshots/` (desktop from the dev-preview page in the real Electr
 3. **"Free up space" deletes several files at once** (after a confirm that lists them). Mobile removes them without the 5-second Undo (the confirm replaces it); desktop gives each its Undo strip. Check you're happy with that difference.
 4. **The popover now loads usage all the time** (one small RPC per file-list change) for the 80% banner, instead of only when menus open.
 5. **Live Activity without push** only starts when Flick goes to the background; it can't appear for files that arrive while Flick is fully closed. Push (commit 7) would fix that after launch.
-6. **The iOS app now needs a development build for widgets/share**; `npm run ios` builds it. Expo Go still runs the app without those parts.
+6. **`npx expo prebuild` rewrites `npm run android` to `expo run:android`** every time it runs. Android still uses Expo Go, so I restored it to `expo start --android`; if you run prebuild yourself, discard that one-line change in `flick-mobile/package.json`.
+7. **The iOS app now needs a development build for widgets/share**; `npm run ios` builds it. Expo Go still runs the app without those parts.
