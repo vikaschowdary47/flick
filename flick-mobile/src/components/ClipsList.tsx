@@ -6,7 +6,9 @@ import type { Palette } from "../design/theme";
 import { tokens } from "../design/tokens";
 import { CLIP_MAX_CHARS, type ClipRow } from "../lib/clips";
 import { formatSender } from "../lib/format";
+import type { Density } from "../hooks/useProfileSettings";
 import { ClipCard } from "./ClipCard";
+import { ClipChip } from "./ClipChip";
 import { PillButton } from "./PillButton";
 
 type Props = {
@@ -19,9 +21,11 @@ type Props = {
   onSend: (text: string) => Promise<string | null>;
   onDelete: (id: string) => void;
   onRefresh: () => Promise<void>;
+  density: Density;
 };
 
-export function ClipsList({ header, clips, error, now, deviceId, deviceNames, onSend, onDelete, onRefresh }: Props) {
+export function ClipsList({ header, clips, error, now, deviceId, deviceNames, onSend, onDelete, onRefresh, density }: Props) {
+  const compact = density === "compact";
   const { palette } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const [draft, setDraft] = useState("");
@@ -52,16 +56,37 @@ export function ClipsList({ header, clips, error, now, deviceId, deviceNames, on
       data={clips}
       keyExtractor={(clip) => clip.id}
       extraData={[now, deviceNames]}
-      renderItem={({ item }) => (
+      renderItem={({ item }) =>
+        compact ? (
+          <ClipChip
+            clip={item}
+            now={now}
+            sender={formatSender(item.device_id, deviceId, deviceNames)}
+            onDelete={onDelete}
+          />
+        ) : (
         <ClipCard
           clip={item}
           now={now}
           sender={formatSender(item.device_id, deviceId, deviceNames)}
           onDelete={() => onDelete(item.id)}
         />
-      )}
+        )
+      }
+      // Fixed chip height lets the list skip measuring rows.
+      getItemLayout={
+        compact
+          ? (_data, index) => ({
+              length: tokens.compact.chipHeight + tokens.compact.gap,
+              offset: (tokens.compact.chipHeight + tokens.compact.gap) * index,
+              index,
+            })
+          : undefined
+      }
+      initialNumToRender={12}
+      windowSize={7}
       contentContainerStyle={styles.content}
-      ItemSeparatorComponent={() => <View style={styles.separator} />}
+      ItemSeparatorComponent={compact ? CompactSeparator : Separator}
       keyboardShouldPersistTaps="handled"
       refreshControl={
         <RefreshControl
@@ -114,6 +139,14 @@ export function ClipsList({ header, clips, error, now, deviceId, deviceNames, on
       ListEmptyComponent={<Text style={styles.note}>No clips yet. Send one from any device.</Text>}
     />
   );
+}
+
+function Separator() {
+  return <View style={{ height: tokens.layout.cardGap }} />;
+}
+
+function CompactSeparator() {
+  return <View style={{ height: tokens.compact.gap }} />;
 }
 
 const makeStyles = (c: Palette) =>

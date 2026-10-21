@@ -191,6 +191,7 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
           onSend={clips.send}
           onDelete={(id) => void clips.remove(id)}
           onRefresh={clips.refresh}
+          density={profile.density}
         />
       ) : (
       <FlatList

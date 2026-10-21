@@ -39,7 +39,7 @@ export function tileColor(mimeType: string | null, name: string, c: Palette): st
   return c.fallbackTile;
 }
 
-function extension(name: string): string {
+export function extension(name: string): string {
   const dot = name.lastIndexOf(".");
   return dot > 0 ? name.slice(dot + 1, dot + 5).toUpperCase() : "FILE";
 }

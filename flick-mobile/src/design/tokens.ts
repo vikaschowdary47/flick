@@ -81,6 +81,22 @@ const layout = {
   menuWidth: 220,
 } as const;
 
+// Compact density: rows, image grid and chips (Comfy uses the values above).
+// Heights are fixed so long lists can skip measuring (getItemLayout).
+const compact = {
+  padding: 10,
+  icon: 28,
+  title: 14,
+  meta: 12,
+  gap: 6,
+  rowHeight: 52,
+  gridColumns: 3,
+  chipHeight: 36,
+  sectionHeaderHeight: 30,
+  moreChipHeight: 32,
+  iconRadius: 9,
+} as const;
+
 const spacing = {
   xs: 4,
   sm: 8,
@@ -101,6 +117,7 @@ export const tokens = {
   motion,
   layout,
   spacing,
+  compact,
 } as const;
 
 export type Tokens = typeof tokens;
