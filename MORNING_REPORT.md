@@ -24,6 +24,12 @@ Nothing was applied to the real Supabase project, deployed, pushed, or deleted.
 | D2 Limit notice + waitlist opt-in | `11d0aa9` | done | Existed (waitlist table + limit screens); new wording in both apps; fixed the popover clipping the limit screen (found by screenshot) |
 | D4 iOS Share Extension "Flick it" | `6dc7cae` | partial | Builds and embeds; sheet states rendered. Needs a real share from Photos/Files with your signed-in app to confirm uploads (and device signing with your Team ID) |
 | D5 Rename device + sender name everywhere | `c04322e` | done | Already existed in both apps; added rename to the popover Settings panel and sender to widget rows |
+| F1 Sharing with friends/groups by link (plan) | `5eb2f2f` | plan | docs/PLAN_share_links.md — Size: L |
+| F2 QR Receive file without sign-in (plan) | `703d755` | plan | docs/PLAN_qr_receive.md — Size: M |
+| F3 Send via Gmail/Outlook from right-click (plan) | `f2eb299` | plan | docs/PLAN_email_send.md — Size: M (desktop) / L (with the share-link backend) |
+| F4 Click now, share later (plan) | `19169d8` | plan | docs/PLAN_send_later.md — Size: M |
+| F5 Personal vs business + per-seat billing (plan) | `ba5a997` | plan | docs/PLAN_business_plans.md — Size: L |
+| F6 VS Code extension (plan) | `8673c23` | plan | docs/PLAN_vscode_extension.md — Size: M |
 
 ## Decisions I made on my own
 
