@@ -31,7 +31,15 @@ export async function uploadThumbnail(userId: string, image: Blob): Promise<stri
     const { error } = await supabase.storage
       .from("flick-files")
       .upload(path, jpeg, { contentType: "image/jpeg", upsert: false });
-    return error ? null : path;
+    if (error) {
+      console.warn("Could not upload thumbnail", {
+        path,
+        message: error.message,
+        status: error.statusCode,
+      });
+      return null;
+    }
+    return path;
   } catch (error: unknown) {
     console.warn("Could not make a thumbnail:", error);
     return null;

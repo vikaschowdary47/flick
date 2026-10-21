@@ -28,7 +28,8 @@ export async function uploadThumbnail(userId: string, sourceUri: string): Promis
     if (error) throw error;
     return path;
   } catch (err) {
-    console.warn("Flick couldn't make a thumbnail", err);
+    const detail = describeError(err);
+    console.warn("Flick couldn't make a thumbnail", { sourceUri, ...detail });
     return null;
   } finally {
     try {
@@ -37,6 +38,17 @@ export async function uploadThumbnail(userId: string, sourceUri: string): Promis
       // cache is cleared by the OS eventually anyway
     }
   }
+}
+
+function describeError(error: unknown): Record<string, unknown> {
+  if (typeof error !== "object" || error === null) return { message: String(error) };
+  const value = error as { message?: unknown; status?: unknown; statusCode?: unknown; code?: unknown; name?: unknown };
+  return {
+    message: value.message ?? String(error),
+    status: value.status ?? value.statusCode,
+    code: value.code,
+    name: value.name,
+  };
 }
 
 const inflight = new Map<string, Promise<string | null>>();

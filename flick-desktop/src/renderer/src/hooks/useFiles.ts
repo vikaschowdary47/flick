@@ -8,6 +8,19 @@ import { CloudFile, CloudFileRow, compareFiles, isCloudFile, MAX_FILE_SIZE } fro
 
 const REMOVAL_UNDO_DELAY = 5000;
 
+function mimeTypeForName(name: string): string {
+  const extension = name.slice(name.lastIndexOf(".") + 1).toLowerCase();
+  return extension === "jpg" || extension === "jpeg"
+    ? "image/jpeg"
+    : extension === "png"
+      ? "image/png"
+      : extension === "gif"
+        ? "image/gif"
+        : extension === "webp"
+          ? "image/webp"
+          : "";
+}
+
 export interface PendingRemoval {
   id: string;
   file: CloudFile;
@@ -458,13 +471,14 @@ export function useFiles(session: Session | null, deviceId: string | null = null
 
         const safeName = file.name.replace(/[\\/]/g, "_").trim() || "file";
         const storagePath = `${session.user.id}/${crypto.randomUUID()}/${safeName}`;
+        const contentType = file.type || mimeTypeForName(file.name) || "application/octet-stream";
         let uploadExists = false;
         let thumbPath: string | null = null;
         try {
           const { error: storageError } = await supabase.storage
             .from("flick-files")
             .upload(storagePath, file, {
-              contentType: file.type || "application/octet-stream",
+              contentType,
               upsert: false,
             });
 
@@ -474,7 +488,7 @@ export function useFiles(session: Session | null, deviceId: string | null = null
           uploadExists = true;
 
           // Images: a small thumbnail for the grid (skipped if it fails).
-          if (file.type.startsWith("image/")) {
+          if (contentType.startsWith("image/")) {
             thumbPath = await uploadThumbnail(session.user.id, file);
           }
 
@@ -484,7 +498,7 @@ export function useFiles(session: Session | null, deviceId: string | null = null
               user_id: session.user.id,
               name: safeName,
               size: file.size,
-              mime_type: file.type || "application/octet-stream",
+              mime_type: contentType,
               storage_path: storagePath,
               device_id: deviceId, // the sender, for "from <device>"
               thumb_path: thumbPath,

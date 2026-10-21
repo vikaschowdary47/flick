@@ -53,6 +53,15 @@ export function useUpload(onUploaded?: () => void, deviceId?: string | null) {
       }
       if (bytes.byteLength === 0) throw new Error("empty file");
       if (bytes.byteLength > MAX_FILE_BYTES) throw new TooLargeError(bytes.byteLength);
+      // Image manipulators cannot reliably read every provider's content://
+      // URI. Keep the bytes we already read in our cache and use that stable
+      // file for thumbnail generation and the post-upload local copy.
+      if (!cached) {
+        const folder = new Directory(Paths.cache, "flick-upload", Crypto.randomUUID());
+        folder.create({ intermediates: true, idempotent: true });
+        cached = new File(folder, safeStorageName(picked.name));
+        cached.write(new Uint8Array(bytes));
+      }
       picked = { ...picked, size: bytes.byteLength };
 
       const storagePath = `${userId}/${Crypto.randomUUID()}-${safeStorageName(picked.name)}`;
@@ -63,7 +72,7 @@ export function useUpload(onUploaded?: () => void, deviceId?: string | null) {
 
       // Images: a small thumbnail for grids and widgets (skipped if it fails).
       const thumbPath = picked.mimeType.startsWith("image/")
-        ? await uploadThumbnail(userId, cached?.uri ?? candidate.uri)
+        ? await uploadThumbnail(userId, cached.uri)
         : null;
 
       const { data: inserted, error: insertError } = await supabase.from("files").insert({
