@@ -2263,3 +2263,69 @@ input:focus-visible {
   margin-bottom: 6px;
   font-size: 13px;
 }
+
+/* ---------- Inline undo (compact layouts) ----------
+   The removed row becomes a slim strip in place; after ~5s it collapses to
+   nothing just as the delete goes through. No toast, no extra height. */
+.undo-strip {
+  display: flex;
+  height: 28px;
+  align-items: center;
+  justify-content: space-between;
+  overflow: hidden;
+  padding: 0 10px;
+  border-radius: 10px;
+  /* A light cream strip, just visible against the cream popover. */
+  background: color-mix(in srgb, var(--flick-navy) 5%, var(--flick-cream));
+  color: var(--flick-muted);
+  font-size: 12px;
+  font-weight: var(--flick-font-weight-semibold);
+  animation: undo-collapse 200ms ease-in 4.8s forwards;
+}
+
+@keyframes undo-collapse {
+  to {
+    height: 0;
+    margin-top: -6px; /* absorb the list gap too */
+    opacity: 0;
+  }
+}
+
+.undo-strip-button {
+  padding: 2px 6px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--flick-navy);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: var(--flick-font-weight-extrabold);
+  text-decoration: underline;
+}
+
+.undo-strip-button:hover {
+  background: var(--flick-white);
+}
+
+.tile-undo-overlay {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border-radius: var(--flick-radius-card);
+  background: color-mix(in srgb, var(--flick-cream) 78%, transparent);
+}
+
+.tile-undo-overlay .undo-strip-button {
+  background: var(--flick-white);
+  text-decoration: none;
+  box-shadow: 0 0 0 1.5px var(--flick-navy);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .undo-strip {
+    animation-duration: 1ms;
+  }
+}

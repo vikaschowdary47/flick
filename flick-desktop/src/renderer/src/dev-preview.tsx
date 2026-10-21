@@ -89,7 +89,10 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     isLoadingFiles={state === "loading"}
     isOnline
     isUploading={false}
-    pendingRemovals={[]}
+    // pending=1: the first image and the second file were just removed.
+    pendingRemovals={
+      params.has("pending") ? [many[0], many[1]].map((removed) => ({ id: removed.id, file: removed })) : []
+    }
     deviceId={null}
     deviceName={null}
     deviceNames={{}}

@@ -16,6 +16,8 @@ export default function CompactImageTile({
   onRemove,
   onTogglePin,
   onRetry,
+  pending = false,
+  onUndo,
 }: CompactItemProps) {
   const menu = useCardMenu();
   const [thumb, setThumb] = useState<string | null>(null);
@@ -80,6 +82,14 @@ export default function CompactImageTile({
       >
         <span aria-hidden="true">⋯</span>
       </button>
+      {pending && (
+        // Removed but still undoable: dim the tile, offer Undo on it.
+        <div className="tile-undo-overlay" role="status">
+          <button type="button" className="undo-strip-button" onClick={() => onUndo?.(file)}>
+            Undo
+          </button>
+        </div>
+      )}
       {menu.menuAt && (
         <FileMenu
           at={menu.menuAt}

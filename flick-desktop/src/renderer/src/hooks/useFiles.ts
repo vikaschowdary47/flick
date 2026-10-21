@@ -789,11 +789,10 @@ export function useFiles(session: Session | null, deviceId: string | null = null
   return {
     arrivalPulse,
     fileInputRef,
-    files: files.filter(
-      (file) =>
-        !dismissedFileIds.has(file.id) &&
-        !pendingRemovals.some((removal) => removal.id === file.id),
-    ),
+    // Files waiting out their 5-second undo stay in the list (see
+    // pendingRemovals): compact layouts show them as an inline "Removed ·
+    // Undo" strip in place, Comfy cards hide them and show the toast.
+    files: files.filter((file) => !dismissedFileIds.has(file.id)),
     handleDragEnter,
     handleDragLeave,
     handleDragOver,

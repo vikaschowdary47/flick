@@ -17,6 +17,9 @@ export interface CompactItemProps {
   onRemove: (file: CloudFile) => void;
   onTogglePin: (file: CloudFile) => void;
   onRetry: (file: CloudFile) => void;
+  // Removed but still undoable: show the slim inline strip instead.
+  pending?: boolean;
+  onUndo?: (file: CloudFile) => void;
 }
 
 const PIN_PATH = "M9 4h6l-1 6 3 3H7l3-3-1-6ZM12 13v7";
@@ -43,8 +46,22 @@ export default function CompactFileRow({
   onRemove,
   onTogglePin,
   onRetry,
+  pending = false,
+  onUndo,
 }: CompactItemProps) {
   const menu = useCardMenu();
+  if (pending) {
+    // In place of the row; it collapses by itself after 5s (CSS), when the
+    // delete goes through and the file leaves the list.
+    return (
+      <div className="undo-strip" role="status">
+        <span>Removed</span>
+        <button type="button" className="undo-strip-button" onClick={() => onUndo?.(file)}>
+          Undo
+        </button>
+      </div>
+    );
+  }
   const visualType = getFileVisualType(file);
   const isReady = file.downloadState === "ready" && Boolean(file.localFileId);
   const note = stateNote(file);

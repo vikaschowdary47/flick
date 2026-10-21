@@ -68,13 +68,18 @@ export default function FileList({
   const view: "loading" | "error" | "empty" | "list" =
     files.length > 0 ? "list" : isLoadingFiles ? "loading" : loadError ? "error" : "empty";
   const senderOf = (file: CloudFile) => formatSender(file.device_id, deviceId, deviceNames);
+  const pendingIds = new Set(pendingRemovals.map((removal) => removal.id));
   const itemActions = {
     onPreview,
     onStartDrag,
     onRemove,
     onTogglePin,
     onRetry: onRetryDownload,
+    pendingIds,
+    onUndo: (file: CloudFile) => onUndoRemove(file.id),
   };
+  // Comfy cards hide files waiting on undo (the toast offers Undo).
+  const comfyFiles = files.filter((file) => !pendingIds.has(file.id));
 
   return (
     <>
@@ -182,7 +187,7 @@ export default function FileList({
       {view === "list" && density === "comfy" && (
         <motion.div layout className="files-list">
           <AnimatePresence initial={false}>
-            {files.map((file, index) => (
+            {comfyFiles.map((file, index) => (
               <FileCard
                 file={file}
                 index={index}
@@ -216,7 +221,7 @@ export default function FileList({
           {uploadError}
         </p>
       )}
-      {pendingRemovals.length > 0 && (
+      {density === "comfy" && pendingRemovals.length > 0 && (
         <div className="removal-toasts" aria-live="polite">
           {pendingRemovals.map(({ id, file }) => (
             <div className="removal-toast" role="status" key={id}>
@@ -245,6 +250,8 @@ interface CompactFilesProps {
   onRemove: (file: CloudFile) => void;
   onTogglePin: (file: CloudFile) => void;
   onRetry: (file: CloudFile) => void;
+  pendingIds: Set<string>;
+  onUndo: (file: CloudFile) => void;
 }
 
 const SECTION_PREVIEW = 5; // items shown before "+N more"
@@ -252,7 +259,7 @@ const SECTION_PREVIEW = 5; // items shown before "+N more"
 // Compact layout: Pinned / Today / Earlier sections. Each can collapse and
 // shows its first few items plus "+N more". Inside a section, images form a
 // grid of tiles and everything else is a row.
-function CompactFiles({ files, now, senderOf, ...actions }: CompactFilesProps) {
+function CompactFiles({ files, now, senderOf, pendingIds, ...actions }: CompactFilesProps) {
   const [collapsed, setCollapsed] = useState(loadCollapsed);
   const [expanded, setExpanded] = useState<Set<SectionKey>>(new Set());
   const sections = groupSections(files, now);
@@ -298,12 +305,12 @@ function CompactFiles({ files, now, senderOf, ...actions }: CompactFilesProps) {
                 {images.length > 0 && (
                   <div className="compact-grid">
                     {images.map((file) => (
-                      <CompactImageTile key={file.id} file={file} now={now} sender={senderOf(file)} {...actions} />
+                      <CompactImageTile key={file.id} file={file} now={now} sender={senderOf(file)} pending={pendingIds.has(file.id)} {...actions} />
                     ))}
                   </div>
                 )}
                 {others.map((file) => (
-                  <CompactFileRow key={file.id} file={file} now={now} sender={senderOf(file)} {...actions} />
+                  <CompactFileRow key={file.id} file={file} now={now} sender={senderOf(file)} pending={pendingIds.has(file.id)} {...actions} />
                 ))}
                 {hidden > 0 && (
                   <button
@@ -344,9 +351,9 @@ function RecentFiles({
   now,
   senderOf,
   onShowMore,
-  ...rest
+  pendingIds,
+  ...actions
 }: CompactFilesProps & { limit: number; onShowMore?: () => void }) {
-  const actions = rest;
   const { shown } = popoverSelection(files, limit);
   const images = shown.filter((file) => getFileVisualType(file) === "image");
   const others = shown.filter((file) => getFileVisualType(file) !== "image");
@@ -358,7 +365,7 @@ function RecentFiles({
       {images.length > 0 && (
         <div className="compact-grid compact-grid-popover">
           {tiles.map((file) => (
-            <CompactImageTile key={file.id} file={file} now={now} sender={senderOf(file)} {...actions} />
+            <CompactImageTile key={file.id} file={file} now={now} sender={senderOf(file)} pending={pendingIds.has(file.id)} {...actions} />
           ))}
           {overflow && (
             <button
@@ -373,7 +380,7 @@ function RecentFiles({
         </div>
       )}
       {others.map((file) => (
-        <CompactFileRow key={file.id} file={file} now={now} sender={senderOf(file)} {...actions} />
+        <CompactFileRow key={file.id} file={file} now={now} sender={senderOf(file)} pending={pendingIds.has(file.id)} {...actions} />
       ))}
     </div>
   );
