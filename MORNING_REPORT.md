@@ -16,6 +16,7 @@ Nothing was applied to the real Supabase project, deployed, pushed, or deleted.
 | A6 Pinned file shows "Expiring…" | — | blocked (needs you) | Display is correct: the file is 3 days past expiry because the expiry job fails (see "Found while working" #1). Pinned files expire like others by design. No code change |
 | B1 Widgets bridge + snapshot writer | `8d02bb3` | done | Swift module in modules/flick-widgets; platform-neutral buildSnapshot; no-op in Expo Go; clears on sign-out; iOS build verified |
 | B2 Home Screen widget (small, medium) | `c5ac064` | done | targets/widget (FlickWidgetExtension); thumbnails, deep links; build verified; screenshots rendered from the real views (docs/screenshots/widget-*.png) |
+| B3 Copy latest clip (iOS 17) | `ffca161` | partial | Button + App Intent built and rendered; whether iOS lets the widget write the clipboard can only be checked on a device with the widget placed — fallback (tap clip → app copies) is in place |
 
 ## Decisions I made on my own
 
