@@ -14,6 +14,8 @@ Nothing was applied to the real Supabase project, deployed, pushed, or deleted.
 | A2 Smaller tiles + real thumbnails | `017077b` (tiles), `5f499a1` (thumbnails) | partial | 5 tiles/row (~64px) done. No thumbnail bug found: every image in the DB was uploaded *before* the thumbnail code existed (newest JPG 06:38 UTC, thumbnail commit 06:44 UTC). Desktop thumbnail generation verified in the real renderer (1600×1200 → 200×150 JPEG, 1.5 KB). A real upload + display needs your sign-in — see test list |
 | A7 Settings panel in the popover | `9704b5e` | done | Replaces the list with ← Back; grows to fit (456px here, nothing clipped); usage bars (coral ≥80%); themed toggles; no density in popover |
 | A6 Pinned file shows "Expiring…" | — | blocked (needs you) | Display is correct: the file is 3 days past expiry because the expiry job fails (see "Found while working" #1). Pinned files expire like others by design. No code change |
+| B1 Widgets bridge + snapshot writer | `8d02bb3` | done | Swift module in modules/flick-widgets; platform-neutral buildSnapshot; no-op in Expo Go; clears on sign-out; iOS build verified |
+| B2 Home Screen widget (small, medium) | `c5ac064` | done | targets/widget (FlickWidgetExtension); thumbnails, deep links; build verified; screenshots rendered from the real views (docs/screenshots/widget-*.png) |
 
 ## Decisions I made on my own
 
@@ -22,6 +24,9 @@ Nothing was applied to the real Supabase project, deployed, pushed, or deleted.
 - **A dev-only preview page** (`flick-desktop/src/renderer/dev-preview.html`) renders the real widget with sample data. Production builds only bundle `index.html`.
 - **Settings panel sizes like the taller popover** (cap min(680px, 80% of screen)), since it's the same "grows downward" rule.
 - **The tray right-click menu keeps its own "Show from menu bar as" and "Launch at login"** in addition to the new panel.
+- **Widget screenshots are rendered from the real SwiftUI widget views** in a throwaway simulator app (not committed), because adding a widget to the Simulator's Home Screen needs manual taps. They use sample data, not your account.
+- **The widget target is named `FlickWidgetExtension`**, not `FlickWidgets`: that name is taken by the app's bridge module and the two Swift modules clashed at build time.
+- **Widgets are on by default** until the `widget_mode` setting (B6) exists.
 - **Comfy cards keep the floating undo toast;** only compact layouts (popover, panel, compact window) use the inline strip.
 
 ## Found while working — needs you
