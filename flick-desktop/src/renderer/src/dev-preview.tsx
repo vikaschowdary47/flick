@@ -7,6 +7,7 @@ import "@fontsource/nunito/600.css";
 import "@fontsource/nunito/800.css";
 import { designTokenCssVariables } from "../../design/tokens";
 import ClipsPanel from "./components/ClipsPanel";
+import LimitScreen from "./components/LimitScreen";
 import Widget from "./components/Widget";
 import type { ClipRow } from "./clips";
 import type { CloudFile } from "./types";
@@ -73,6 +74,19 @@ const noop = () => {};
 const session = { user: { id: "preview", email: "you@example.com" } } as unknown as Session;
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
+  <>
+  {state === "limit" && (
+    <LimitScreen
+      limit="storage"
+      usage={{ plan: "free", pinsUsed: 1, maxPins: 3, storageUsedBytes: 500 * 1024 * 1024, maxStorageMb: 500, devicesUsed: 3, maxDevices: 4 }}
+      email="you@example.com"
+      devices={[]}
+      thisDeviceId={null}
+      onRemoveDevice={async () => null}
+      paymentsEnabled={false}
+      onClose={noop}
+    />
+  )}
   <Widget
     accountMenuRef={createRef<HTMLDivElement>()}
     authReady
@@ -149,5 +163,6 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     onDensityChange={noop}
     clipboardSharing={state === "mixed" ? true : null}
     onClipboardSharingChange={noop}
-  />,
+  />
+  </>,
 );

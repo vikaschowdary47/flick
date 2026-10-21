@@ -174,6 +174,17 @@ export default function Widget({
         }
         const padding = parseFloat(getComputedStyle(content).paddingBottom) || 0;
         const chrome = widget.offsetHeight - content.clientHeight; // header, footer, borders
+        // A limit screen is drawn over the popover: make room for all of it
+        // (it sizes like the taller popover).
+        const limitScreen = document.querySelector<HTMLElement>(".limit-screen");
+        if (limitScreen) {
+          const overlayPadding = 28;
+          window.flick.reportPopoverHeight(
+            Math.max(chrome + bottom + padding, limitScreen.scrollHeight + overlayPadding),
+            true,
+          );
+          return;
+        }
         window.flick.reportPopoverHeight(chrome + bottom + padding, expandedRef.current);
       });
     };
@@ -181,10 +192,11 @@ export default function Widget({
     const observeAll = () => {
       resize.disconnect();
       widget.querySelectorAll(".content > *, .content .compact-list").forEach((node) => resize.observe(node));
+      document.querySelectorAll(".limit-screen").forEach((node) => resize.observe(node));
       measure();
     };
     const mutations = new MutationObserver(observeAll);
-    mutations.observe(widget, { childList: true, subtree: true });
+    mutations.observe(document.body, { childList: true, subtree: true });
     observeAll();
     return () => {
       cancelAnimationFrame(frame);

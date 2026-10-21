@@ -159,11 +159,11 @@ export function LimitScreen({
             <PillButton label="Upgrade" variant="secondary" onPress={close} />
           ) : waitlist.state === "joined" ? (
             <Text accessibilityLiveRegion="polite" style={styles.note}>
-              We'll email you once, when Pro launches.
+              We'll email you once, when more is available.
             </Text>
           ) : (
             <PillButton
-              label="Want more? Get notified when Pro is ready"
+              label="Notify me when more is available"
               variant="secondary"
               busy={waitlist.state === "saving"}
               onPress={() => void waitlist.join(limit)}

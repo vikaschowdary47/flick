@@ -168,7 +168,7 @@ export default function LimitScreen({
             </button>
           ) : waitlist.state === "joined" ? (
             <p className="limit-note" role="status">
-              We&apos;ll email you once, when Pro launches.
+              We&apos;ll email you once, when more is available.
             </p>
           ) : (
             <button
@@ -177,7 +177,7 @@ export default function LimitScreen({
               disabled={waitlist.state === "saving"}
               onClick={() => void waitlist.join(limit)}
             >
-              Want more? Get notified when Pro is ready
+              Notify me when more is available
             </button>
           )}
           {!paymentsEnabled && (
