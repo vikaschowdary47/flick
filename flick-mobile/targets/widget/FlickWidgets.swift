@@ -5,5 +5,6 @@ import WidgetKit
 struct FlickWidgetBundle: WidgetBundle {
   var body: some Widget {
     FlickHomeWidget()
+    FlickLockWidget()
   }
 }
