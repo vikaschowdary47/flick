@@ -20,8 +20,8 @@ export default function App() {
   const activeLimit = fileState.limitHit ?? (device.limitHit ? "devices" : null);
   // Limits and usage come from the server; refresh when they're about to show.
   const { density, setDensity } = useDensity(auth.session);
-  const [settingsVisible, setSettingsVisible] = useState(false);
-  const usage = useUsage(settingsVisible || auth.isAccountMenuOpen || activeLimit !== null);
+  // Always loaded (cheap), refreshed as files change, for the 80% prompt.
+  const usage = useUsage(Boolean(auth.session), fileState.files.reduce((sum, file) => sum + file.size, 0));
   // Clips: nothing is fetched, subscribed or bound unless the clipboard
   // feature flag and the user's Clipboard sharing setting are both on.
   const flags = useFeatureFlags(auth.session);
@@ -113,7 +113,6 @@ export default function App() {
       onRetryLoad={fileState.retryLoad}
       usage={usage.usage}
       clipsCount={clips.clips.length}
-      onSettingsVisibleChange={setSettingsVisible}
       clipsPanel={
         clipboardSetting.clipsActive ? (view) => (
           <ClipsPanel

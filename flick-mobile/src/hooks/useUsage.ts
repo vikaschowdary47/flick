@@ -3,7 +3,9 @@ import { supabase } from "../lib/supabase";
 import type { Usage } from "../lib/limits";
 
 // Current usage and plan limits from the server (Settings, limit screen).
-export function useUsage(active: boolean) {
+// refreshKey: pass something that changes with the file list (e.g. its
+// total size) to keep usage current for the 80% storage prompt.
+export function useUsage(active: boolean, refreshKey?: unknown) {
   const [usage, setUsage] = useState<Usage | null>(null);
 
   const refresh = useCallback(async () => {
@@ -23,7 +25,7 @@ export function useUsage(active: boolean) {
 
   useEffect(() => {
     if (active) void refresh();
-  }, [active, refresh]);
+  }, [active, refresh, refreshKey]);
 
   return { usage, refresh };
 }

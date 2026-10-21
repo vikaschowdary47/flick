@@ -2509,3 +2509,62 @@ input:focus-visible {
   font-weight: var(--flick-font-weight-extrabold);
   -webkit-app-region: no-drag;
 }
+
+/* ---------- 80% storage prompt ---------- */
+.storage-nudge {
+  margin-bottom: 6px;
+  padding: 6px 8px;
+  border: 1.5px solid var(--flick-navy);
+  border-radius: 12px;
+  background: var(--flick-yellow);
+  color: var(--flick-navy);
+  font-size: 12px;
+  font-weight: var(--flick-font-weight-semibold);
+}
+
+.storage-nudge-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.storage-nudge-row > span {
+  flex: 1;
+}
+
+.storage-nudge-button {
+  flex: none;
+  min-height: 24px;
+  padding: 0 10px;
+  border: 1.5px solid var(--flick-navy);
+  border-radius: 999px;
+  background: var(--flick-cream);
+  color: var(--flick-navy);
+  cursor: pointer;
+  font: inherit;
+  font-weight: var(--flick-font-weight-extrabold);
+}
+
+.storage-nudge-remove {
+  background: var(--flick-coral);
+}
+
+.storage-nudge-close,
+.storage-nudge-cancel {
+  border: 0;
+  background: transparent;
+  color: var(--flick-navy);
+  cursor: pointer;
+  font: inherit;
+  font-weight: var(--flick-font-weight-extrabold);
+}
+
+.storage-nudge-confirm ul {
+  margin: 4px 0 6px;
+  padding-left: 16px;
+}
+
+.storage-nudge-actions {
+  display: flex;
+  gap: 8px;
+}

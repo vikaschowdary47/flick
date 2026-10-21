@@ -287,6 +287,7 @@ export default function Widget({
           isUploading={isUploading}
           uploadError={uploadError}
           loadError={loadError}
+          usage={usage}
           onRetryLoad={onRetryLoad}
           pendingRemovals={pendingRemovals}
           deviceId={deviceId}

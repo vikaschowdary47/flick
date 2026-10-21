@@ -3,7 +3,8 @@ import type { Usage } from "../limits";
 import { supabase } from "../supabase";
 
 // Current usage and plan limits from the server (account menu, limit screen).
-export function useUsage(active: boolean) {
+// refreshKey: something that changes with the file list (e.g. total size).
+export function useUsage(active: boolean, refreshKey?: unknown) {
   const [usage, setUsage] = useState<Usage | null>(null);
 
   const refresh = useCallback(async () => {
@@ -30,7 +31,7 @@ export function useUsage(active: boolean) {
     if (active) {
       void refresh();
     }
-  }, [active, refresh]);
+  }, [active, refresh, refreshKey]);
 
   return { usage, refresh };
 }

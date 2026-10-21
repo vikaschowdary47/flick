@@ -3,6 +3,8 @@ import { useState } from "react";
 import { groupSections, loadCollapsed, saveCollapsed, type SectionKey } from "../sections";
 import type { ChangeEvent, RefObject } from "react";
 import CompactFileRow from "./CompactFileRow";
+import StorageNudge from "./StorageNudge";
+import type { Usage } from "../limits";
 import CompactImageTile from "./CompactImageTile";
 import FileCard from "./FileCard";
 import type { Density } from "../density";
@@ -17,6 +19,7 @@ interface FileListProps {
   isUploading: boolean;
   uploadError: string;
   loadError: string;
+  usage?: Usage | null; // for the 80% storage prompt
   onRetryLoad: () => void;
   pendingRemovals: PendingRemoval[];
   deviceId: string | null;
@@ -42,6 +45,7 @@ export default function FileList({
   isUploading,
   uploadError,
   loadError,
+  usage = null,
   onRetryLoad,
   pendingRemovals,
   deviceId,
@@ -120,6 +124,10 @@ export default function FileList({
             aria-label="Choose files to upload"
           />
         </>
+      )}
+
+      {view === "list" && (
+        <StorageNudge usage={usage} files={files.filter((file) => !pendingIds.has(file.id))} onRemove={onRemove} />
       )}
 
       {view === "loading" && (

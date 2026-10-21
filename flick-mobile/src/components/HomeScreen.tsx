@@ -34,6 +34,7 @@ import { PillButton } from "./PillButton";
 import { SettingsSheet } from "./SettingsSheet";
 import { SourceSheet } from "./SourceSheet";
 import { Tabs, type HomeTab } from "./Tabs";
+import { StorageNudge } from "./StorageNudge";
 import { UploadCard } from "./UploadCard";
 
 type Props = {
@@ -145,7 +146,9 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
 
   const activeLimit = uploadLimit ?? pinner.limitHit ?? (device.limitHit ? "devices" : null);
   // Limits and usage come from the server; refresh when they're about to show.
-  const usage = useUsage(settingsOpen || activeLimit !== null);
+  // Always loaded (cheap) and refreshed as files change, for the 80% prompt.
+  const totalBytes = recent.files.reduce((sum, file) => sum + file.size, 0);
+  const usage = useUsage(true, totalBytes);
 
   // Drop cached copies of files that expired or were deleted (on any device),
   // copies unused for 24 hours, and the oldest ones past 150 MB.
@@ -264,6 +267,7 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
         Flick it to all your devices
       </Animated.Text>
       <UploadCard state={upload} onDismiss={reset} />
+      <StorageNudge usage={usage.usage} files={recent.files} onRemove={remover.removeNow} />
       {openError && (
         <Text accessibilityRole="alert" style={styles.openError}>
           {openError}
@@ -278,6 +282,7 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
       </Text>
       {tabs}
       <UploadCard state={upload} onDismiss={reset} />
+      <StorageNudge usage={usage.usage} files={recent.files} onRemove={remover.removeNow} />
       <Text accessibilityRole="header" style={styles.eyebrow}>
         RECENTLY SENT
       </Text>

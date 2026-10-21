@@ -93,5 +93,14 @@ export function useRemoveFile(onRemoved: () => void) {
     [pending, deletingIds],
   );
 
-  return { remove, undo, pending, isHidden, error };
+  // "Free up space": the user confirmed a list, so remove each now, one
+  // after another, through the same delete path (row, then storage).
+  const removeNow = useCallback(
+    async (files: FileRow[]) => {
+      for (const file of files) await finalize(file);
+    },
+    [finalize],
+  );
+
+  return { remove, removeNow, undo, pending, isHidden, error };
 }
