@@ -128,8 +128,14 @@ async function startDownload(button: HTMLButtonElement, linkId: string, file: Sh
       }
       return;
     }
-    window.location.assign(body.downloadUrl);
-    window.setTimeout(() => showDownloadStarted(file, linkId), 1_200);
+    const download = document.createElement("a");
+    download.href = body.downloadUrl;
+    download.download = file.fileName;
+    download.hidden = true;
+    document.body.append(download);
+    download.click();
+    download.remove();
+    window.setTimeout(() => showDownloadStarted(file, linkId), 200);
   } catch {
     showError("Couldn’t reach Flick", "Check your connection and try again.");
   }
