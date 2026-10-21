@@ -1,4 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
+import { useState } from "react";
+import { groupSections, loadCollapsed, saveCollapsed, type SectionKey } from "../sections";
 import type { ChangeEvent, RefObject } from "react";
 import CompactFileRow from "./CompactFileRow";
 import CompactImageTile from "./CompactImageTile";
@@ -186,22 +188,78 @@ interface CompactFilesProps {
   onRetry: (file: CloudFile) => void;
 }
 
-// Compact layout: images as a grid of tiles, everything else as rows.
+const SECTION_PREVIEW = 5; // items shown before "+N more"
+
+// Compact layout: Pinned / Today / Earlier sections. Each can collapse and
+// shows its first few items plus "+N more". Inside a section, images form a
+// grid of tiles and everything else is a row.
 function CompactFiles({ files, now, senderOf, ...actions }: CompactFilesProps) {
-  const images = files.filter((file) => getFileVisualType(file) === "image");
-  const others = files.filter((file) => getFileVisualType(file) !== "image");
+  const [collapsed, setCollapsed] = useState(loadCollapsed);
+  const [expanded, setExpanded] = useState<Set<SectionKey>>(new Set());
+  const sections = groupSections(files, now);
+
+  function toggleCollapsed(key: SectionKey): void {
+    const next = new Set(collapsed);
+    if (next.has(key)) {
+      next.delete(key);
+    } else {
+      next.add(key);
+    }
+    setCollapsed(next);
+    saveCollapsed(next);
+  }
+
   return (
     <div className="compact-list">
-      {images.length > 0 && (
-        <div className="compact-grid">
-          {images.map((file) => (
-            <CompactImageTile key={file.id} file={file} now={now} sender={senderOf(file)} {...actions} />
-          ))}
-        </div>
-      )}
-      {others.map((file) => (
-        <CompactFileRow key={file.id} file={file} now={now} sender={senderOf(file)} {...actions} />
-      ))}
+      {sections.map((section) => {
+        const isCollapsed = collapsed.has(section.key);
+        const isExpanded = expanded.has(section.key);
+        const shown = isExpanded ? section.files : section.files.slice(0, SECTION_PREVIEW);
+        const hidden = section.files.length - shown.length;
+        const images = shown.filter((file) => getFileVisualType(file) === "image");
+        const others = shown.filter((file) => getFileVisualType(file) !== "image");
+        const headingId = `section-${section.key}`;
+        return (
+          <section key={section.key} className="compact-section" aria-labelledby={headingId}>
+            <button
+              type="button"
+              id={headingId}
+              className="compact-section-header"
+              aria-expanded={!isCollapsed}
+              onClick={() => toggleCollapsed(section.key)}
+            >
+              <span className="compact-section-caret" aria-hidden="true">
+                {isCollapsed ? "▸" : "▾"}
+              </span>
+              {section.title.toUpperCase()}
+              <span className="compact-section-count">{section.files.length}</span>
+            </button>
+            {!isCollapsed && (
+              <>
+                {images.length > 0 && (
+                  <div className="compact-grid">
+                    {images.map((file) => (
+                      <CompactImageTile key={file.id} file={file} now={now} sender={senderOf(file)} {...actions} />
+                    ))}
+                  </div>
+                )}
+                {others.map((file) => (
+                  <CompactFileRow key={file.id} file={file} now={now} sender={senderOf(file)} {...actions} />
+                ))}
+                {hidden > 0 && (
+                  <button
+                    type="button"
+                    className="compact-more-chip"
+                    onClick={() => setExpanded(new Set(expanded).add(section.key))}
+                  >
+                    +{hidden} more
+                  </button>
+                )}
+              </>
+            )}
+          </section>
+        );
+      })}
     </div>
   );
 }

@@ -1766,3 +1766,56 @@ input:focus-visible {
 .clip-chip-delete:hover {
   background: var(--flick-cream);
 }
+
+.compact-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.compact-section + .compact-section {
+  margin-top: 6px;
+}
+
+.compact-section-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 2px;
+  border: 0;
+  background: transparent;
+  color: var(--flick-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  font-weight: var(--flick-font-weight-extrabold);
+  letter-spacing: 0.08em;
+  text-align: left;
+}
+
+.compact-section-caret {
+  width: 10px;
+}
+
+.compact-section-count {
+  padding: 0 6px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 10px;
+  letter-spacing: 0;
+}
+
+.compact-more-chip {
+  align-self: flex-start;
+  min-height: 26px;
+  padding: 0 12px;
+  border: 1.5px solid var(--flick-navy);
+  border-radius: 999px;
+  background: var(--flick-yellow);
+  box-shadow: 0 2px 0 var(--flick-navy);
+  color: var(--flick-navy);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: var(--flick-font-weight-extrabold);
+}
