@@ -53,7 +53,7 @@ Nothing was applied to the real Supabase project, deployed, pushed, or deleted.
 
 ## Found while working — needs you
 
-1. **File expiry is not running at all.** Every hourly call to `expire-files` returns `401 {"error":"Unauthorized"}`.
+1. **FIXED (with your permission): new secret set on the function and in Vault as `flick_expire_files_secret`, mis-named Vault entry deleted; a manual run returned 200 and deleted the 3-day-old `Flick-Demo.html` (row + object).** Original finding: **File expiry is not running at all.** Every hourly call to `expire-files` returns `401 {"error":"Unauthorized"}`.
    The cron job reads the Vault secret `flick_expire_files_secret`, which doesn't exist. Vault has `flick_project_url`
    and a secret whose *name* is your publishable key (`sb_publishable_…`), so `vault.create_secret(value, name)`
    was probably called with the wrong value. That's why the 3-day-old pinned `Flick-Demo.html` shows "Expiring…".
@@ -69,7 +69,7 @@ Nothing was applied to the real Supabase project, deployed, pushed, or deleted.
 
 ## Migrations / deploys for you to run (in order)
 
-0. **First, fix the expiry secret** ("Found while working" #1) — independent of the rest, but expiry is broken until then.
+0. ~~Fix the expiry secret~~ — done (see "Found while working" #1).
 1. `supabase/migrations/20261027120000_widget_mode.sql` — per-device widget switches (B6). Tested on a throwaway local Postgres 14.
    The apps work before you run it (device rows are read with `select("*")`); the widget toggles just won't save until it's applied.
 
@@ -116,7 +116,7 @@ All in `docs/screenshots/` (desktop from the dev-preview page in the real Electr
 
 ## Worth reviewing first
 
-1. **The expiry job has been failing (401) since setup** — files never expire. Fix the Vault secret first (top of this report).
+1. **The expiry job was failing (401) since setup** — now fixed and verified (200, expired file removed). Next hourly run (:00) should show 200 in `net._http_response`.
 2. **Share extension session handling** (`flick-mobile/targets/share/FlickUploader.swift`, `src/hooks/useShareSession.ts`): the app writes its session tokens to the App Group so the extension can upload as you. The file is protected (until first unlock) and only the app and its extensions can read it, but a **Keychain access group** would be the stronger home once your Apple account can sign it. Also review the refresh hand-back: the extension may rotate the refresh token and the app adopts it on next open.
 3. **"Free up space" deletes several files at once** (after a confirm that lists them). Mobile removes them without the 5-second Undo (the confirm replaces it); desktop gives each its Undo strip. Check you're happy with that difference.
 4. **The popover now loads usage all the time** (one small RPC per file-list change) for the 80% banner, instead of only when menus open.
