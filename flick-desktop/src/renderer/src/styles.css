@@ -1893,3 +1893,39 @@ input:focus-visible {
 .widget-popover .footer {
   display: none;
 }
+
+.density-setting {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.density-label {
+  flex: 1 0 100%;
+  color: var(--flick-muted);
+  font-size: 12px;
+  font-weight: var(--flick-font-weight-extrabold);
+}
+
+.density-option {
+  flex: 1;
+  min-height: 28px;
+  border: 1.5px solid var(--flick-navy);
+  border-radius: 999px;
+  background: var(--flick-white);
+  color: var(--flick-navy);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: var(--flick-font-weight-extrabold);
+}
+
+.density-option[aria-checked="true"] {
+  background: var(--flick-coral);
+}
+
+.density-note {
+  color: var(--flick-muted);
+  font-size: 11px;
+}

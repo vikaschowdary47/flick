@@ -48,6 +48,7 @@ interface WidgetProps {
   clipsDot: boolean;
   onOpenClips: () => void;
   density: Density;
+  onDensityChange: (density: Density) => void;
   clipboardSharing: boolean | null; // null hides the setting (flag off)
   onClipboardSharingChange: (on: boolean) => void;
 }
@@ -93,6 +94,7 @@ export default function Widget({
   clipsDot,
   onOpenClips,
   density,
+  onDensityChange,
   clipboardSharing,
   onClipboardSharingChange,
 }: WidgetProps) {
@@ -135,6 +137,8 @@ export default function Widget({
         onRenameDevice={onRenameDevice}
         usage={usage}
         windowMode={windowMode}
+        density={density}
+        onDensityChange={onDensityChange}
         clipboardSharing={clipboardSharing}
         onClipboardSharingChange={onClipboardSharingChange}
         setIsAccountMenuOpen={setIsAccountMenuOpen}

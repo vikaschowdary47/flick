@@ -2,6 +2,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useState, type RefObject } from "react";
 import { DEVICE_NAME_MAX } from "../hooks/useDevice";
 import type { Usage } from "../limits";
+import type { Density } from "../density";
 import type { Session } from "@supabase/supabase-js";
 import { designTokens } from "../../../design/tokens";
 
@@ -18,6 +19,8 @@ interface HeaderProps {
   onRenameDevice?: (name: string) => Promise<string | null>;
   usage?: Usage | null;
   windowMode?: "popover" | "panel" | "main";
+  density?: Density;
+  onDensityChange?: (density: Density) => void;
   clipboardSharing?: boolean | null; // null/undefined hides it (flag off)
   onClipboardSharingChange?: (on: boolean) => void;
 }
@@ -35,6 +38,8 @@ export default function Header({
   onRenameDevice,
   usage = null,
   windowMode = "popover",
+  density = "compact",
+  onDensityChange,
   clipboardSharing = null,
   onClipboardSharingChange,
 }: HeaderProps) {
@@ -140,6 +145,26 @@ export default function Header({
                       {usage.maxStorageMb} MB, {usage.devicesUsed} of{" "}
                       {usage.maxDevices} devices
                     </span>
+                  )}
+                  {onDensityChange && (
+                    <div className="density-setting" role="radiogroup" aria-label="Density">
+                      <span className="density-label">Density</span>
+                      {(["comfy", "compact"] as const).map((value) => (
+                        <button
+                          key={value}
+                          type="button"
+                          role="radio"
+                          aria-checked={density === value}
+                          className="density-option"
+                          onClick={() => onDensityChange(value)}
+                        >
+                          {value === "comfy" ? "Comfy" : "Compact"}
+                        </button>
+                      ))}
+                      {windowMode !== "main" && (
+                        <span className="density-note">The menu bar popover and panel are always compact.</span>
+                      )}
+                    </div>
                   )}
                   {clipboardSharing !== null && onClipboardSharingChange && (
                     <label className="clipboard-setting">

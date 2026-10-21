@@ -5,6 +5,7 @@ import Widget from "./components/Widget";
 import { useEffect, useState } from "react";
 import { useClips } from "./hooks/useClips";
 import { useClipboardSetting } from "./hooks/useClipboardSetting";
+import { useDensity } from "./hooks/useDensity";
 import { useDevice } from "./hooks/useDevice";
 import { useFeatureFlags } from "./hooks/useFeatureFlags";
 import { useFiles } from "./hooks/useFiles";
@@ -18,8 +19,7 @@ export default function App() {
   const fileState = useFiles(auth.session, device.deviceId);
   const activeLimit = fileState.limitHit ?? (device.limitHit ? "devices" : null);
   // Limits and usage come from the server; refresh when they're about to show.
-  // Compact until Settings reads profiles.ui_density (later commit).
-  const density = "compact" as const;
+  const { density, setDensity } = useDensity(auth.session);
   const usage = useUsage(auth.isAccountMenuOpen || activeLimit !== null);
   // Clips: nothing is fetched, subscribed or bound unless the clipboard
   // feature flag and the user's Clipboard sharing setting are both on.
@@ -125,6 +125,7 @@ export default function App() {
       }
       clipsDot={clips.hasNew}
       density={density}
+      onDensityChange={setDensity}
       onOpenClips={clips.clearNew}
       clipboardSharing={flags.clipboard ? clipboardSetting.sharingOn : null}
       onClipboardSharingChange={clipboardSetting.setSharing}
