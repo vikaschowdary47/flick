@@ -119,7 +119,6 @@ create table if not exists public.share_link_rate_limits (
 alter table public.share_link_rate_limits enable row level security;
 
 revoke all on table public.share_link_rate_limits from public, anon, authenticated;
-revoke all on function public.flick_share_link_rate_limit(text) from public, anon, authenticated;
 
 create or replace function public.flick_share_link_rate_limit(p_id_hash text)
 returns boolean
@@ -150,4 +149,5 @@ begin
 end;
 $$;
 
+revoke all on function public.flick_share_link_rate_limit(text) from public, anon, authenticated;
 grant execute on function public.flick_share_link_rate_limit(text) to service_role;
