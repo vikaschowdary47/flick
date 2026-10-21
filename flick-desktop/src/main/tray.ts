@@ -24,6 +24,7 @@ let tray: Tray | null = null;
 let getWindow: () => BrowserWindow | null = () => null;
 let hasNewArrival = false;
 let dragInProgress = false;
+let lastPopoverBlurHideAt = 0;
 let extraMenuItems: () => Electron.MenuItemConstructorOptions[] = () => [];
 
 // ---- icon ------------------------------------------------------------------
@@ -337,9 +338,12 @@ export function openMainWindow(): void {
   showIn("main");
 }
 
-export function togglePopover(): void {
+export function togglePopover(source: "tray" | "shortcut" = "shortcut"): void {
   const window = getWindow();
   if (!window) {
+    return;
+  }
+  if (source === "tray" && Date.now() - lastPopoverBlurHideAt < 250) {
     return;
   }
   const wanted = getSettings().showAs;
@@ -459,7 +463,7 @@ export function setupTray(windowGetter: () => BrowserWindow | null): void {
 
   tray = new Tray(trayImage(false));
   tray.setToolTip("Flick");
-  tray.on("click", togglePopover);
+  tray.on("click", () => togglePopover("tray"));
   tray.on("right-click", () => tray?.popUpContextMenu(buildMenu()));
   // Linux AppIndicator has no click events, only a menu: always attach it.
   if (process.platform === "linux") {
@@ -479,6 +483,7 @@ export function attachWindow(window: BrowserWindow, isQuitting: () => boolean): 
     const keepForDev = !app.isPackaged && process.env.FLICK_KEEP_POPOVER === "1";
     if (mode === "popover" && !dragInProgress && !keepForDev && !window.webContents.isDevToolsOpened()) {
       window.hide();
+      lastPopoverBlurHideAt = Date.now();
     }
   });
   // The next tray click opens the compact popover again.
