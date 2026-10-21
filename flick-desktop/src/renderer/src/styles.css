@@ -2568,3 +2568,15 @@ input:focus-visible {
   display: flex;
   gap: 8px;
 }
+
+.settings-input {
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1.5px solid var(--flick-navy);
+  border-radius: 10px;
+  background: var(--flick-cream);
+  color: var(--flick-navy);
+  font: inherit;
+  font-size: 13px;
+  font-weight: var(--flick-font-weight-semibold);
+}

@@ -68,7 +68,8 @@ struct ItemRow: View {
           Text(item.title)
             .font(.system(size: 13, weight: .heavy, design: .rounded))
             .lineLimit(1)
-          Text([item.kind == "file" ? item.subtitle : nil, timeLeft(item, now: now)]
+          // "2.4 MB · 23h left · from Vikas's MacBook" (sender as everywhere else).
+          Text([item.kind == "file" ? item.subtitle : nil, timeLeft(item, now: now), item.sender.isEmpty ? nil : item.sender]
             .compactMap { $0 }.joined(separator: " · "))
             .font(.system(size: 11, weight: .semibold, design: .rounded))
             .foregroundStyle(.secondary)

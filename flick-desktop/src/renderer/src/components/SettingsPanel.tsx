@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { DEVICE_NAME_MAX } from "../hooks/useDevice";
 import type { Usage } from "../limits";
 
 interface SettingsPanelProps {
@@ -8,6 +9,9 @@ interface SettingsPanelProps {
   clipboardSharing: boolean | null;
   onClipboardSharingChange: (on: boolean) => void;
   onSignOut: () => void;
+  // This device's name, shown as "from …" on your other devices.
+  deviceName: string | null;
+  onRenameDevice: (name: string) => Promise<string | null>;
 }
 
 // Themed on/off switch: coral when on, cream when off, navy outline.
@@ -65,7 +69,18 @@ export default function SettingsPanel({
   clipboardSharing,
   onClipboardSharingChange,
   onSignOut,
+  deviceName,
+  onRenameDevice,
 }: SettingsPanelProps) {
+  const [draftName, setDraftName] = useState(deviceName ?? "");
+  const [nameMessage, setNameMessage] = useState("");
+  useEffect(() => setDraftName(deviceName ?? ""), [deviceName]);
+  async function saveName(): Promise<void> {
+    if (draftName.trim() === (deviceName ?? "")) {
+      return;
+    }
+    setNameMessage((await onRenameDevice(draftName)) ?? "Saved");
+  }
   const [app, setApp] = useState<{ showAs: "popover" | "panel"; canLaunchAtLogin: boolean; launchAtLogin: boolean } | null>(
     null,
   );
@@ -96,6 +111,34 @@ export default function SettingsPanel({
             />
           </div>
         )}
+      </section>
+
+      <section className="settings-group">
+        <label className="settings-label" htmlFor="settings-device-name">
+          This device
+        </label>
+        <input
+          id="settings-device-name"
+          className="settings-input"
+          type="text"
+          value={draftName}
+          maxLength={DEVICE_NAME_MAX}
+          placeholder="Name"
+          disabled={deviceName === null}
+          onChange={(event) => {
+            setDraftName(event.target.value);
+            setNameMessage("");
+          }}
+          onBlur={() => void saveName()}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              void saveName();
+            }
+          }}
+        />
+        <p className="settings-help">
+          {nameMessage || "Shown as “from …” on files and clips you send."}
+        </p>
       </section>
 
       {clipboardSharing !== null && (

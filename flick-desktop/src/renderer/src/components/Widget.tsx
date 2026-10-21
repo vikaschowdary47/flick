@@ -257,6 +257,8 @@ export default function Widget({
             clipboardSharing={clipboardSharing}
             onClipboardSharingChange={onClipboardSharingChange}
             onSignOut={handleSignOut}
+            deviceName={deviceName}
+            onRenameDevice={onRenameDevice}
           />
         ) : (
         <>

@@ -108,7 +108,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       params.has("pending") ? [many[0], many[1]].map((removed) => ({ id: removed.id, file: removed })) : []
     }
     deviceId={null}
-    deviceName={null}
+    deviceName="Vikas's MacBook"
     deviceNames={{}}
     onRenameDevice={async () => null}
     usage={{
