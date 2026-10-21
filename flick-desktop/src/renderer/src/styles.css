@@ -1822,7 +1822,32 @@ input:focus-visible {
 }
 
 .compact-grid-popover {
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
+}
+
+/* Small tiles in the popover (~64px): label and time scale down. */
+.compact-grid-popover .compact-tile-label {
+  font-size: 10px;
+}
+
+.compact-grid-popover .compact-tile-time {
+  bottom: 3px;
+  font-size: 9px;
+}
+
+.compact-grid-popover .compact-tile-pin {
+  top: 4px;
+  left: 4px;
+  width: 7px;
+  height: 7px;
+}
+
+.compact-grid-popover .compact-tile-more {
+  top: 2px;
+  right: 2px;
+  width: 18px;
+  height: 18px;
+  font-size: 10px;
 }
 
 .window-close-button {
@@ -2175,11 +2200,3 @@ input:focus-visible {
   height: 28px;
 }
 
-/* Expanded popover: the heading stays, but no "+" button (drop files to upload). */
-.widget-popover .file-actions {
-  display: none;
-}
-
-.widget-expanded .section-heading {
-  margin: 4px 0 6px;
-}

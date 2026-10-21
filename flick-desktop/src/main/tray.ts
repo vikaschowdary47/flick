@@ -139,8 +139,7 @@ const POPOVER_WIDTH = 360;
 const POPOVER_MIN_HEIGHT = 140;
 const POPOVER_MAX_HEIGHT = 440;
 const POPOVER_MAX_SHARE = 0.45; // of the screen's work area height
-// "Open Flick" expands the same popover in place, up to this size.
-const EXPANDED_WIDTH = 420;
+// "Open Flick" makes the same popover taller (never wider), up to this.
 const EXPANDED_MAX_HEIGHT = 680;
 const EXPANDED_MAX_SHARE = 0.8;
 const RESIZE_MS = 180;
@@ -162,7 +161,7 @@ function popoverSize(window: BrowserWindow): { width: number; height: number } {
     : Math.min(POPOVER_MAX_HEIGHT, Math.floor(area.height * POPOVER_MAX_SHARE));
   const usable = area.height - POPOVER_GAP * 2;
   const height = Math.min(usable, Math.max(POPOVER_MIN_HEIGHT, Math.min(max, Math.ceil(popoverContentHeight))));
-  return { width: popoverExpanded ? EXPANDED_WIDTH : POPOVER_WIDTH, height };
+  return { width: POPOVER_WIDTH, height };
 }
 
 function cancelResize(): void {

@@ -113,10 +113,9 @@ export default function Widget({
   // resize); click-away or "Show less" brings back the compact popover.
   const [expanded, setExpanded] = useState(false);
   useEffect(() => window.flick.onPopoverExpanded(setExpanded), []);
-  const showFull = !isPopover || expanded;
-  // The compact popover and the floating panel are always compact; the main
-  // window and the expanded popover follow the Comfy/Compact setting.
-  const effectiveDensity: Density = windowMode === "main" || (isPopover && expanded) ? density : "compact";
+  // The popover (compact or taller) and the floating panel are always
+  // compact; only the separate main window follows the Comfy/Compact setting.
+  const effectiveDensity: Density = windowMode === "main" ? density : "compact";
   const popoverHidden = isPopover && !expanded ? popoverSelection(files, POPOVER_ITEMS).hidden : 0;
   const expandedRef = useRef(expanded);
   expandedRef.current = expanded;
@@ -249,7 +248,8 @@ export default function Widget({
           deviceId={deviceId}
           deviceNames={deviceNames}
           density={effectiveDensity}
-          recentOnly={showFull ? undefined : POPOVER_ITEMS}
+          // Popover: the same compact list either way; taller shows every item.
+          recentOnly={isPopover ? (expanded ? Number.POSITIVE_INFINITY : POPOVER_ITEMS) : undefined}
           onShowMore={() => setExpanded(true)}
           onFileSelection={handleFileSelection}
           onPreview={onPreviewFile}

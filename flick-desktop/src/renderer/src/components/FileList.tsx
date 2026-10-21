@@ -323,11 +323,14 @@ function CompactFiles({ files, now, senderOf, ...actions }: CompactFilesProps) {
   );
 }
 
-const POPOVER_GRID = 4; // one row of image tiles in the popover
+const POPOVER_GRID = 5; // image tiles per row in the popover (~64px each)
 
 // What the menu bar popover shows: the newest `limit` items, with at most
 // one pinned file (pins sort first, so they'd otherwise fill it).
 export function popoverSelection(files: CloudFile[], limit: number): { shown: CloudFile[]; hidden: number } {
+  if (!Number.isFinite(limit)) {
+    return { shown: files, hidden: 0 }; // taller popover: everything
+  }
   const pinned = files.filter((file) => file.pinned).slice(0, 1);
   const shown = [...pinned, ...files.filter((file) => !file.pinned)].slice(0, limit);
   return { shown, hidden: files.length - shown.length };
@@ -347,7 +350,8 @@ function RecentFiles({
   const { shown } = popoverSelection(files, limit);
   const images = shown.filter((file) => getFileVisualType(file) === "image");
   const others = shown.filter((file) => getFileVisualType(file) !== "image");
-  const overflow = images.length > POPOVER_GRID;
+  // Compact: one row, the last tile "+N". Taller: every image, row after row.
+  const overflow = Number.isFinite(limit) && images.length > POPOVER_GRID;
   const tiles = overflow ? images.slice(0, POPOVER_GRID - 1) : images;
   return (
     <div className="compact-list">
