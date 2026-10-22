@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent, type RefObject } from "react";
+import { useEffect, useLayoutEffect, useState, type FormEvent, type RefObject } from "react";
 import { useReducedMotion } from "framer-motion";
 import type { Session } from "@supabase/supabase-js";
 import Header from "./Header";
@@ -93,6 +93,12 @@ export default function SignIn({
     const timer = window.setInterval(() => setCooldown((value) => Math.max(0, value - 1)), 1000);
     return () => window.clearInterval(timer);
   }, [cooldown]);
+
+  // SignIn is rendered instead of Widget while signed out, so it must report
+  // its own minimum height to the tray/panel window.
+  useLayoutEffect(() => {
+    window.flick.reportPopoverHeight(520, false);
+  }, []);
 
   async function submit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();

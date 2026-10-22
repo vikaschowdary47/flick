@@ -541,9 +541,17 @@ export function setupWindowModeIpc(): void {
     const toggled = (expanded === true) !== popoverExpanded;
     popoverContentHeight = height;
     popoverExpanded = expanded === true;
-    if (!window || mode !== "popover") {
+    if (!window) {
       return;
     }
+    if (mode === "panel") {
+      const [, currentHeight] = window.getSize();
+      if (height > currentHeight) {
+        window.setSize(window.getSize()[0], Math.ceil(height), false);
+      }
+      return;
+    }
+    if (mode !== "popover") return;
     if (toggled) {
       fitPopover(window, true);
     } else if (!resizeTimer) {
