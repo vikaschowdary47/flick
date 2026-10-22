@@ -138,8 +138,8 @@ export type WindowMode = "popover" | "panel" | "main";
 const POPOVER_WIDTH = 360;
 // Low enough that the one-line empty state isn't padded with blank space.
 const POPOVER_MIN_HEIGHT = 140;
-const POPOVER_MAX_HEIGHT = 440;
-const POPOVER_MAX_SHARE = 0.45; // of the screen's work area height
+const POPOVER_MAX_HEIGHT = 560;
+const POPOVER_MAX_SHARE = 0.65; // of the screen's work area height
 // "Open Flick" makes the same popover taller (never wider), up to this.
 const EXPANDED_MAX_HEIGHT = 680;
 const EXPANDED_MAX_SHARE = 0.8;

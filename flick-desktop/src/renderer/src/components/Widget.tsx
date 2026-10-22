@@ -194,7 +194,8 @@ export default function Widget({
           );
           return;
         }
-        window.flick.reportPopoverHeight(chrome + bottom + padding, expandedRef.current);
+        const authMinimum = widget.classList.contains("widget-auth") ? 520 : 0;
+        window.flick.reportPopoverHeight(Math.max(authMinimum, chrome + bottom + padding), expandedRef.current);
       });
     };
     const resize = new ResizeObserver(measure);

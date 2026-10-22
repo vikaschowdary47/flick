@@ -128,7 +128,7 @@ export default function SignIn({
 
   return (
     <main
-      className={`widget${isDraggingFiles ? " drag-active" : ""}`}
+      className={`widget widget-auth${isDraggingFiles ? " drag-active" : ""}`}
       onClickCapture={onOutsideClick}
       onDragEnter={handleDragEnter}
       onDragOver={handleDragOver}

@@ -59,6 +59,10 @@ input:focus-visible {
   isolation: isolate;
 }
 
+.widget-auth {
+  min-height: 520px;
+}
+
 .topbar {
   display: flex;
   min-height: 72px;
