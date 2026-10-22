@@ -1160,6 +1160,19 @@ input:focus-visible {
   background: var(--flick-white);
 }
 
+.google-sign-in-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.google-logo {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+}
+
 .file-menu-button {
   color: var(--flick-navy);
   font-size: 18px;
