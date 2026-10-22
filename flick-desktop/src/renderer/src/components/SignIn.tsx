@@ -215,7 +215,7 @@ export default function SignIn({
                     <path fill="#FBBC05" d="M6.53 14.06a5.86 5.86 0 0 1 0-3.72V7.81H3.28a9.76 9.76 0 0 0 0 8.78l3.25-2.53Z" />
                     <path fill="#EA4335" d="M12 6.31c1.43 0 2.71.49 3.72 1.46l2.79-2.79C16.84 3.43 14.63 2.02 12 2.02a9.75 9.75 0 0 0-8.72 5.79l3.25 2.53C7.3 8.03 9.46 6.31 12 6.31Z" />
                   </svg>
-                  Continue with Google
+                  {isSigningIn ? "Signing in…" : "Continue with Google"}
                 </button>
                 <button className="auth-link" type="button" onClick={() => { setMode("signUp"); setLocalError(""); }}>Don’t have an account? Sign up</button>
               </>}

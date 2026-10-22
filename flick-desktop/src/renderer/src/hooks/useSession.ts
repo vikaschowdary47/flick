@@ -187,6 +187,7 @@ export function useSession() {
       if (error || !data.url) {
         throw error ?? new Error("Could not start Google sign-in.");
       }
+      await window.flick.openAuthUrl(data.url);
       const callbackUrl = await new Promise<string>((resolve, reject) => {
         let finished = false;
         let unsubscribe: (() => void) | null = null;
