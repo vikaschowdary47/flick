@@ -14,8 +14,17 @@ WebBrowser.maybeCompleteAuthSession();
 export const APPLE_SIGN_IN_ENABLED = process.env.EXPO_PUBLIC_ENABLE_APPLE_SIGN_IN === "true";
 const exchangedCodes = new Set<string>();
 
-function authRedirectUrl(): string {
-  return makeRedirectUri({ scheme: "flick", path: "auth-callback" });
+export type AuthCallbackNotice = {
+  kind: "confirmed" | "reset";
+  email: string;
+};
+
+function authRedirectUrl(email?: string): string {
+  const redirect = makeRedirectUri({ scheme: "flick", path: "auth-callback" });
+  if (!email) return redirect;
+  const url = new URL(redirect);
+  url.searchParams.set("email", email.trim());
+  return url.toString();
 }
 
 function callbackParams(url: string): URLSearchParams {
@@ -40,6 +49,10 @@ async function exchangeCallbackCode(code: string): Promise<string | null> {
   return error ? friendlyAuthError(error.message) : null;
 }
 
+function isCodeVerifierError(message: string): boolean {
+  return /code verifier|verifier.*(missing|not found|invalid)|pkce/i.test(message);
+}
+
 async function openGoogleAuthSession(url: string, redirectTo: string) {
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
   try {
@@ -58,6 +71,7 @@ export function useSession() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [passwordRecovery, setPasswordRecovery] = useState(false);
+  const [authCallbackNotice, setAuthCallbackNotice] = useState<AuthCallbackNotice | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -78,12 +92,23 @@ export function useSession() {
       const code = params.get("code");
       if (code) {
         const error = await exchangeCallbackCode(code);
+        if (error && isCodeVerifierError(error)) {
+          setAuthCallbackNotice({
+            kind: params.get("type") === "recovery" ? "reset" : "confirmed",
+            email: params.get("email") ?? "",
+          });
+          return;
+        }
         if (error) console.warn("Flick email confirmation failed:", error);
       }
       const accessToken = params.get("access_token");
       const refreshToken = params.get("refresh_token");
       if (accessToken && refreshToken) {
         const { error } = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+        if (error && isCodeVerifierError(error.message)) {
+          setAuthCallbackNotice({ kind: "reset", email: params.get("email") ?? "" });
+          return;
+        }
         if (error) console.warn("Flick password reset session failed:", error.message);
         if (params.get("type") === "recovery") setPasswordRecovery(true);
       }
@@ -113,7 +138,7 @@ export function useSession() {
     const { error } = await supabase.auth.signUp({
       email: email.trim(),
       password,
-      options: { emailRedirectTo: authRedirectUrl() },
+      options: { emailRedirectTo: authRedirectUrl(email) },
     });
     return error ? friendlyAuthError(error.message) : null;
   }, []);
@@ -122,13 +147,13 @@ export function useSession() {
     const { error } = await supabase.auth.resend({
       type: "signup",
       email: email.trim(),
-      options: { emailRedirectTo: authRedirectUrl() },
+      options: { emailRedirectTo: authRedirectUrl(email) },
     });
     return error ? friendlyAuthError(error.message) : null;
   }, []);
 
   const requestPasswordReset = useCallback(async (email: string) => {
-    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: authRedirectUrl() });
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: authRedirectUrl(email) });
     return error ? friendlyAuthError(error.message) : null;
   }, []);
 
@@ -205,6 +230,7 @@ export function useSession() {
     session,
     loading,
     passwordRecovery,
+    authCallbackNotice,
     signIn,
     signUp,
     resendSignUp,

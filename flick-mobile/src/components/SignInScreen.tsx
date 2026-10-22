@@ -11,6 +11,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme, useThemedStyles } from "../design/ThemeProvider";
 import type { Palette } from "../design/theme";
 import { tokens } from "../design/tokens";
+import type { AuthCallbackNotice } from "../hooks/useSession";
 import { LogoMark } from "./LogoMark";
 import { PillButton } from "./PillButton";
 
@@ -24,6 +25,7 @@ type Props = {
   onSignInWithApple: () => Promise<string | null>;
   appleSignInEnabled: boolean;
   passwordRecovery: boolean;
+  authCallbackNotice: AuthCallbackNotice | null;
 };
 
 export function SignInScreen({
@@ -36,6 +38,7 @@ export function SignInScreen({
   onSignInWithApple,
   appleSignInEnabled,
   passwordRecovery,
+  authCallbackNotice,
 }: Props) {
   const { palette } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -52,6 +55,15 @@ export function SignInScreen({
   useEffect(() => {
     if (passwordRecovery) setMode("resetPassword");
   }, [passwordRecovery]);
+
+  useEffect(() => {
+    if (!authCallbackNotice) return;
+    setEmail(authCallbackNotice.email);
+    setPassword("");
+    setConfirmPassword("");
+    setError(null);
+    setMode(authCallbackNotice.kind === "reset" ? "resetRequest" : "signIn");
+  }, [authCallbackNotice]);
 
   useEffect(() => {
     if (cooldown === 0) return;
@@ -145,6 +157,13 @@ export function SignInScreen({
         <Text style={styles.sub}>
           {mode === "checkEmail" ? `Check ${email} for a link from Flick.` : "Sign in to send files to all your devices."}
         </Text>
+        {authCallbackNotice && (
+          <Text accessibilityRole="alert" style={styles.notice}>
+            {authCallbackNotice.kind === "confirmed"
+              ? "Email confirmed! Go back to the device where you signed up, or log in here."
+              : "This reset link was opened on another device. Open it on the device where you requested it, or resend the link here."}
+          </Text>
+        )}
 
         <View style={styles.form}>
           {mode !== "checkEmail" && mode !== "resetPassword" && (
@@ -215,6 +234,7 @@ export function SignInScreen({
             <PillButton label={busy ? "Saving…" : "Save password"} onPress={saveNewPassword} busy={busy} disabled={busy} />
           </>}
           {mode === "checkEmail" && <>
+            <PillButton label="I’ve confirmed — log in" onPress={() => { setMode("signIn"); setPassword(""); setConfirmPassword(""); setError(null); }} disabled={busy} />
             <PillButton label={cooldown ? `Resend in ${cooldown}s` : "Resend email"} onPress={resend} disabled={busy || cooldown > 0} />
             <Text style={styles.link} onPress={() => { setMode("signIn"); setError(null); }}>Back to sign in</Text>
           </>}
@@ -272,6 +292,13 @@ const makeStyles = (c: Palette) =>
       textAlign: "center",
     },
     error: {
+      color: c.text,
+      fontFamily: tokens.fonts.semibold,
+      fontSize: tokens.fontSizes.meta,
+      textAlign: "center",
+    },
+    notice: {
+      maxWidth: 330,
       color: c.text,
       fontFamily: tokens.fonts.semibold,
       fontSize: tokens.fontSizes.meta,

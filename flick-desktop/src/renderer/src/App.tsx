@@ -63,6 +63,7 @@ export default function App() {
         handleRequestPasswordReset={auth.handleRequestPasswordReset}
         handleUpdatePassword={auth.handleUpdatePassword}
         passwordRecovery={auth.passwordRecovery}
+        authCallbackNotice={auth.authCallbackNotice}
         handleSignOut={auth.handleSignOut}
         isAccountMenuOpen={auth.isAccountMenuOpen}
         isDraggingFiles={fileState.isDraggingFiles}

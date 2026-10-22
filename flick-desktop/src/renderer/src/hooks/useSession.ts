@@ -8,6 +8,21 @@ import {
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../supabase";
 
+export type AuthCallbackNotice = {
+  kind: "confirmed" | "reset";
+  email: string;
+};
+
+function authRedirectUrl(email?: string): string {
+  const redirect = new URL("flick://auth-callback");
+  if (email) redirect.searchParams.set("email", email.trim());
+  return redirect.toString();
+}
+
+function isCodeVerifierError(message: string): boolean {
+  return /code verifier|verifier.*(missing|not found|invalid)|pkce/i.test(message);
+}
+
 export function useSession() {
   const [session, setSession] = useState<Session | null>(null);
   const [authReady, setAuthReady] = useState(false);
@@ -17,6 +32,7 @@ export function useSession() {
   const [authError, setAuthError] = useState("");
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [passwordRecovery, setPasswordRecovery] = useState(false);
+  const [authCallbackNotice, setAuthCallbackNotice] = useState<AuthCallbackNotice | null>(null);
   const googleInProgress = useRef(false);
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
   const accountMenuRef = useRef<HTMLDivElement>(null);
@@ -80,14 +96,29 @@ export function useSession() {
           const code = params.get("code");
           if (code) {
             const { error } = await client.auth.exchangeCodeForSession(code);
-            if (error) throw error;
+            if (error) {
+              if (isCodeVerifierError(error.message)) {
+                setAuthCallbackNotice({
+                  kind: params.get("type") === "recovery" ? "reset" : "confirmed",
+                  email: params.get("email") ?? "",
+                });
+                return;
+              }
+              throw error;
+            }
           }
           if (params.get("access_token") && params.get("refresh_token")) {
             const { error } = await client.auth.setSession({
               access_token: params.get("access_token")!,
               refresh_token: params.get("refresh_token")!,
             });
-            if (error) throw error;
+            if (error) {
+              if (isCodeVerifierError(error.message)) {
+                setAuthCallbackNotice({ kind: "reset", email: params.get("email") ?? "" });
+                return;
+              }
+              throw error;
+            }
             setPasswordRecovery(params.get("type") === "recovery");
           }
         } catch (error: unknown) {
@@ -208,7 +239,7 @@ export function useSession() {
       const { error } = await supabase.auth.signUp({
         email: nextEmail.trim(),
         password: nextPassword,
-        options: { emailRedirectTo: "flick://auth-callback" },
+        options: { emailRedirectTo: authRedirectUrl(nextEmail) },
       });
       return error ? friendlyAuthError(error.message) : null;
     } finally {
@@ -223,7 +254,7 @@ export function useSession() {
       const { error } = await supabase.auth.resend({
         type: "signup",
         email: nextEmail.trim(),
-        options: { emailRedirectTo: "flick://auth-callback" },
+        options: { emailRedirectTo: authRedirectUrl(nextEmail) },
       });
       return error ? friendlyAuthError(error.message) : null;
     } finally {
@@ -236,7 +267,7 @@ export function useSession() {
     setIsSigningIn(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(nextEmail.trim(), {
-        redirectTo: "flick://auth-callback",
+        redirectTo: authRedirectUrl(nextEmail),
       });
       return error ? friendlyAuthError(error.message) : null;
     } finally {
@@ -300,6 +331,7 @@ export function useSession() {
     isOnline,
     isSigningIn,
     passwordRecovery,
+    authCallbackNotice,
     handleSignUp,
     handleResendSignUp,
     handleRequestPasswordReset,

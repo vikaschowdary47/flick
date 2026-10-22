@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent, type RefObject } from "react";
 import { useReducedMotion } from "framer-motion";
 import type { Session } from "@supabase/supabase-js";
 import Header from "./Header";
+import type { AuthCallbackNotice } from "../hooks/useSession";
 
 interface SignInProps {
   accountMenuRef: RefObject<HTMLDivElement | null>;
@@ -19,6 +20,7 @@ interface SignInProps {
   handleRequestPasswordReset: (email: string) => Promise<string | null>;
   handleUpdatePassword: (password: string) => Promise<string | null>;
   passwordRecovery: boolean;
+  authCallbackNotice: AuthCallbackNotice | null;
   handleSignOut: () => void;
   isAccountMenuOpen: boolean;
   isDraggingFiles: boolean;
@@ -51,6 +53,7 @@ export default function SignIn({
   handleRequestPasswordReset,
   handleUpdatePassword,
   passwordRecovery,
+  authCallbackNotice,
   handleSignOut,
   isAccountMenuOpen,
   isDraggingFiles,
@@ -77,6 +80,14 @@ export default function SignIn({
   useEffect(() => {
     if (passwordRecovery) setMode("resetPassword");
   }, [passwordRecovery]);
+  useEffect(() => {
+    if (!authCallbackNotice) return;
+    setEmail(authCallbackNotice.email);
+    setPassword("");
+    setConfirmPassword("");
+    setLocalError("");
+    setMode(authCallbackNotice.kind === "reset" ? "resetRequest" : "signIn");
+  }, [authCallbackNotice, setEmail, setPassword]);
   useEffect(() => {
     if (cooldown === 0) return;
     const timer = window.setInterval(() => setCooldown((value) => Math.max(0, value - 1)), 1000);
@@ -169,6 +180,11 @@ export default function SignIn({
             <p className="sign-in-copy">
               {mode === "checkEmail" ? `Check ${email} for a link from Flick.` : "Sign in to catch files from your other devices."}
             </p>
+            {authCallbackNotice && <p className="auth-status" role="alert">
+              {authCallbackNotice.kind === "confirmed"
+                ? "Email confirmed! Go back to the device where you signed up, or log in here."
+                : "This reset link was opened on another device. Open it on the device where you requested it, or resend the link here."}
+            </p>}
             <form className="auth-form" onSubmit={submit}>
               {mode !== "checkEmail" && mode !== "resetPassword" && <label>
                 Email
@@ -199,6 +215,7 @@ export default function SignIn({
               </>}
               {mode === "resetPassword" && <button className="sign-in-button" type="submit" disabled={isSigningIn}>{isSigningIn ? "Saving…" : "Save password"}</button>}
               {mode === "checkEmail" && <>
+                <button className="sign-in-button" type="button" onClick={() => { setMode("signIn"); setPassword(""); setConfirmPassword(""); setLocalError(""); }} disabled={isSigningIn}>I’ve confirmed — log in</button>
                 <button className="sign-in-button" type="button" onClick={() => void resend()} disabled={isSigningIn || cooldown > 0}>{cooldown ? `Resend in ${cooldown}s` : "Resend email"}</button>
                 <button className="auth-link" type="button" onClick={() => setMode("signIn")}>Back to sign in</button>
               </>}

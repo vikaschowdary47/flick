@@ -29,6 +29,7 @@ function Root() {
     session,
     loading,
     passwordRecovery,
+    authCallbackNotice,
     signIn,
     signUp,
     resendSignUp,
@@ -63,6 +64,7 @@ function Root() {
           onSignInWithApple={signInWithApple}
           appleSignInEnabled={APPLE_SIGN_IN_ENABLED}
           passwordRecovery={passwordRecovery}
+          authCallbackNotice={authCallbackNotice}
         />
       )}
     </>
