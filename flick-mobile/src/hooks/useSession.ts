@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import * as AppleAuthentication from "expo-apple-authentication";
 import * as Crypto from "expo-crypto";
+import { makeRedirectUri } from "expo-auth-session";
 import type { Session } from "@supabase/supabase-js";
 import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
@@ -8,7 +9,23 @@ import { widgetsBridge } from "../../modules/flick-widgets";
 import { clearCache } from "../lib/cache";
 import { supabase } from "../lib/supabase";
 
+WebBrowser.maybeCompleteAuthSession();
+
 export const APPLE_SIGN_IN_ENABLED = process.env.EXPO_PUBLIC_ENABLE_APPLE_SIGN_IN === "true";
+
+async function openGoogleAuthSession(url: string, redirectTo: string) {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      WebBrowser.openAuthSessionAsync(url, redirectTo),
+      new Promise<never>((_, reject) => {
+        timeoutId = setTimeout(() => reject(new Error("Google sign-in timed out.")), 120_000);
+      }),
+    ]);
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
+  }
+}
 
 export function useSession() {
   const [session, setSession] = useState<Session | null>(null);
@@ -45,15 +62,15 @@ export function useSession() {
   // (ASWebAuthenticationSession on iOS). Returns an error message or null.
   const signInWithGoogle = useCallback(async () => {
     try {
-      const redirectTo = "flick://auth-callback";
+      const redirectTo = makeRedirectUri({ scheme: "flick", path: "auth-callback" });
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: { redirectTo, skipBrowserRedirect: true },
       });
       if (error || !data?.url) return friendlyAuthError(error?.message ?? "No sign-in link");
 
-      const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
-      if (result.type !== "success") return "Google sign-in was cancelled.";
+      const result = await openGoogleAuthSession(data.url, redirectTo);
+      if (result.type !== "success" || !result.url) return "Google sign-in was cancelled.";
 
       const { queryParams } = Linking.parse(result.url);
       const code = typeof queryParams?.code === "string" ? queryParams.code : null;
