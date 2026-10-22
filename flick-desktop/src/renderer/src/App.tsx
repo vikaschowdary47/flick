@@ -58,6 +58,11 @@ export default function App() {
         handleDrop={fileState.handleDrop}
         handleSignIn={auth.handleSignIn}
         handleGoogleSignIn={auth.handleGoogleSignIn}
+        handleSignUp={auth.handleSignUp}
+        handleResendSignUp={auth.handleResendSignUp}
+        handleRequestPasswordReset={auth.handleRequestPasswordReset}
+        handleUpdatePassword={auth.handleUpdatePassword}
+        passwordRecovery={auth.passwordRecovery}
         handleSignOut={auth.handleSignOut}
         isAccountMenuOpen={auth.isAccountMenuOpen}
         isDraggingFiles={fileState.isDraggingFiles}

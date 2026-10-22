@@ -910,6 +910,16 @@ input:focus-visible {
   margin-top: 4px;
 }
 
+.auth-link {
+  border: 0;
+  background: transparent;
+  color: var(--flick-navy);
+  cursor: pointer;
+  font-size: var(--flick-font-size-status);
+  font-weight: var(--flick-font-weight-semibold);
+  text-decoration: underline;
+}
+
 .auth-error {
   margin: 0;
   padding: 10px 12px;

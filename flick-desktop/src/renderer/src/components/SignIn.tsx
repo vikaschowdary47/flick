@@ -1,4 +1,4 @@
-import type { FormEvent, RefObject } from "react";
+import { useEffect, useState, type FormEvent, type RefObject } from "react";
 import { useReducedMotion } from "framer-motion";
 import type { Session } from "@supabase/supabase-js";
 import Header from "./Header";
@@ -14,6 +14,11 @@ interface SignInProps {
   handleDrop: (event: React.DragEvent<HTMLElement>) => void;
   handleSignIn: (event: FormEvent<HTMLFormElement>) => void;
   handleGoogleSignIn: () => void;
+  handleSignUp: (email: string, password: string) => Promise<string | null>;
+  handleResendSignUp: (email: string) => Promise<string | null>;
+  handleRequestPasswordReset: (email: string) => Promise<string | null>;
+  handleUpdatePassword: (password: string) => Promise<string | null>;
+  passwordRecovery: boolean;
   handleSignOut: () => void;
   isAccountMenuOpen: boolean;
   isDraggingFiles: boolean;
@@ -41,6 +46,11 @@ export default function SignIn({
   handleDrop,
   handleSignIn,
   handleGoogleSignIn,
+  handleSignUp,
+  handleResendSignUp,
+  handleRequestPasswordReset,
+  handleUpdatePassword,
+  passwordRecovery,
   handleSignOut,
   isAccountMenuOpen,
   isDraggingFiles,
@@ -57,6 +67,53 @@ export default function SignIn({
   showConfetti,
 }: SignInProps) {
   const prefersReducedMotion = useReducedMotion();
+  const [mode, setMode] = useState<"signIn" | "signUp" | "resetRequest" | "resetPassword" | "checkEmail">(
+    passwordRecovery ? "resetPassword" : "signIn",
+  );
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [localError, setLocalError] = useState("");
+  const [cooldown, setCooldown] = useState(0);
+
+  useEffect(() => {
+    if (passwordRecovery) setMode("resetPassword");
+  }, [passwordRecovery]);
+  useEffect(() => {
+    if (cooldown === 0) return;
+    const timer = window.setInterval(() => setCooldown((value) => Math.max(0, value - 1)), 1000);
+    return () => window.clearInterval(timer);
+  }, [cooldown]);
+
+  async function submit(event: FormEvent<HTMLFormElement>): Promise<void> {
+    event.preventDefault();
+    setLocalError("");
+    if (mode === "signIn") return handleSignIn(event);
+    if (mode === "signUp") {
+      if (!email.includes("@")) return setLocalError("Enter a valid email address.");
+      if (password.length < 8) return setLocalError("Use a password with at least 8 characters.");
+      if (password !== confirmPassword) return setLocalError("Passwords do not match.");
+      const error = await handleSignUp(email, password);
+      if (error) setLocalError(error);
+      else { setMode("checkEmail"); setCooldown(60); }
+    } else if (mode === "resetRequest") {
+      if (!email.includes("@")) return setLocalError("Enter a valid email address.");
+      const error = await handleRequestPasswordReset(email);
+      if (error) setLocalError(error);
+      else setMode("checkEmail");
+    } else if (mode === "resetPassword") {
+      if (password.length < 8) return setLocalError("Use a password with at least 8 characters.");
+      if (password !== confirmPassword) return setLocalError("Passwords do not match.");
+      const error = await handleUpdatePassword(password);
+      if (error) setLocalError(error);
+      else setMode("signIn");
+    }
+  }
+
+  async function resend(): Promise<void> {
+    if (cooldown > 0) return;
+    const error = await handleResendSignUp(email);
+    if (error) setLocalError(error);
+    else setCooldown(60);
+  }
 
   return (
     <main
@@ -108,53 +165,44 @@ export default function SignIn({
               </svg>
             </div>
             <p className="eyebrow">YOUR FILES, EVERYWHERE</p>
-            <h1 id="incoming-heading">Welcome to Flick</h1>
+            <h1 id="incoming-heading">{mode === "signUp" ? "Join Flick" : mode === "resetPassword" ? "Choose a new password" : "Welcome to Flick"}</h1>
             <p className="sign-in-copy">
-              Sign in to catch files from your other devices.
+              {mode === "checkEmail" ? `Check ${email} for a link from Flick.` : "Sign in to catch files from your other devices."}
             </p>
-            <form className="auth-form" onSubmit={handleSignIn}>
-              <label>
+            <form className="auth-form" onSubmit={submit}>
+              {mode !== "checkEmail" && mode !== "resetPassword" && <label>
                 Email
-                <input
-                  type="email"
-                  autoComplete="email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  required
-                />
-              </label>
-              <label>
+                <input type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
+              </label>}
+              {(mode === "signIn" || mode === "signUp") && <label>
                 Password
-                <input
-                  type="password"
-                  autoComplete="current-password"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  required
-                />
-              </label>
-              <button
-                className="sign-in-button"
-                type="submit"
-                disabled={isSigningIn}
-              >
-                {isSigningIn ? "Signing in…" : "Sign in"}
-              </button>
-              <p className="sign-in-or">or</p>
-              <button
-                className="sign-in-button sign-in-button-secondary"
-                type="button"
-                disabled={isSigningIn}
-                onClick={handleGoogleSignIn}
-              >
-                Continue with Google
-              </button>
-              {/* TODO(apple-sign-in): "Continue with Apple" button goes here. */}
-              {authError && (
-                <p className="auth-error" role="alert">
-                  {authError}
-                </p>
-              )}
+                <input type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} required />
+              </label>}
+              {(mode === "signUp" || mode === "resetPassword") && <label>
+                Confirm password
+                <input type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} required />
+              </label>}
+              {mode === "signIn" && <>
+                <button className="sign-in-button" type="submit" disabled={isSigningIn}>{isSigningIn ? "Signing in…" : "Sign in"}</button>
+                <button className="auth-link" type="button" onClick={() => { setMode("resetRequest"); setLocalError(""); }}>Forgot password?</button>
+                <p className="sign-in-or">or</p>
+                <button className="sign-in-button sign-in-button-secondary" type="button" disabled={isSigningIn} onClick={handleGoogleSignIn}>Continue with Google</button>
+                <button className="auth-link" type="button" onClick={() => { setMode("signUp"); setLocalError(""); }}>Don’t have an account? Sign up</button>
+              </>}
+              {mode === "signUp" && <>
+                <button className="sign-in-button" type="submit" disabled={isSigningIn}>{isSigningIn ? "Creating account…" : "Create account"}</button>
+                <button className="auth-link" type="button" onClick={() => setMode("signIn")}>Already have an account? Log in</button>
+              </>}
+              {mode === "resetRequest" && <>
+                <button className="sign-in-button" type="submit" disabled={isSigningIn}>{isSigningIn ? "Sending…" : "Send reset link"}</button>
+                <button className="auth-link" type="button" onClick={() => setMode("signIn")}>Back to sign in</button>
+              </>}
+              {mode === "resetPassword" && <button className="sign-in-button" type="submit" disabled={isSigningIn}>{isSigningIn ? "Saving…" : "Save password"}</button>}
+              {mode === "checkEmail" && <>
+                <button className="sign-in-button" type="button" onClick={() => void resend()} disabled={isSigningIn || cooldown > 0}>{cooldown ? `Resend in ${cooldown}s` : "Resend email"}</button>
+                <button className="auth-link" type="button" onClick={() => setMode("signIn")}>Back to sign in</button>
+              </>}
+              {(authError || localError) && <p className="auth-error" role="alert">{localError || authError}</p>}
             </form>
           </div>
         )}

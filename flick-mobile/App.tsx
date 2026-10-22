@@ -25,7 +25,19 @@ export default function App() {
 
 function Root() {
   const [fontsLoaded] = useFonts({ Nunito_600SemiBold, Nunito_800ExtraBold });
-  const { session, loading, signIn, signInWithGoogle, signInWithApple, signOut } = useSession();
+  const {
+    session,
+    loading,
+    passwordRecovery,
+    signIn,
+    signUp,
+    resendSignUp,
+    requestPasswordReset,
+    updatePassword,
+    signInWithGoogle,
+    signInWithApple,
+    signOut,
+  } = useSession();
   const { palette, scheme } = useTheme();
   const styles = useThemedStyles(makeStyles);
 
@@ -43,9 +55,14 @@ function Root() {
       ) : (
         <SignInScreen
           onSignIn={signIn}
+          onSignUp={signUp}
+          onResendSignUp={resendSignUp}
+          onRequestPasswordReset={requestPasswordReset}
+          onUpdatePassword={updatePassword}
           onSignInWithGoogle={signInWithGoogle}
           onSignInWithApple={signInWithApple}
           appleSignInEnabled={APPLE_SIGN_IN_ENABLED}
+          passwordRecovery={passwordRecovery}
         />
       )}
     </>

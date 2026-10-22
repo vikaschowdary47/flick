@@ -12,6 +12,33 @@ import { supabase } from "../lib/supabase";
 WebBrowser.maybeCompleteAuthSession();
 
 export const APPLE_SIGN_IN_ENABLED = process.env.EXPO_PUBLIC_ENABLE_APPLE_SIGN_IN === "true";
+const exchangedCodes = new Set<string>();
+
+function authRedirectUrl(): string {
+  return makeRedirectUri({ scheme: "flick", path: "auth-callback" });
+}
+
+function callbackParams(url: string): URLSearchParams {
+  const parsed = Linking.parse(url);
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(parsed.queryParams ?? {})) {
+    if (typeof value === "string") params.set(key, value);
+  }
+  if (parsed.path?.includes("#")) {
+    for (const [key, value] of new URLSearchParams(parsed.path.split("#")[1]).entries()) {
+      params.set(key, value);
+    }
+  }
+  return params;
+}
+
+async function exchangeCallbackCode(code: string): Promise<string | null> {
+  if (exchangedCodes.has(code)) return null;
+  exchangedCodes.add(code);
+  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  if (error) exchangedCodes.delete(code);
+  return error ? friendlyAuthError(error.message) : null;
+}
 
 async function openGoogleAuthSession(url: string, redirectTo: string) {
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
@@ -30,6 +57,7 @@ async function openGoogleAuthSession(url: string, redirectTo: string) {
 export function useSession() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [passwordRecovery, setPasswordRecovery] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -42,11 +70,34 @@ export function useSession() {
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, next) => {
       setSession(next);
+      if (_event === "PASSWORD_RECOVERY") setPasswordRecovery(true);
     });
+
+    async function handleAuthUrl(url: string): Promise<void> {
+      const params = callbackParams(url);
+      const code = params.get("code");
+      if (code) {
+        const error = await exchangeCallbackCode(code);
+        if (error) console.warn("Flick email confirmation failed:", error);
+      }
+      const accessToken = params.get("access_token");
+      const refreshToken = params.get("refresh_token");
+      if (accessToken && refreshToken) {
+        const { error } = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+        if (error) console.warn("Flick password reset session failed:", error.message);
+        if (params.get("type") === "recovery") setPasswordRecovery(true);
+      }
+    }
+
+    void Linking.getInitialURL().then((url) => {
+      if (url) void handleAuthUrl(url);
+    });
+    const urlListener = Linking.addEventListener("url", ({ url }) => void handleAuthUrl(url));
 
     return () => {
       mounted = false;
       listener.subscription.unsubscribe();
+      urlListener.remove();
     };
   }, []);
 
@@ -58,11 +109,40 @@ export function useSession() {
     return error ? friendlyAuthError(error.message) : null;
   }, []);
 
+  const signUp = useCallback(async (email: string, password: string) => {
+    const { error } = await supabase.auth.signUp({
+      email: email.trim(),
+      password,
+      options: { emailRedirectTo: authRedirectUrl() },
+    });
+    return error ? friendlyAuthError(error.message) : null;
+  }, []);
+
+  const resendSignUp = useCallback(async (email: string) => {
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: email.trim(),
+      options: { emailRedirectTo: authRedirectUrl() },
+    });
+    return error ? friendlyAuthError(error.message) : null;
+  }, []);
+
+  const requestPasswordReset = useCallback(async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: authRedirectUrl() });
+    return error ? friendlyAuthError(error.message) : null;
+  }, []);
+
+  const updatePassword = useCallback(async (password: string) => {
+    const { error } = await supabase.auth.updateUser({ password });
+    if (!error) setPasswordRecovery(false);
+    return error ? friendlyAuthError(error.message) : null;
+  }, []);
+
   // Google via Supabase OAuth with PKCE, in the system browser sheet
   // (ASWebAuthenticationSession on iOS). Returns an error message or null.
   const signInWithGoogle = useCallback(async () => {
     try {
-      const redirectTo = makeRedirectUri({ scheme: "flick", path: "auth-callback" });
+      const redirectTo = authRedirectUrl();
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: { redirectTo, skipBrowserRedirect: true },
@@ -78,8 +158,7 @@ export function useSession() {
         const description = queryParams?.error_description;
         return typeof description === "string" ? description : "Google sign-in didn't finish. Try again.";
       }
-      const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
-      return exchangeError ? friendlyAuthError(exchangeError.message) : null;
+      return exchangeCallbackCode(code);
     } catch (err) {
       return friendlyAuthError(err instanceof Error ? err.message : String(err));
     }
@@ -122,7 +201,19 @@ export function useSession() {
     await supabase.auth.signOut();
   }, []);
 
-  return { session, loading, signIn, signInWithGoogle, signInWithApple, signOut };
+  return {
+    session,
+    loading,
+    passwordRecovery,
+    signIn,
+    signUp,
+    resendSignUp,
+    requestPasswordReset,
+    updatePassword,
+    signInWithGoogle,
+    signInWithApple,
+    signOut,
+  };
 }
 
 function friendlyAuthError(message: string): string {

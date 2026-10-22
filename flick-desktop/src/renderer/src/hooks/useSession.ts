@@ -16,6 +16,8 @@ export function useSession() {
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState("");
   const [isSigningIn, setIsSigningIn] = useState(false);
+  const [passwordRecovery, setPasswordRecovery] = useState(false);
+  const googleInProgress = useRef(false);
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
   const accountMenuRef = useRef<HTMLDivElement>(null);
 
@@ -57,16 +59,47 @@ export function useSession() {
       setAuthReady(true);
       return;
     }
+    const client = supabase;
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    } = client.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession);
       setAuthReady(true);
       setAuthError("");
+      if (_event === "PASSWORD_RECOVERY") setPasswordRecovery(true);
     });
 
-    return () => subscription.unsubscribe();
+    const unsubscribe = window.flick.onAuthCallback((callbackUrl) => {
+      if (googleInProgress.current) return;
+      void (async () => {
+        try {
+          const callback = new URL(callbackUrl);
+          const params = new URLSearchParams(callback.hash.replace(/^#/, "&"));
+          callback.searchParams.forEach((value, key) => params.set(key, value));
+          const code = params.get("code");
+          if (code) {
+            const { error } = await client.auth.exchangeCodeForSession(code);
+            if (error) throw error;
+          }
+          if (params.get("access_token") && params.get("refresh_token")) {
+            const { error } = await client.auth.setSession({
+              access_token: params.get("access_token")!,
+              refresh_token: params.get("refresh_token")!,
+            });
+            if (error) throw error;
+            setPasswordRecovery(params.get("type") === "recovery");
+          }
+        } catch (error: unknown) {
+          setAuthError(friendlyAuthError(error instanceof Error ? error.message : String(error)));
+        }
+      })();
+    });
+
+    return () => {
+      subscription.unsubscribe();
+      unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
@@ -113,6 +146,7 @@ export function useSession() {
     }
     setIsSigningIn(true);
     setAuthError("");
+    googleInProgress.current = true;
     try {
       const redirectTo = "flick://auth-callback";
       const { data, error } = await supabase.auth.signInWithOAuth({
@@ -162,6 +196,62 @@ export function useSession() {
         error instanceof Error ? friendlyAuthError(error.message) : "Could not sign in with Google.",
       );
     } finally {
+      googleInProgress.current = false;
+      setIsSigningIn(false);
+    }
+  }
+
+  async function handleSignUp(nextEmail: string, nextPassword: string): Promise<string | null> {
+    if (!supabase) return "Flick is not connected.";
+    setIsSigningIn(true);
+    try {
+      const { error } = await supabase.auth.signUp({
+        email: nextEmail.trim(),
+        password: nextPassword,
+        options: { emailRedirectTo: "flick://auth-callback" },
+      });
+      return error ? friendlyAuthError(error.message) : null;
+    } finally {
+      setIsSigningIn(false);
+    }
+  }
+
+  async function handleResendSignUp(nextEmail: string): Promise<string | null> {
+    if (!supabase) return "Flick is not connected.";
+    setIsSigningIn(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email: nextEmail.trim(),
+        options: { emailRedirectTo: "flick://auth-callback" },
+      });
+      return error ? friendlyAuthError(error.message) : null;
+    } finally {
+      setIsSigningIn(false);
+    }
+  }
+
+  async function handleRequestPasswordReset(nextEmail: string): Promise<string | null> {
+    if (!supabase) return "Flick is not connected.";
+    setIsSigningIn(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(nextEmail.trim(), {
+        redirectTo: "flick://auth-callback",
+      });
+      return error ? friendlyAuthError(error.message) : null;
+    } finally {
+      setIsSigningIn(false);
+    }
+  }
+
+  async function handleUpdatePassword(nextPassword: string): Promise<string | null> {
+    if (!supabase) return "Flick is not connected.";
+    setIsSigningIn(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: nextPassword });
+      if (!error) setPasswordRecovery(false);
+      return error ? friendlyAuthError(error.message) : null;
+    } finally {
       setIsSigningIn(false);
     }
   }
@@ -209,6 +299,11 @@ export function useSession() {
     isAccountMenuOpen,
     isOnline,
     isSigningIn,
+    passwordRecovery,
+    handleSignUp,
+    handleResendSignUp,
+    handleRequestPasswordReset,
+    handleUpdatePassword,
     password,
     session,
     setEmail,
