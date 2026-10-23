@@ -1,3 +1,5 @@
+import FirstRunProfile from "./components/FirstRunProfile";
+import { useOnboarding } from "./hooks/useOnboarding";
 import SignIn from "./components/SignIn";
 import ClipsPanel from "./components/ClipsPanel";
 import LimitScreen from "./components/LimitScreen";
@@ -16,19 +18,21 @@ import { supabase } from "./supabase";
 
 export default function App() {
   const auth = useSession();
-  const device = useDevice(auth.session, () => void auth.handleSignOut());
-  const fileState = useFiles(auth.session, device.deviceId);
-  const shareLinks = useShareLinks(auth.session);
+  const onboarding = useOnboarding(auth.session);
+  const homeSession = onboarding.ready && !auth.passwordRecovery ? auth.session : null;
+  const device = useDevice(homeSession, () => void auth.handleSignOut());
+  const fileState = useFiles(homeSession, device.deviceId);
+  const shareLinks = useShareLinks(homeSession);
   const activeLimit = shareLinks.limitHit ? "sharing" : fileState.limitHit ?? (device.limitHit ? "devices" : null);
   // Limits and usage come from the server; refresh when they're about to show.
-  const { density, setDensity } = useDensity(auth.session);
+  const { density, setDensity } = useDensity(homeSession);
   // Always loaded (cheap), refreshed as files change, for the 80% prompt.
-  const usage = useUsage(Boolean(auth.session), fileState.files.reduce((sum, file) => sum + file.size, 0));
+  const usage = useUsage(Boolean(homeSession), fileState.files.reduce((sum, file) => sum + file.size, 0));
   // Clips: nothing is fetched, subscribed or bound unless the clipboard
   // feature flag and the user's Clipboard sharing setting are both on.
-  const flags = useFeatureFlags(auth.session);
-  const clipboardSetting = useClipboardSetting(auth.session, flags.clipboard);
-  const clips = useClips(auth.session, device.deviceId, clipboardSetting.clipsActive);
+  const flags = useFeatureFlags(homeSession);
+  const clipboardSetting = useClipboardSetting(homeSession, flags.clipboard);
+  const clips = useClips(homeSession, device.deviceId, clipboardSetting.clipsActive);
   const [sendStatus, setSendStatus] = useState("");
   const sendClip = clips.send;
   useEffect(() => {
@@ -45,7 +49,7 @@ export default function App() {
     });
   }, [clipboardSetting.clipsActive, sendClip]);
 
-  if (!auth.session) {
+  if (!auth.session || auth.passwordRecovery) {
     return (
       <SignIn
         accountMenuRef={auth.accountMenuRef}
@@ -80,6 +84,12 @@ export default function App() {
         showConfetti={fileState.showConfetti}
       />
     );
+  }
+
+  if (!onboarding.ready) {
+    return <FirstRunProfile key={auth.session.user.id} initialName={onboarding.initialName} initialType={onboarding.initialType}
+      loading={onboarding.loading} error={onboarding.error} onRetry={onboarding.retry} onSave={onboarding.save}
+      onSignOut={auth.handleSignOut} />;
   }
 
   return (

@@ -6,6 +6,8 @@ import { useFonts } from "expo-font";
 import { StatusBar } from "expo-status-bar";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { FirstRunProfile } from "./src/components/FirstRunProfile";
+import { useOnboarding } from "./src/hooks/useOnboarding";
 import { HomeScreen } from "./src/components/HomeScreen";
 import { SignInScreen } from "./src/components/SignInScreen";
 import { ThemeProvider, useTheme, useThemedStyles } from "./src/design/ThemeProvider";
@@ -39,6 +41,7 @@ function Root() {
     signInWithApple,
     signOut,
   } = useSession();
+  const onboarding = useOnboarding(session);
   const { palette, scheme } = useTheme();
   const styles = useThemedStyles(makeStyles);
 
@@ -49,10 +52,13 @@ function Root() {
         <View style={styles.loading}>
           <ActivityIndicator color={palette.text} />
         </View>
-      ) : session ? (
+      ) : session && !passwordRecovery ? (
+        !onboarding.ready ? <FirstRunProfile key={session.user.id} initialName={onboarding.initialName} initialType={onboarding.initialType}
+          loading={onboarding.loading} error={onboarding.error} onRetry={onboarding.retry} onSave={onboarding.save} onSignOut={signOut} /> : (
         <FeatureFlagsProvider userId={session.user.id}>
           <HomeScreen userId={session.user.id} email={session.user.email ?? null} onSignOut={signOut} />
         </FeatureFlagsProvider>
+        )
       ) : (
         <SignInScreen
           onSignIn={signIn}

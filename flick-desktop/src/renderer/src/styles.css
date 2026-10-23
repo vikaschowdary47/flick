@@ -2607,3 +2607,14 @@ input:focus-visible {
   font-size: 13px;
   font-weight: var(--flick-font-weight-semibold);
 }
+
+.profile-account-types {
+  display: flex;
+  gap: 16px;
+  margin: 0;
+  padding: 8px 12px;
+  border: 1px solid var(--flick-navy);
+  border-radius: var(--flick-radius-small);
+}
+.profile-account-types label { flex-direction: row; align-items: center; gap: 6px; }
+.profile-account-types input { width: 16px; min-height: 16px; height: 16px; padding: 0; accent-color: var(--flick-coral); }
