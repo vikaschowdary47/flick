@@ -16,7 +16,8 @@
       },
       "infoPlist": {
         "NSSupportsLiveActivities": true
-      }
+      },
+      "usesAppleSignIn": true
     },
     "android": {
       "adaptiveIcon": {

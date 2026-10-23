@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useState, type FormEvent, type RefObject } from "react";
 import { useReducedMotion } from "framer-motion";
 import type { Session } from "@supabase/supabase-js";
+import { APPLE_SIGN_IN_ENABLED } from "../hooks/useAppleSignIn";
 import Header from "./Header";
 import type { AuthCallbackNotice } from "../hooks/useSession";
 
@@ -15,6 +16,9 @@ interface SignInProps {
   handleDrop: (event: React.DragEvent<HTMLElement>) => void;
   handleSignIn: (event: FormEvent<HTMLFormElement>) => void;
   handleGoogleSignIn: () => void;
+  handleAppleSignIn: () => void;
+  cancelAppleSignIn: () => void;
+  isAppleSigningIn: boolean;
   handleSignUp: (email: string, password: string) => Promise<string | null>;
   handleResendSignUp: (email: string) => Promise<string | null>;
   handleRequestPasswordReset: (email: string) => Promise<string | null>;
@@ -48,6 +52,9 @@ export default function SignIn({
   handleDrop,
   handleSignIn,
   handleGoogleSignIn,
+  handleAppleSignIn,
+  cancelAppleSignIn,
+  isAppleSigningIn,
   handleSignUp,
   handleResendSignUp,
   handleRequestPasswordReset,
@@ -217,6 +224,11 @@ export default function SignIn({
                   </svg>
                   {isSigningIn ? "Signing in…" : "Continue with Google"}
                 </button>
+                {APPLE_SIGN_IN_ENABLED && <button type="button" className="apple-sign-in-button" onClick={handleAppleSignIn} disabled={isSigningIn}>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M17.05 12.54c.03 3.07 2.69 4.09 2.72 4.1-.02.07-.43 1.46-1.41 2.9-.85 1.24-1.73 2.48-3.12 2.5-1.36.03-1.8-.81-3.36-.81-1.55 0-2.04.79-3.33.84-1.34.05-2.35-1.35-3.2-2.58-1.75-2.53-3.09-7.15-1.29-10.27a4.97 4.97 0 0 1 4.22-2.56c1.32-.03 2.56.89 3.36.89.79 0 2.28-1.1 3.84-.94.65.03 2.48.26 3.65 1.97-.1.06-2.18 1.27-2.08 3.96ZM14.49 4.94c.71-.86 1.19-2.05 1.06-3.24-1.02.04-2.25.68-2.98 1.54-.66.76-1.24 1.98-1.09 3.14 1.14.09 2.3-.58 3.01-1.44Z" /></svg>
+                  Sign in with Apple
+                </button>}
+                {isAppleSigningIn && <button className="auth-link" type="button" onClick={cancelAppleSignIn}>Cancel Apple sign-in</button>}
                 <button className="auth-link" type="button" onClick={() => { setMode("signUp"); setLocalError(""); }}>Don’t have an account? Sign up</button>
               </>}
               {mode === "signUp" && <>

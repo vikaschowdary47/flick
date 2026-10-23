@@ -62,6 +62,9 @@ export default function App() {
         handleDrop={fileState.handleDrop}
         handleSignIn={auth.handleSignIn}
         handleGoogleSignIn={auth.handleGoogleSignIn}
+        handleAppleSignIn={auth.handleAppleSignIn}
+        cancelAppleSignIn={auth.cancelAppleSignIn}
+        isAppleSigningIn={auth.isAppleSigningIn}
         handleSignUp={auth.handleSignUp}
         handleResendSignUp={auth.handleResendSignUp}
         handleRequestPasswordReset={auth.handleRequestPasswordReset}
@@ -72,7 +75,7 @@ export default function App() {
         isAccountMenuOpen={auth.isAccountMenuOpen}
         isDraggingFiles={fileState.isDraggingFiles}
         isOnline={auth.isOnline}
-        isSigningIn={auth.isSigningIn}
+        isSigningIn={auth.isSigningIn || auth.isAppleSigningIn}
         onOutsideClick={auth.handleOutsideClick}
         password={auth.password}
         session={auth.session}

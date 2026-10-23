@@ -2618,3 +2618,21 @@ input:focus-visible {
 }
 .profile-account-types label { flex-direction: row; align-items: center; gap: 6px; }
 .profile-account-types input { width: 16px; min-height: 16px; height: 16px; padding: 0; accent-color: var(--flick-coral); }
+
+.apple-sign-in-button {
+  display: flex;
+  width: 100%;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid #000;
+  border-radius: 8px;
+  background: #000;
+  color: #fff;
+  font-family: system-ui, sans-serif;
+  font-size: 16px;
+  cursor: pointer;
+}
+.apple-sign-in-button svg { width: 20px; height: 20px; }
+.apple-sign-in-button:disabled { opacity: 0.5; cursor: default; }

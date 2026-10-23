@@ -6,6 +6,7 @@ import {
   type MouseEvent,
 } from "react";
 import type { Session } from "@supabase/supabase-js";
+import { useAppleSignIn } from "./useAppleSignIn";
 import { supabase } from "../supabase";
 
 export type AuthCallbackNotice = {
@@ -33,6 +34,8 @@ export function useSession() {
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [passwordRecovery, setPasswordRecovery] = useState(false);
   const [authCallbackNotice, setAuthCallbackNotice] = useState<AuthCallbackNotice | null>(null);
+  const apple = useAppleSignIn(setAuthError);
+  const appleInProgress = apple.inProgress;
   const googleInProgress = useRef(false);
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
   const accountMenuRef = useRef<HTMLDivElement>(null);
@@ -87,7 +90,7 @@ export function useSession() {
     });
 
     const unsubscribe = window.flick.onAuthCallback((callbackUrl) => {
-      if (googleInProgress.current) return;
+      if (googleInProgress.current || appleInProgress.current) return;
       void (async () => {
         try {
           const callback = new URL(callbackUrl);
@@ -131,7 +134,7 @@ export function useSession() {
       subscription.unsubscribe();
       unsubscribe();
     };
-  }, []);
+  }, [appleInProgress]);
 
   useEffect(() => {
     const updateOnlineStatus = () => setIsOnline(navigator.onLine);
@@ -325,6 +328,9 @@ export function useSession() {
     authReady,
     email,
     handleGoogleSignIn,
+    handleAppleSignIn: apple.signIn,
+    cancelAppleSignIn: apple.cancel,
+    isAppleSigningIn: apple.busy,
     handleSignIn,
     handleSignOut,
     handleOutsideClick,

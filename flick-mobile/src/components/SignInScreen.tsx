@@ -1,3 +1,4 @@
+import * as AppleAuthentication from "expo-apple-authentication";
 import { useEffect, useState } from "react";
 import {
   KeyboardAvoidingView,
@@ -40,12 +41,19 @@ export function SignInScreen({
   passwordRecovery,
   authCallbackNotice,
 }: Props) {
-  const { palette } = useTheme();
+  const { palette, scheme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const [appleAvailable, setAppleAvailable] = useState(false);
+  useEffect(() => {
+    if (Platform.OS !== "ios" || !appleSignInEnabled) return;
+    let active = true;
+    void AppleAuthentication.isAvailableAsync().then((available) => { if (active) setAppleAvailable(available); }).catch(() => {});
+    return () => { active = false; };
+  }, [appleSignInEnabled]);
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<"signIn" | "signUp" | "resetRequest" | "resetPassword" | "checkEmail">(
     passwordRecovery ? "resetPassword" : "signIn",
@@ -219,7 +227,15 @@ export function SignInScreen({
             <Text style={styles.link} onPress={() => { setMode("resetRequest"); setError(null); }}>Forgot password?</Text>
             <Text style={styles.or}>or</Text>
             <PillButton label="Continue with Google" variant="secondary" onPress={google} disabled={busy} />
-            {Platform.OS === "ios" && appleSignInEnabled && <PillButton label="Continue with Apple" variant="secondary" onPress={apple} disabled={busy} />}
+            {appleAvailable && <View pointerEvents={busy ? "none" : "auto"} accessibilityState={{ disabled: busy }}>
+              <AppleAuthentication.AppleAuthenticationButton
+                buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+                buttonStyle={scheme === "dark" ? AppleAuthentication.AppleAuthenticationButtonStyle.WHITE : AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+                cornerRadius={tokens.radii.pill}
+                style={{ width: "100%", height: tokens.layout.inputHeight }}
+                onPress={() => { if (!busy) void apple(); }}
+              />
+            </View>}
             <Text style={styles.link} onPress={() => { setMode("signUp"); setError(null); }}>Don’t have an account? Sign up</Text>
           </>}
           {mode === "signUp" && <>

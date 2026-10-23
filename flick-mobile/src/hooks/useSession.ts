@@ -1,3 +1,4 @@
+import { Platform } from "react-native";
 import { useCallback, useEffect, useState } from "react";
 import * as AppleAuthentication from "expo-apple-authentication";
 import * as Crypto from "expo-crypto";
@@ -190,7 +191,8 @@ export function useSession() {
   }, []);
 
   const signInWithApple = useCallback(async () => {
-    if (!APPLE_SIGN_IN_ENABLED) return "Apple sign-in is not enabled yet.";
+    if (!APPLE_SIGN_IN_ENABLED || Platform.OS !== "ios") return "Apple sign-in is not enabled on this device.";
+    if (!(await AppleAuthentication.isAvailableAsync())) return "Apple sign-in is unavailable on this device.";
     try {
       const rawNonce = Crypto.randomUUID();
       const hashedNonce = await Crypto.digestStringAsync(
@@ -211,7 +213,15 @@ export function useSession() {
         token: credential.identityToken,
         nonce: rawNonce,
       });
-      return error ? friendlyAuthError(error.message) : null;
+      if (error) return friendlyAuthError(error.message);
+      // Apple only supplies the name on the first authorization, not in the token.
+      const fullName = credential.fullName
+        ? AppleAuthentication.formatFullName(credential.fullName).trim() : "";
+      if (fullName) {
+        const { error: nameError } = await supabase.auth.updateUser({ data: { full_name: fullName } });
+        if (nameError) console.warn("Couldn't save Apple display name; it can be entered during onboarding.");
+      }
+      return null;
     } catch (err: unknown) {
       if (err && typeof err === "object" && "code" in err && err.code === "ERR_REQUEST_CANCELED") {
         return "Apple sign-in was cancelled.";
