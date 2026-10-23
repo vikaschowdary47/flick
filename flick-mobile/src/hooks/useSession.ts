@@ -1,5 +1,5 @@
-import { Platform } from "react-native";
-import { useCallback, useEffect, useState } from "react";
+import { Alert, Platform } from "react-native";
+import { useCallback, useEffect, useRef, useState } from "react";
 import * as AppleAuthentication from "expo-apple-authentication";
 import * as Crypto from "expo-crypto";
 import { makeRedirectUri } from "expo-auth-session";
@@ -7,7 +7,8 @@ import type { Session } from "@supabase/supabase-js";
 import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
 import { widgetsBridge } from "../../modules/flick-widgets";
-import { clearCache } from "../lib/cache";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { clearAccountCache, clearCache, setAccountCacheEnabled } from "../lib/cache";
 import { supabase } from "../lib/supabase";
 
 WebBrowser.maybeCompleteAuthSession();
@@ -69,6 +70,7 @@ async function openGoogleAuthSession(url: string, redirectTo: string) {
 }
 
 export function useSession() {
+  const deletingAccount = useRef(false);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [passwordRecovery, setPasswordRecovery] = useState(false);
@@ -79,11 +81,13 @@ export function useSession() {
 
     supabase.auth.getSession().then(({ data }) => {
       if (!mounted) return;
+      setAccountCacheEnabled(Boolean(data.session));
       setSession(data.session);
       setLoading(false);
     });
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, next) => {
+      setAccountCacheEnabled(Boolean(next) && !deletingAccount.current);
       setSession(next);
       if (_event === "PASSWORD_RECOVERY") setPasswordRecovery(true);
     });
@@ -192,8 +196,8 @@ export function useSession() {
 
   const signInWithApple = useCallback(async () => {
     if (!APPLE_SIGN_IN_ENABLED || Platform.OS !== "ios") return "Apple sign-in is not enabled on this device.";
-    if (!(await AppleAuthentication.isAvailableAsync())) return "Apple sign-in is unavailable on this device.";
     try {
+      if (!(await AppleAuthentication.isAvailableAsync())) return "Apple sign-in is unavailable on this device.";
       const rawNonce = Crypto.randomUUID();
       const hashedNonce = await Crypto.digestStringAsync(
         Crypto.CryptoDigestAlgorithm.SHA256,
@@ -230,6 +234,46 @@ export function useSession() {
     }
   }, []);
 
+  const deleteAccount = useCallback(async (): Promise<string | null> => {
+    if (!session) return "Sign in again before deleting your account.";
+    if (deletingAccount.current) return "Account deletion is already running.";
+    deletingAccount.current = true;
+    try {
+      let appleAuthorizationCode: string | undefined;
+      if (Platform.OS === "ios" && session.user.identities?.some((identity) => identity.provider === "apple")
+          && await AppleAuthentication.isAvailableAsync()) {
+        try {
+          const credential = await AppleAuthentication.signInAsync({ requestedScopes: [] });
+          appleAuthorizationCode = credential.authorizationCode ?? undefined;
+        } catch (reason) {
+          if (reason && typeof reason === "object" && "code" in reason && reason.code === "ERR_REQUEST_CANCELED") {
+            return "Account deletion was cancelled.";
+          }
+          // Missing provider credentials must not prevent account deletion.
+        }
+      }
+      const { data, error } = await supabase.functions.invoke("delete-account", {
+        body: { confirmation: "DELETE", appleAuthorizationCode, appleRefreshToken: session.provider_refresh_token ?? undefined },
+      });
+      if (error || !data?.deleted) return "Couldn't finish deleting your account. Check your connection and retry; uploads may be paused until cleanup finishes.";
+      setAccountCacheEnabled(false);
+      let cleanupFailed = false;
+      try { clearAccountCache(); } catch { cleanupFailed = true; }
+      await supabase.auth.signOut({ scope: "local" });
+      setSession(null); setPasswordRecovery(false); setAuthCallbackNotice(null);
+      try {
+        await widgetsBridge.clear();
+        await widgetsBridge.endLiveActivity();
+        await AsyncStorage.multiRemove(["flick.liveActivity.seenAt.v1", "flick.uiDensity.v1", "flick.clipboardSharing.v1", `flick.device.v1.${session.user.id}`]);
+      } catch { cleanupFailed = true; }
+      Alert.alert("Account deleted", ["Your Flick account and cloud data have been deleted.",
+        data.appleRevocationRequired ? "Also revoke Flick in Settings → your Apple Account → Sign in with Apple → Flick → Stop Using Sign in with Apple." : "",
+        cleanupFailed ? "Some local data couldn't be removed. Clear Flick's app data before sharing this device." : ""].filter(Boolean).join("\n\n"));
+      return null;
+    } catch { return "Couldn't delete your account. Check your connection and retry."; }
+    finally { deletingAccount.current = false; }
+  }, [session]);
+
   const signOut = useCallback(async () => {
     clearCache(); // no downloaded copies stay behind after sign-out
     void widgetsBridge.clear(); // widgets don't keep showing this account
@@ -249,6 +293,7 @@ export function useSession() {
     signInWithGoogle,
     signInWithApple,
     signOut,
+    deleteAccount,
   };
 }
 

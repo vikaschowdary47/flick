@@ -29,6 +29,8 @@ interface Window {
     readClipboard: () => Promise<string>
     writeClipboard: (text: string) => Promise<void>
     onSendClipboardText: (listener: (text: string) => void) => () => void
+    setAccountActive: (active: boolean) => Promise<void>
+    clearAccountData: () => Promise<void>
     openAuthUrl: (authUrl: string) => Promise<void>
     onAuthCallback: (listener: (url: string) => void) => () => void
     getDefaultDevice: () => Promise<{ name: string; platform: string }>

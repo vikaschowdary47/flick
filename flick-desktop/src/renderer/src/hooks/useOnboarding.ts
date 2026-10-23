@@ -10,13 +10,13 @@ export function useOnboarding(session: Session | null) {
   const [state, setState] = useState<{ userId?: string; profile: Profile | null; error: string }>({ profile: null, error: "" });
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
-    if (!userId || !supabase) return;
+    if (!userId || !supabase) { setState({ profile: null, error: "" }); return; }
     let active = true;
     const client = supabase;
     setState({ userId, profile: null, error: "" });
     void (async () => {
       try {
-        const { data, error } = await client.rpc("ensure_my_profile");
+        const { data, error } = await client.rpc("ensure_my_profile").single<Profile>();
         if (error) throw error;
         if (!data || data.user_id !== userId) throw new Error("Profile unavailable");
         if (active) setState({ userId, profile: data as Profile, error: "" });

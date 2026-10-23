@@ -43,6 +43,7 @@ type Props = {
   userId: string;
   email: string | null;
   onSignOut: () => void;
+  onDeleteAccount: () => Promise<string | null>;
 };
 
 function requestIdle(callback: () => void): void {
@@ -56,7 +57,7 @@ function requestIdle(callback: () => void): void {
   }
 }
 
-export function HomeScreen({ userId, email, onSignOut }: Props) {
+export function HomeScreen({ userId, email, onSignOut, onDeleteAccount }: Props) {
   const { palette } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const recent = useRecentFiles(userId);
@@ -475,6 +476,7 @@ export function HomeScreen({ userId, email, onSignOut }: Props) {
         onClose={() => setSourceOpen(false)}
       />
       <SettingsSheet
+        onDeleteAccount={onDeleteAccount}
         visible={settingsOpen}
         onClose={() => setSettingsOpen(false)}
         deviceName={device.name}

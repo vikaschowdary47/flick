@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { AppState } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { widgetsBridge } from "../../modules/flick-widgets";
+import { cacheEpoch, cacheEpochActive } from "../lib/cache";
 import type { FileRow } from "../lib/types";
 
 // "N new files from <device>" on the Lock Screen / Dynamic Island.
@@ -45,7 +46,7 @@ export function useLiveActivity(options: {
         markSeen();
         return;
       }
-      if (state !== "background") return;
+      if (state !== "background" || !cacheEpochActive(cacheEpoch())) return;
       const { files, thisDeviceId, deviceNames } = latest.current;
       const unseen = files.filter(
         (file) => file.device_id !== thisDeviceId && new Date(file.created_at).getTime() > seenAt,

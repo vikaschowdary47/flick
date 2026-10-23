@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { widgetsBridge } from "../../modules/flick-widgets";
+import { cacheEpoch, cacheEpochActive } from "../lib/cache";
 import type { ClipRow } from "../lib/clips";
 import { localThumbnail } from "../lib/thumbs";
 import type { FileRow } from "../lib/types";
@@ -25,7 +26,7 @@ export function useWidgetSnapshot({ files, clips, senderOf, homeEnabled, lockEna
 
   // All widgets off: write one empty "turned off" snapshot, then nothing.
   useEffect(() => {
-    if (enabled || !widgetsBridge.available()) return;
+    if (enabled || !widgetsBridge.available() || !cacheEpochActive(cacheEpoch())) return;
     const off = buildSnapshot({ files: [], clips: [], senderOf, thumbs: {}, showContentOnLockScreen: false, homeEnabled: false, lockEnabled: false });
     void widgetsBridge
       .writeSnapshot(JSON.stringify(off))
@@ -36,6 +37,8 @@ export function useWidgetSnapshot({ files, clips, senderOf, homeEnabled, lockEna
 
   useEffect(() => {
     if (!enabled || !widgetsBridge.available()) return;
+    const epoch = cacheEpoch();
+    if (!cacheEpochActive(epoch)) return;
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => {
       void (async () => {
@@ -49,10 +52,12 @@ export function useWidgetSnapshot({ files, clips, senderOf, homeEnabled, lockEna
             if (!file?.thumb_path) continue;
             const local = await localThumbnail(file.id, file.thumb_path);
             if (!local) continue;
+            if (!cacheEpochActive(epoch)) return;
             const name = await widgetsBridge.saveThumbnail(file.id, local);
             if (name) thumbs[file.id] = name;
           }
           const snapshot = buildSnapshot({ files, clips, thumbs, ...common });
+          if (!cacheEpochActive(epoch)) return;
           await widgetsBridge.writeSnapshot(JSON.stringify(snapshot));
           await widgetsBridge.pruneThumbnails(Object.values(thumbs));
           widgetsBridge.reloadWidgets();

@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { AppState } from "react-native";
 import type { Session } from "@supabase/supabase-js";
 import { widgetsBridge } from "../../modules/flick-widgets";
+import { cacheEpoch, cacheEpochActive } from "../lib/cache";
 import { supabase } from "../lib/supabase";
 
 // Shares the signed-in session with the "Flick it" share extension through
@@ -23,6 +24,7 @@ type SharedSession = {
 };
 
 function write(session: Session, deviceId: string | null) {
+  if (!cacheEpochActive(cacheEpoch())) return;
   const shared: SharedSession = {
     version: 1,
     by: "app",
@@ -46,6 +48,7 @@ export function useShareSession(deviceId: string | null) {
     const adopt = async () => {
       const raw = await widgetsBridge.readSession().catch(() => null);
       const { data } = await supabase.auth.getSession();
+      if (!cacheEpochActive(cacheEpoch())) return;
       if (raw) {
         try {
           const shared = JSON.parse(raw) as SharedSession;

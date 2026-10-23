@@ -213,9 +213,11 @@ export function useFiles(session: Session | null, deviceId: string | null = null
           throw new Error("The downloaded file size does not match its record.");
         }
 
+        const bytes = new Uint8Array(await blob.arrayBuffer());
+        if (!isMounted) return;
         const localFileCard = await window.flick.saveReceivedFile(
           file.name,
-          new Uint8Array(await blob.arrayBuffer()),
+          bytes,
           file.id,
         );
         localFilesById.set(localFileCard.id, localFileCard);

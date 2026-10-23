@@ -1,6 +1,7 @@
 import * as Crypto from "expo-crypto";
 import { Directory, File, Paths } from "expo-file-system";
 import { ImageManipulator, SaveFormat } from "expo-image-manipulator";
+import { cacheEpoch, cacheEpochActive } from "./cache";
 import { FILES_BUCKET, supabase } from "./supabase";
 
 // Image thumbnails (~200px JPEG). The uploading device makes one and stores
@@ -55,6 +56,8 @@ const inflight = new Map<string, Promise<string | null>>();
 
 // Local uri of a file's thumbnail, downloading it once if needed.
 export function localThumbnail(fileId: string, thumbPath: string): Promise<string | null> {
+  const epoch = cacheEpoch();
+  if (!cacheEpochActive(epoch)) return Promise.resolve(null);
   const target = new File(new Directory(Paths.cache, THUMB_DIR), `${fileId}.jpg`);
   if (target.exists && (target.size ?? 0) > 0) return Promise.resolve(target.uri);
   const pending = inflight.get(fileId);
@@ -63,8 +66,10 @@ export function localThumbnail(fileId: string, thumbPath: string): Promise<strin
     try {
       const { data, error } = await supabase.storage.from(FILES_BUCKET).createSignedUrl(thumbPath, LINK_SECONDS);
       if (error || !data?.signedUrl) return null;
+      if (!cacheEpochActive(epoch)) return null;
       new Directory(Paths.cache, THUMB_DIR).create({ intermediates: true, idempotent: true });
       const downloaded = await File.downloadFileAsync(data.signedUrl, target);
+      if (!cacheEpochActive(epoch)) { if (downloaded.exists) downloaded.delete(); return null; }
       return downloaded.uri;
     } catch {
       return null;

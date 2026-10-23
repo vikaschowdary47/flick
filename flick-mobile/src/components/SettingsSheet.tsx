@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Switch } from "react-native";
-import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { ScrollView, KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme, useThemedStyles } from "../design/ThemeProvider";
 import type { AppearancePreference, Palette, ThemeName } from "../design/theme";
@@ -10,10 +10,12 @@ import type { Density } from "../hooks/useProfileSettings";
 import { cacheSize, clearCache } from "../lib/cache";
 import { formatBytes } from "../lib/format";
 import type { Usage } from "../lib/limits";
+import { DeleteAccount } from "./DeleteAccount";
 import { PillButton } from "./PillButton";
 
 type Props = {
   visible: boolean;
+  onDeleteAccount: () => Promise<string | null>;
   onClose: () => void;
   deviceName: string | null;
   onRenameDevice: (name: string) => Promise<string | null>;
@@ -44,7 +46,7 @@ const THEMES: { value: ThemeName; label: string }[] = [
   { value: "classy", label: "Classy" },
 ];
 
-export function SettingsSheet({ visible, onClose, deviceName, onRenameDevice, usage, protectUris = [], showClipboardSetting, clipboardSharing, onClipboardSharingChange, density, onDensityChange, widgetMode, onWidgetModeChange }: Props) {
+export function SettingsSheet({ onDeleteAccount, visible, onClose, deviceName, onRenameDevice, usage, protectUris = [], showClipboardSetting, clipboardSharing, onClipboardSharingChange, density, onDensityChange, widgetMode, onWidgetModeChange }: Props) {
   const { appearance, setAppearance, themeName, setThemeName } = useTheme();
   const styles = useThemedStyles(makeStyles);
 
@@ -52,6 +54,7 @@ export function SettingsSheet({ visible, onClose, deviceName, onRenameDevice, us
   const [draft, setDraft] = useState(deviceName ?? "");
   const [nameError, setNameError] = useState<string | null>(null);
   const [cacheBytes, setCacheBytes] = useState(0);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (visible) setCacheBytes(cacheSize());
@@ -74,14 +77,16 @@ export function SettingsSheet({ visible, onClose, deviceName, onRenameDevice, us
 
   // Stay open if the name couldn't be saved, so the message is seen.
   async function close() {
+    if (deleting) return;
     if (await saveName()) onClose();
   }
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={() => void close()}>
       <Pressable accessibilityLabel="Close settings" style={styles.scrim} onPress={() => void close()} />
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined}>
+      <KeyboardAvoidingView style={{ maxHeight: "90%" }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
       <SafeAreaView edges={["bottom"]} style={styles.sheet}>
+        <ScrollView key={visible ? "open" : "closed"} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.sheetContent}>
         <Text accessibilityRole="header" style={styles.heading}>
           Settings
         </Text>
@@ -183,7 +188,9 @@ export function SettingsSheet({ visible, onClose, deviceName, onRenameDevice, us
             </View>
           </View>
         )}
-        <PillButton label="Done" onPress={() => void close()} variant="secondary" />
+        <DeleteAccount onDelete={onDeleteAccount} onBusyChange={setDeleting} />
+        <PillButton label="Done" onPress={() => void close()} disabled={deleting} variant="secondary" />
+        </ScrollView>
       </SafeAreaView>
       </KeyboardAvoidingView>
     </Modal>
@@ -228,9 +235,9 @@ const makeStyles = (c: Palette) =>
       flex: 1,
       backgroundColor: c.scrim,
     },
+    sheetContent: { gap: tokens.spacing.lg, padding: tokens.layout.screenPadding },
     sheet: {
-      gap: tokens.spacing.lg,
-      padding: tokens.layout.screenPadding,
+      flexShrink: 1,
       borderTopLeftRadius: tokens.radii.window,
       borderTopRightRadius: tokens.radii.window,
       borderWidth: tokens.borderWidth.outline,

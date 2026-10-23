@@ -15,6 +15,7 @@ import {
   readFile,
   realpath,
   rename,
+  rm,
   stat,
   unlink,
   writeFile,
@@ -55,6 +56,7 @@ let files = new Map<string, RegisteredFile>();
 let fileIdsByPath = new Map<string, string>();
 let ignoredPaths = new Set<string>();
 let fileMutationQueue: Promise<void> = Promise.resolve();
+let accountCacheBlocked = false;
 
 const registryPath = join(app.getPath("userData"), "files.json");
 const AUTH_CALLBACK_PREFIX = "flick://auth-callback";
@@ -301,6 +303,7 @@ async function saveReceivedFile(input: unknown): Promise<FileCard> {
   }
 
   return serializeFileMutation(async () => {
+    if (accountCacheBlocked) throw new Error("Account cache is closed.");
     const fileName = sanitizeReceivedFileName(input.name);
     const fileId = input.id ?? randomUUID();
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(fileId)) {
@@ -563,6 +566,22 @@ ipcMain.handle("device:default", async (event) => {
           ? "linux"
           : "other";
   return { name: (await computerName()) || "Computer", platform };
+});
+
+ipcMain.handle("account:set-active", (event, active: unknown) => {
+  assertMainWindow(event);
+  accountCacheBlocked = active !== true;
+});
+ipcMain.handle("account:clear-local-data", async (event) => {
+  assertMainWindow(event);
+  accountCacheBlocked = true;
+  await serializeFileMutation(async () => {
+    // Fixed app-owned directory only; never delete the user's source files.
+    await rm(join(app.getPath("userData"), "downloads"), { recursive: true, force: true });
+    await saveFiles(new Map(), new Set());
+    files.clear(); fileIdsByPath.clear(); ignoredPaths.clear();
+  });
+  await event.sender.session.clearCache();
 });
 
 ipcMain.handle("auth:open-external", async (event, authUrl: unknown) => {

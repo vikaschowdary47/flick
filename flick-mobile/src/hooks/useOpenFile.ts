@@ -4,7 +4,7 @@ import { Directory, File } from "expo-file-system";
 import { getContentUriAsync } from "expo-file-system/legacy";
 import * as IntentLauncher from "expo-intent-launcher";
 import * as Sharing from "expo-sharing";
-import { cachedCopy, fileCacheDir, pruneCache, touchCachedCopy } from "../lib/cache";
+import { cacheEpoch, cacheEpochActive, cachedCopy, fileCacheDir, pruneCache, touchCachedCopy } from "../lib/cache";
 import { isExpired } from "../lib/format";
 import { resolveMimeType } from "../lib/mime";
 import { FILES_BUCKET, supabase } from "../lib/supabase";
@@ -76,6 +76,8 @@ export function useOpenFile() {
   const [viewer, setViewer] = useState<ViewerState | null>(null);
 
   const run = useCallback(async (file: FileRow, mode: OpenMode) => {
+    const epoch = cacheEpoch();
+    const assertActive = () => { if (!cacheEpochActive(epoch)) throw new Error("Account cache is closed."); };
     setOpeningId(file.id);
     setError(null);
     const folder = fileCacheDir(file.id);
@@ -83,6 +85,7 @@ export function useOpenFile() {
     let stage = "cache";
     let fresh: File | null = null; // a download in progress, removed if it fails
     try {
+      assertActive();
       if (isExpired(file, Date.now())) {
         throw new ExpiredError();
       }
@@ -100,6 +103,7 @@ export function useOpenFile() {
           });
           throw /not.?found|404|object/i.test(linkError?.message ?? "") ? new ExpiredError() : linkError ?? new Error("No link");
         }
+        assertActive();
         folder.create({ intermediates: true, idempotent: true });
         fresh = new File(folder, file.name.replace(/[/\\:]/g, "_") || "file");
         stage = "download";
@@ -120,11 +124,15 @@ export function useOpenFile() {
             Object.assign(statusError, { status: response.status });
             throw statusError;
           }
-          fresh.write(new Uint8Array(await response.arrayBuffer()));
+          const bytes = new Uint8Array(await response.arrayBuffer());
+          assertActive();
+          fresh.write(bytes);
           downloaded = fresh;
         }
+        assertActive();
         fresh = null;
       }
+      assertActive();
       touchCachedCopy(file.id);
       pruneCache({ protectUris: [folder.uri] }); // keep the cache under 150 MB
 

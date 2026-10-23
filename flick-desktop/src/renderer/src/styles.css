@@ -2636,3 +2636,17 @@ input:focus-visible {
 }
 .apple-sign-in-button svg { width: 20px; height: 20px; }
 .apple-sign-in-button:disabled { opacity: 0.5; cursor: default; }
+
+.settings-sign-out:disabled { opacity: 0.5; cursor: default; }
+.account-popover { max-height: calc(100vh - 90px); overflow-y: auto; }
+
+.account-deletion-progress {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  background: var(--flick-cream);
+  color: var(--flick-navy);
+  font-weight: var(--flick-font-weight-extrabold);
+}

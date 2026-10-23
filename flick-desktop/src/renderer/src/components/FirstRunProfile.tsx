@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import type { AccountType } from "../hooks/useOnboarding";
 
 type Props = {
@@ -6,6 +6,7 @@ type Props = {
   onRetry: () => void; onSave: (name: string, type: AccountType) => Promise<string | null>; onSignOut: () => void;
 };
 export default function FirstRunProfile({ initialName, initialType, loading, error, onRetry, onSave, onSignOut }: Props) {
+  useLayoutEffect(() => { window.flick.reportPopoverHeight(520, false); }, []);
   const [name, setName] = useState(initialName);
   const [edited, setEdited] = useState(false);
   const [type, setType] = useState<AccountType>(initialType);

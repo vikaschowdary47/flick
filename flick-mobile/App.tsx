@@ -40,6 +40,7 @@ function Root() {
     signInWithGoogle,
     signInWithApple,
     signOut,
+    deleteAccount,
   } = useSession();
   const onboarding = useOnboarding(session);
   const { palette, scheme } = useTheme();
@@ -56,7 +57,7 @@ function Root() {
         !onboarding.ready ? <FirstRunProfile key={session.user.id} initialName={onboarding.initialName} initialType={onboarding.initialType}
           loading={onboarding.loading} error={onboarding.error} onRetry={onboarding.retry} onSave={onboarding.save} onSignOut={signOut} /> : (
         <FeatureFlagsProvider userId={session.user.id}>
-          <HomeScreen userId={session.user.id} email={session.user.email ?? null} onSignOut={signOut} />
+          <HomeScreen userId={session.user.id} email={session.user.email ?? null} onSignOut={signOut} onDeleteAccount={deleteAccount} />
         </FeatureFlagsProvider>
         )
       ) : (

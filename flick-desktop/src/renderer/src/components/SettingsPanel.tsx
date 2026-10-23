@@ -1,3 +1,4 @@
+import DeleteAccount from "./DeleteAccount";
 import { useEffect, useState } from "react";
 import { DEVICE_NAME_MAX } from "../hooks/useDevice";
 import type { Usage } from "../limits";
@@ -9,6 +10,7 @@ interface SettingsPanelProps {
   clipboardSharing: boolean | null;
   onClipboardSharingChange: (on: boolean) => void;
   onSignOut: () => void;
+  onDeleteAccount?: () => Promise<string | null>;
   // This device's name, shown as "from …" on your other devices.
   deviceName: string | null;
   onRenameDevice: (name: string) => Promise<string | null>;
@@ -68,6 +70,7 @@ export default function SettingsPanel({
   clipboardSharing,
   onClipboardSharingChange,
   onSignOut,
+  onDeleteAccount,
   deviceName,
   onRenameDevice,
 }: SettingsPanelProps) {
@@ -194,6 +197,7 @@ export default function SettingsPanel({
         </section>
       )}
 
+      {onDeleteAccount && <DeleteAccount onDelete={onDeleteAccount} />}
       <button type="button" className="settings-sign-out" onClick={onSignOut}>
         Sign out
       </button>

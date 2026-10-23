@@ -19,7 +19,7 @@ import { supabase } from "./supabase";
 export default function App() {
   const auth = useSession();
   const onboarding = useOnboarding(auth.session);
-  const homeSession = onboarding.ready && !auth.passwordRecovery ? auth.session : null;
+  const homeSession = onboarding.ready && !auth.passwordRecovery && !auth.isDeletingAccount ? auth.session : null;
   const device = useDevice(homeSession, () => void auth.handleSignOut());
   const fileState = useFiles(homeSession, device.deviceId);
   const shareLinks = useShareLinks(homeSession);
@@ -97,7 +97,9 @@ export default function App() {
 
   return (
     <>
+    {auth.isDeletingAccount && <div className="account-deletion-progress" role="status">Deleting your account…</div>}
     <Widget
+      isDeletingAccount={auth.isDeletingAccount}
       accountMenuRef={auth.accountMenuRef}
       authReady={auth.authReady}
       fileInputRef={fileState.fileInputRef}
@@ -108,6 +110,7 @@ export default function App() {
       handleDrop={fileState.handleDrop}
       handleFileSelection={fileState.handleFileSelection}
       handleSignOut={auth.handleSignOut}
+      onDeleteAccount={auth.handleDeleteAccount}
       isAccountMenuOpen={auth.isAccountMenuOpen}
       isDraggingFiles={fileState.isDraggingFiles}
       isLoadingFiles={fileState.isLoadingFiles}

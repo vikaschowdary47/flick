@@ -1,3 +1,4 @@
+import DeleteAccount from "./DeleteAccount";
 import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useState, type RefObject } from "react";
 import { DEVICE_NAME_MAX } from "../hooks/useDevice";
@@ -12,6 +13,7 @@ interface HeaderProps {
   isAccountMenuOpen: boolean;
   isOnline: boolean;
   onSignOut: () => void;
+  onDeleteAccount?: () => Promise<string | null>;
   setIsAccountMenuOpen: (isOpen: boolean | ((current: boolean) => boolean)) => void;
   session: Session | null;
   arrivalPulse: number;
@@ -38,6 +40,7 @@ export default function Header({
   isAccountMenuOpen,
   isOnline,
   onSignOut,
+  onDeleteAccount,
   setIsAccountMenuOpen,
   session,
   arrivalPulse,
@@ -241,6 +244,7 @@ export default function Header({
                       )}
                     </form>
                   )}
+                  {onDeleteAccount && <DeleteAccount onDelete={onDeleteAccount} />}
                   <button
                     className="sign-out-button"
                     type="button"

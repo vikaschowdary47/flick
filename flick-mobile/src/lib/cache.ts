@@ -197,3 +197,21 @@ export function deleteIfCached(uri: string): void {
   if (!uri.startsWith(Paths.cache.uri)) return;
   remove(new File(uri));
 }
+
+// Invalidates in-flight downloads so they cannot recreate a deleted account's cache.
+let accountCacheEpoch = 0;
+let accountCacheEnabled = true;
+export const cacheEpoch = () => accountCacheEpoch;
+export const cacheEpochActive = (epoch: number) => accountCacheEnabled && epoch === accountCacheEpoch;
+export function setAccountCacheEnabled(enabled: boolean): void {
+  if (accountCacheEnabled !== enabled) accountCacheEpoch++;
+  accountCacheEnabled = enabled;
+}
+export function clearAccountCache(): void {
+  setAccountCacheEnabled(false);
+  const errors: unknown[] = [];
+  for (const name of [OPEN_DIR, THUMB_DIR, UPLOAD_DIR, ...PICKER_DIRS]) {
+    try { const dir = new Directory(Paths.cache, name); if (dir.exists) dir.delete(); } catch (error) { errors.push(error); }
+  }
+  if (errors.length) throw new Error("Some cached files could not be removed.");
+}

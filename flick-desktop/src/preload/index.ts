@@ -124,6 +124,8 @@ contextBridge.exposeInMainWorld('flick', {
   },
   getDefaultDevice: (): Promise<{ name: string; platform: string }> =>
     ipcRenderer.invoke('device:default'),
+  setAccountActive: (active: boolean): Promise<void> => ipcRenderer.invoke('account:set-active', active),
+  clearAccountData: (): Promise<void> => ipcRenderer.invoke('account:clear-local-data'),
   openAuthUrl: (authUrl: string): Promise<void> =>
     ipcRenderer.invoke('auth:open-external', authUrl),
   onAuthCallback: (listener: (url: string) => void): (() => void) => {

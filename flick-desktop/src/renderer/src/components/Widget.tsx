@@ -21,6 +21,8 @@ interface WidgetProps {
   handleDrop: (event: React.DragEvent<HTMLElement>) => void;
   handleFileSelection: (event: ChangeEvent<HTMLInputElement>) => void;
   handleSignOut: () => void;
+  onDeleteAccount?: () => Promise<string | null>;
+  isDeletingAccount?: boolean;
   isAccountMenuOpen: boolean;
   isDraggingFiles: boolean;
   isLoadingFiles: boolean;
@@ -79,6 +81,8 @@ export default function Widget({
   handleDrop,
   handleFileSelection,
   handleSignOut,
+  onDeleteAccount,
+  isDeletingAccount = false,
   isAccountMenuOpen,
   isDraggingFiles,
   isLoadingFiles,
@@ -217,6 +221,7 @@ export default function Widget({
 
   return (
     <main
+      inert={isDeletingAccount}
       ref={widgetRef}
       className={`widget${isDraggingFiles ? " drag-active" : ""}${effectiveDensity === "compact" ? " widget-compact" : ""}${isPopover ? " widget-popover" : ""}${isPopover && expanded ? " widget-expanded" : ""}`}
       onClickCapture={onOutsideClick}
@@ -243,6 +248,7 @@ export default function Widget({
         isAccountMenuOpen={isAccountMenuOpen}
         isOnline={isOnline}
         onSignOut={handleSignOut}
+        onDeleteAccount={onDeleteAccount}
         deviceName={deviceName}
         onRenameDevice={onRenameDevice}
         usage={usage}
@@ -267,6 +273,7 @@ export default function Widget({
             clipboardSharing={clipboardSharing}
             onClipboardSharingChange={onClipboardSharingChange}
             onSignOut={handleSignOut}
+            onDeleteAccount={onDeleteAccount}
             deviceName={deviceName}
             onRenameDevice={onRenameDevice}
           />

@@ -32,6 +32,8 @@ export function useSession() {
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState("");
   const [isSigningIn, setIsSigningIn] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const deletingAccount = useRef(false);
   const [passwordRecovery, setPasswordRecovery] = useState(false);
   const [authCallbackNotice, setAuthCallbackNotice] = useState<AuthCallbackNotice | null>(null);
   const apple = useAppleSignIn(setAuthError);
@@ -84,6 +86,7 @@ export function useSession() {
       data: { subscription },
     } = client.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession);
+      void window.flick.setAccountActive(Boolean(nextSession) && !deletingAccount.current);
       setAuthReady(true);
       setAuthError("");
       if (_event === "PASSWORD_RECOVERY") setPasswordRecovery(true);
@@ -291,6 +294,30 @@ export function useSession() {
     }
   }
 
+  async function handleDeleteAccount(): Promise<string | null> {
+    if (!supabase || !session) return "Sign in again before deleting your account.";
+    if (deletingAccount.current) return "Account deletion is already running.";
+    deletingAccount.current = true;
+    setIsDeletingAccount(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("delete-account", {
+        body: { confirmation: "DELETE", appleRefreshToken: session.provider_refresh_token ?? undefined },
+      });
+      if (error || !data?.deleted) return "Couldn't finish deleting your account. Check your connection and retry; uploads may be paused until cleanup finishes.";
+      let cleanupFailed = false;
+      try { await window.flick.clearAccountData(); } catch { cleanupFailed = true; }
+      await supabase.auth.signOut({ scope: "local" });
+      setSession(null);
+      setEmail(""); setPassword(""); setPasswordRecovery(false); setAuthCallbackNotice(null);
+      const notice = ["Your Flick account and cloud data have been deleted.",
+        data.appleRevocationRequired ? "Also revoke Flick in Apple Account → Sign-In & Security → Sign in with Apple → Flick → Stop Using Sign in with Apple." : "",
+        cleanupFailed ? "Some downloaded files could not be removed. Clear Flick's local downloads before sharing this device." : ""].filter(Boolean).join("\n\n");
+      window.alert(notice);
+      return null;
+    } catch { return "Couldn't delete your account. Check your connection and retry."; }
+    finally { deletingAccount.current = false; setIsDeletingAccount(false); }
+  }
+
   async function handleSignOut(): Promise<void> {
     setIsAccountMenuOpen(false);
     if (!supabase) {
@@ -333,6 +360,8 @@ export function useSession() {
     isAppleSigningIn: apple.busy,
     handleSignIn,
     handleSignOut,
+    handleDeleteAccount,
+    isDeletingAccount,
     handleOutsideClick,
     isAccountMenuOpen,
     isOnline,
