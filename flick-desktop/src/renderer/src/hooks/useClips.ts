@@ -48,6 +48,9 @@ export function useClips(session: Session | null, deviceId: string | null, activ
           const row = payload.new as Partial<ClipRow>;
           if (row.device_id !== deviceIdRef.current) {
             setHasNew(true);
+            if (deviceIdRef.current && row.device_id && typeof row.id === "string") {
+              window.flick.notifyArrival({ kind: "clip", id: row.id });
+            }
           }
           void refresh();
         },

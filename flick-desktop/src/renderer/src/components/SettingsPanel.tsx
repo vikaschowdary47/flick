@@ -1,3 +1,4 @@
+import { AppPreferences, Toggle } from "./AppPreferences";
 import DeleteAccount from "./DeleteAccount";
 import { useEffect, useState } from "react";
 import { DEVICE_NAME_MAX } from "../hooks/useDevice";
@@ -14,30 +15,6 @@ interface SettingsPanelProps {
   // This device's name, shown as "from …" on your other devices.
   deviceName: string | null;
   onRenameDevice: (name: string) => Promise<string | null>;
-}
-
-// Themed on/off switch: coral when on, cream when off, navy outline.
-export function Toggle({
-  checked,
-  onChange,
-  label,
-}: {
-  checked: boolean;
-  onChange: (on: boolean) => void;
-  label: string;
-}) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      aria-label={label}
-      className="toggle"
-      onClick={() => onChange(!checked)}
-    >
-      <span className="toggle-knob" aria-hidden="true" />
-    </button>
-  );
 }
 
 function UsageBar({ label, used, max, text }: { label: string; used: number; max: number; text: string }) {
@@ -83,13 +60,6 @@ export default function SettingsPanel({
     }
     setNameMessage((await onRenameDevice(draftName)) ?? "Saved");
   }
-  const [app, setApp] = useState<{ showAs: "popover" | "panel"; canLaunchAtLogin: boolean; launchAtLogin: boolean } | null>(
-    null,
-  );
-  useEffect(() => {
-    void window.flick.getAppSettings().then(setApp);
-  }, []);
-
   const mb = (bytes: number) => Math.round(bytes / (1024 * 1024));
 
   return (
@@ -155,47 +125,7 @@ export default function SettingsPanel({
         </section>
       )}
 
-      {app && (
-        <section className="settings-group">
-          <p className="settings-label">Show from menu bar as</p>
-          <div className="settings-segments" role="radiogroup" aria-label="Show from menu bar as">
-            {(
-              [
-                ["popover", "Popover"],
-                ["panel", "Floating panel"],
-              ] as const
-            ).map(([value, label]) => (
-              <button
-                key={value}
-                type="button"
-                role="radio"
-                aria-checked={app.showAs === value}
-                className="settings-segment"
-                onClick={() => {
-                  setApp({ ...app, showAs: value });
-                  void window.flick.setShowAs(value);
-                }}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {app?.canLaunchAtLogin && (
-        <section className="settings-group settings-row">
-          <p className="settings-label">Launch at login</p>
-          <Toggle
-            label="Launch at login"
-            checked={app.launchAtLogin}
-            onChange={(on) => {
-              setApp({ ...app, launchAtLogin: on });
-              void window.flick.setLaunchAtLogin(on);
-            }}
-          />
-        </section>
-      )}
+      <AppPreferences />
 
       {onDeleteAccount && <DeleteAccount onDelete={onDeleteAccount} />}
       <button type="button" className="settings-sign-out" onClick={onSignOut}>

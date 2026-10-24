@@ -1,3 +1,4 @@
+import type { DesktopAppSettings, ArrivalNotice } from '../shared/appSettings'
 import { contextBridge, ipcRenderer } from 'electron'
 import type {
   DroppedFilesResult,
@@ -10,6 +11,12 @@ type FilesDroppedListener = (result: DroppedFilesResult) => void
 const filesDroppedListeners = new Set<FilesDroppedListener>()
 const authCallbackListeners = new Set<(url: string) => void>()
 const pendingAuthCallbacks: string[] = []
+let pendingSettingsOpen = false
+const settingsListeners = new Set<() => void>()
+ipcRenderer.on('settings:open', () => {
+  if (!settingsListeners.size) pendingSettingsOpen = true
+  else for (const listener of Array.from(settingsListeners)) listener()
+})
 
 ipcRenderer.on('auth:callback', (_event, value: unknown) => {
   if (typeof value !== 'string' || !value.startsWith('flick://auth-callback')) {
@@ -91,7 +98,7 @@ contextBridge.exposeInMainWorld('flick', {
   },
   startFileDrag: (fileId: string) => ipcRenderer.send('file:start-drag', fileId),
   endFileDrag: () => ipcRenderer.send('file:drag-ended'),
-  notifyArrival: () => ipcRenderer.send('tray:arrival'),
+  notifyArrival: (notice?: ArrivalNotice) => ipcRenderer.send('tray:arrival', notice),
   getWindowMode: (): Promise<'popover' | 'panel' | 'main'> => ipcRenderer.invoke('window:get-mode'),
   onWindowMode: (listener: (mode: 'popover' | 'panel' | 'main') => void): (() => void) => {
     const handler = (_event: unknown, mode: unknown) =>
@@ -101,10 +108,16 @@ contextBridge.exposeInMainWorld('flick', {
   },
   openMainWindow: () => ipcRenderer.send('window:open-main'),
   hideWindow: () => ipcRenderer.send('window:hide'),
-  getAppSettings: (): Promise<{ showAs: 'popover' | 'panel'; canLaunchAtLogin: boolean; launchAtLogin: boolean }> =>
+  getAppSettings: (): Promise<DesktopAppSettings> =>
     ipcRenderer.invoke('settings:get-app'),
   setShowAs: (showAs: 'popover' | 'panel'): Promise<void> => ipcRenderer.invoke('settings:set-show-as', showAs),
-  setLaunchAtLogin: (on: boolean): Promise<void> => ipcRenderer.invoke('settings:set-launch-at-login', on),
+  setLaunchAtLogin: (on: boolean): Promise<DesktopAppSettings> => ipcRenderer.invoke('settings:set-launch-at-login', on),
+  setShortcut: (shortcut: string): Promise<{ error: string | null; settings: DesktopAppSettings }> => ipcRenderer.invoke('settings:set-shortcut', shortcut),
+  onOpenSettings: (listener: () => void): (() => void) => {
+    settingsListeners.add(listener)
+    if (pendingSettingsOpen) { pendingSettingsOpen = false; listener() }
+    return () => { settingsListeners.delete(listener) }
+  },
   reportPopoverHeight: (height: number, expanded: boolean) =>
     ipcRenderer.send('popover:content-height', height, expanded),
   onPopoverExpanded: (listener: (expanded: boolean) => void): (() => void) => {

@@ -1,6 +1,7 @@
 import {
   app,
   type BrowserWindow,
+  dialog,
   globalShortcut,
   ipcMain,
   Menu,
@@ -9,6 +10,9 @@ import {
   screen,
   Tray,
 } from "electron";
+import { join } from "node:path";
+import type { DesktopAppSettings } from "../shared/appSettings";
+import { windowsPanelBounds, normalizeWindowsShortcut, replaceShortcut } from "./windows-behavior";
 import { designTokens } from "../design/tokens";
 import { type Bounds, getSettings, type ShowAs, updateSettings } from "./settings";
 
@@ -21,6 +25,9 @@ const TOGGLE_SHORTCUT = "Alt+Shift+F"; // Option+Shift+F on a Mac
 const POPOVER_GAP = 6;
 
 let tray: Tray | null = null;
+let registeredShortcut: string | null = null;
+let shortcutError: string | null = null;
+let windowsTipOpen = false;
 let getWindow: () => BrowserWindow | null = () => null;
 let hasNewArrival = false;
 let dragInProgress = false;
@@ -156,13 +163,13 @@ let mode: WindowMode = "popover";
 // Popover size: content height, between the minimum and the cap for the
 // current state (compact or expanded), never taller than the screen allows.
 function popoverSize(window: BrowserWindow): { width: number; height: number } {
-  const area = screen.getDisplayMatching(window.getBounds()).workArea;
+  const area = (process.platform === "win32" ? trayDisplay() : screen.getDisplayMatching(window.getBounds())).workArea;
   const max = popoverExpanded
     ? Math.min(EXPANDED_MAX_HEIGHT, Math.floor(area.height * EXPANDED_MAX_SHARE))
     : Math.min(POPOVER_MAX_HEIGHT, Math.floor(area.height * POPOVER_MAX_SHARE));
   const usable = area.height - POPOVER_GAP * 2;
   const height = Math.min(usable, Math.max(POPOVER_MIN_HEIGHT, Math.min(max, Math.ceil(popoverContentHeight))));
-  return { width: POPOVER_WIDTH, height };
+  return { width: process.platform === "win32" ? Math.min(POPOVER_WIDTH, area.width - POPOVER_GAP * 2) : POPOVER_WIDTH, height };
 }
 
 function cancelResize(): void {
@@ -177,7 +184,7 @@ function cancelResize(): void {
 function fitPopover(window: BrowserWindow, animate = false): void {
   const { width, height } = popoverSize(window);
   const target = anchoredBounds(width, height);
-  window.setMinimumSize(POPOVER_WIDTH, POPOVER_MIN_HEIGHT);
+  window.setMinimumSize(width, Math.min(POPOVER_MIN_HEIGHT, height));
   if (!target) {
     window.setSize(width, height, false);
     return;
@@ -226,11 +233,25 @@ export function currentMode(): WindowMode {
 // Where a window of this size goes: under the tray icon when the bar is at
 // the top (macOS, most Linux), above it when the taskbar is at the bottom
 // (Windows default), always inside the work area.
+function trayDisplay(): Electron.Display {
+  const icon = tray?.getBounds();
+  const point = icon && icon.width > 0 && icon.height > 0
+    ? { x: Math.round(icon.x + icon.width / 2), y: Math.round(icon.y + icon.height / 2) }
+    : screen.getCursorScreenPoint();
+  return screen.getDisplayNearestPoint(point);
+}
+
 function anchoredBounds(width: number, height: number): Bounds | null {
   if (!tray) {
     return null;
   }
   const icon = tray.getBounds();
+  if (process.platform === "win32") {
+    const display = trayDisplay();
+    const point = screen.getCursorScreenPoint();
+    const anchor = icon.width > 0 && icon.height > 0 ? icon : { ...point, width: 1, height: 1 };
+    return windowsPanelBounds(anchor, display.bounds, display.workArea, width, height);
+  }
   // Linux (AppIndicator) often reports empty bounds: fall back to the cursor.
   const anchor =
     icon.width > 0
@@ -326,11 +347,27 @@ function showIn(next: WindowMode): void {
   window.show();
   window.focus();
   setArrivalDot(false);
+  if (process.platform === "win32") void showWindowsTip(window);
+}
+
+async function showWindowsTip(window: BrowserWindow): Promise<void> {
+  if (getSettings().windowsTipShown || windowsTipOpen || window.webContents.isLoadingMainFrame()) return;
+  windowsTipOpen = true;
+  try {
+    const shortcut = getSettings().windowsShortcut;
+    await dialog.showMessageBox(window, {
+      type: "info", title: "Flick is in your system tray", message: "Flick stays in your system tray when you close this panel.",
+      detail: `Use ${shortcut} to open or close Flick from anywhere.${shortcutError ? " This shortcut is currently unavailable; choose another in Settings." : ""}\n\nTo keep the icon visible, open the taskbar's hidden-icons arrow and drag Flick onto the visible tray. You can also enable Flick in Windows Settings → Personalization → Taskbar → Other system tray icons (Windows 11) or Select which icons appear on the taskbar (Windows 10).\n\nRight-click Flick's tray icon for Open, Settings, or Quit.`,
+      buttons: ["Got it"], defaultId: 0, noLink: true,
+    });
+    updateSettings({ windowsTipShown: true });
+  } catch (error) { console.warn("Couldn't show the Windows tray tip:", error); }
+  finally { windowsTipOpen = false; }
 }
 
 // Tray click / Option+Shift+F: the user's choice of popover or panel.
 export function showPopover(): void {
-  showIn(getSettings().showAs);
+  showIn(process.platform === "win32" ? "popover" : getSettings().showAs);
 }
 
 // "Open Flick": the resizable main window.
@@ -346,8 +383,11 @@ export function togglePopover(source: "tray" | "shortcut" = "shortcut"): void {
   if (source === "tray" && Date.now() - lastPopoverBlurHideAt < 250) {
     return;
   }
-  const wanted = getSettings().showAs;
-  if (window.isVisible() && mode === wanted && (window.isFocused() || mode === "panel")) {
+  const wanted = process.platform === "win32" ? "popover" : getSettings().showAs;
+  const closeVisible = process.platform === "win32"
+    ? window.isVisible() && window.isFocused()
+    : window.isVisible() && mode === wanted && (window.isFocused() || mode === "panel");
+  if (closeVisible) {
     window.hide();
   } else {
     showPopover();
@@ -389,8 +429,18 @@ export function setDragInProgress(value: boolean): void {
 }
 
 function buildMenu(): Menu {
+  if (process.platform === "win32") return Menu.buildFromTemplate([
+    { label: "Open", click: () => showPopover() },
+    { label: "Settings", click: () => {
+      showPopover();
+      requestPopoverExpanded(true);
+      getWindow()?.webContents.send("settings:open");
+    } },
+    { type: "separator" },
+    { label: "Quit", role: "quit" },
+  ]);
   const settings = getSettings();
-  const canLaunchAtLogin = process.platform === "darwin" || process.platform === "win32";
+  const canLaunchAtLogin = process.platform === "darwin";
   const setShowAs = (showAs: ShowAs) => {
     updateSettings({ showAs });
     if (mode !== "main" && getWindow()?.isVisible()) {
@@ -461,7 +511,9 @@ export function setupTray(windowGetter: () => BrowserWindow | null): void {
     app.dock?.hide();
   }
 
-  tray = new Tray(trayImage(false));
+  tray = process.platform === "win32"
+    ? new Tray((app.isPackaged ? join(process.resourcesPath, "icon.ico") : join(app.getAppPath(), "build/icon.ico")), "649d5631-5781-49ee-a2a0-c2a306bc4163")
+    : new Tray(trayImage(false));
   tray.setToolTip("Flick");
   tray.on("click", () => togglePopover("tray"));
   tray.on("right-click", () => tray?.popUpContextMenu(buildMenu()));
@@ -470,8 +522,25 @@ export function setupTray(windowGetter: () => BrowserWindow | null): void {
     tray.setContextMenu(buildMenu());
   }
 
-  if (!globalShortcut.register(TOGGLE_SHORTCUT, togglePopover)) {
-    console.warn(`Flick couldn't register ${TOGGLE_SHORTCUT}; another app may be using it.`);
+  const shortcut = process.platform === "win32" ? normalizeWindowsShortcut(getSettings().windowsShortcut) ?? "Ctrl+Shift+Space" : TOGGLE_SHORTCUT;
+  if (globalShortcut.register(shortcut, () => togglePopover())) registeredShortcut = shortcut;
+  else {
+    shortcutError = `Couldn't register ${shortcut}. Another app may be using it. Choose a different shortcut in Settings.`;
+    console.warn(shortcutError);
+  }
+  if (process.platform === "win32") {
+    // Only configure the default once, and only for the installed executable.
+    // Later Task Manager/Windows Startup choices are left untouched.
+    if (app.isPackaged && !getSettings().windowsStartupConfigured) {
+      try {
+        app.setLoginItemSettings({ openAtLogin: true, path: process.execPath, args: ["--hidden"] });
+        updateSettings({ windowsStartupConfigured: true });
+      } catch (error) { console.warn("Couldn't enable Start with Windows:", error); }
+    }
+    screen.on("display-metrics-changed", () => {
+      const window = getWindow();
+      if (window?.isVisible() && mode === "popover") fitPopover(window);
+    });
   }
   app.on("will-quit", () => globalShortcut.unregisterAll());
 }
@@ -481,7 +550,7 @@ export function attachWindow(window: BrowserWindow, isQuitting: () => boolean): 
   window.on("blur", () => {
     // FLICK_KEEP_POPOVER=1 (development only) keeps it open for screenshots.
     const keepForDev = !app.isPackaged && process.env.FLICK_KEEP_POPOVER === "1";
-    if (mode === "popover" && !dragInProgress && !keepForDev && !window.webContents.isDevToolsOpened()) {
+    if (mode === "popover" && !windowsTipOpen && !dragInProgress && !keepForDev && !window.webContents.isDevToolsOpened()) {
       window.hide();
       lastPopoverBlurHideAt = Date.now();
     }
@@ -504,17 +573,50 @@ export function attachWindow(window: BrowserWindow, isQuitting: () => boolean): 
     }
   });
   // Tell a freshly loaded page which mode it's in.
-  window.webContents.on("did-finish-load", () => window.webContents.send("window:mode", mode));
+  window.webContents.on("did-finish-load", () => {
+    window.webContents.send("window:mode", mode);
+    if (process.platform === "win32" && window.isVisible()) void showWindowsTip(window);
+  });
+}
+
+function desktopSettings(): DesktopAppSettings {
+  const windows = process.platform === "win32";
+  const login = windows
+    ? app.getLoginItemSettings({ path: process.execPath, args: ["--hidden"] })
+    : app.getLoginItemSettings();
+  return {
+    showAs: windows ? "popover" : getSettings().showAs,
+    isWindows: windows,
+    canLaunchAtLogin: process.platform === "darwin" || (windows && app.isPackaged),
+    launchAtLogin: login.openAtLogin && (!windows || login.executableWillLaunchAtLogin !== false),
+    shortcut: windows ? getSettings().windowsShortcut : TOGGLE_SHORTCUT,
+    shortcutRegistered: registeredShortcut !== null,
+    shortcutError,
+  };
+}
+
+function assertSettingsSender(event: Electron.IpcMainInvokeEvent): void {
+  if (event.sender !== getWindow()?.webContents) throw new Error("Settings are only available to the Flick window.");
 }
 
 export function setupWindowModeIpc(): void {
   ipcMain.handle("window:get-mode", () => mode);
   // Settings panel in the popover: the per-device app settings.
-  ipcMain.handle("settings:get-app", () => ({
-    showAs: getSettings().showAs,
-    canLaunchAtLogin: process.platform === "darwin" || process.platform === "win32",
-    launchAtLogin: app.getLoginItemSettings().openAtLogin,
-  }));
+  ipcMain.handle("settings:get-app", (event) => { assertSettingsSender(event); return desktopSettings(); });
+  ipcMain.handle("settings:set-shortcut", (event, value: unknown) => {
+    assertSettingsSender(event);
+    if (process.platform !== "win32") return { error: "Shortcut customization is only available on Windows.", settings: desktopSettings() };
+    const next = typeof value === "string" ? normalizeWindowsShortcut(value) : null;
+    if (!next) return { error: "Use Ctrl, Alt or Win with a key, for example Ctrl+Shift+Space.", settings: desktopSettings() };
+    if (next === "Alt+Shift+C") return { error: "Alt+Shift+C is reserved for Send clipboard. Choose another shortcut.", settings: desktopSettings() };
+    const success = replaceShortcut(registeredShortcut, next,
+      (shortcut) => !globalShortcut.isRegistered(shortcut) && globalShortcut.register(shortcut, () => togglePopover()),
+      (shortcut) => globalShortcut.unregister(shortcut));
+    if (!success) return { error: "That shortcut is unavailable. Try another; your previous shortcut has been kept.", settings: desktopSettings() };
+    registeredShortcut = next; shortcutError = null;
+    updateSettings({ windowsShortcut: next });
+    return { error: null, settings: desktopSettings() };
+  });
   ipcMain.handle("settings:set-show-as", (_event, showAs: unknown) => {
     if (showAs === "popover" || showAs === "panel") {
       updateSettings({ showAs });
@@ -524,11 +626,16 @@ export function setupWindowModeIpc(): void {
       refreshLinuxMenu();
     }
   });
-  ipcMain.handle("settings:set-launch-at-login", (_event, on: unknown) => {
-    if (typeof on === "boolean" && (process.platform === "darwin" || process.platform === "win32")) {
-      app.setLoginItemSettings({ openAtLogin: on });
-      refreshLinuxMenu();
-    }
+  ipcMain.handle("settings:set-launch-at-login", (event, on: unknown) => {
+    assertSettingsSender(event);
+    if (typeof on !== "boolean") throw new Error("A boolean startup preference is required.");
+    if (process.platform === "win32") {
+      if (!app.isPackaged) throw new Error("Install Flick to enable Start with Windows.");
+      app.setLoginItemSettings({ openAtLogin: on, path: process.execPath, args: ["--hidden"] });
+      updateSettings({ windowsStartupConfigured: true });
+    } else if (process.platform === "darwin") app.setLoginItemSettings({ openAtLogin: on });
+    refreshLinuxMenu();
+    return desktopSettings();
   });
   // The popover page reports its natural height whenever its list changes.
   // The page reports its natural height and layout after every change. A

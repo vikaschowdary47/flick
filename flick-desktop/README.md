@@ -52,3 +52,5 @@ Only use the Supabase publishable key in the desktop app. Never put a `service_r
 The SQL is safe to re-run for this initial setup. It does not configure the Supabase Auth provider; enable email sign-in in the dashboard as described above.
 
 Auth setup, Apple credentials and deployment: [docs/auth-setup.md](../docs/auth-setup.md). Full iOS, Android and desktop checks: [docs/auth-test-checklist.md](../docs/auth-test-checklist.md).
+
+Windows NSIS packaging, GitHub Actions artifact download, tray behavior and native test checklist: [docs/windows-desktop.md](../docs/windows-desktop.md). Run `npm run package:win` on a Windows build host.

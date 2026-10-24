@@ -15,14 +15,16 @@ interface Window {
     >
     startFileDrag: (fileId: string) => void
     endFileDrag: () => void
-    notifyArrival: () => void
+    notifyArrival: (notice?: import('../../shared/appSettings').ArrivalNotice) => void
     getWindowMode: () => Promise<'popover' | 'panel' | 'main'>
     onWindowMode: (listener: (mode: 'popover' | 'panel' | 'main') => void) => () => void
     openMainWindow: () => void
     hideWindow: () => void
-    getAppSettings: () => Promise<{ showAs: 'popover' | 'panel'; canLaunchAtLogin: boolean; launchAtLogin: boolean }>
+    getAppSettings: () => Promise<import('../../shared/appSettings').DesktopAppSettings>
     setShowAs: (showAs: 'popover' | 'panel') => Promise<void>
-    setLaunchAtLogin: (on: boolean) => Promise<void>
+    setLaunchAtLogin: (on: boolean) => Promise<import('../../shared/appSettings').DesktopAppSettings>
+    setShortcut: (shortcut: string) => Promise<{ error: string | null; settings: import('../../shared/appSettings').DesktopAppSettings }>
+    onOpenSettings: (listener: () => void) => () => void
     reportPopoverHeight: (height: number, expanded: boolean) => void
     onPopoverExpanded: (listener: (expanded: boolean) => void) => () => void
     setClipsActive: (active: boolean) => Promise<void>

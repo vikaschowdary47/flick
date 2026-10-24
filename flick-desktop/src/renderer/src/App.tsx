@@ -1,3 +1,4 @@
+import { AppPreferences } from "./components/AppPreferences";
 import FirstRunProfile from "./components/FirstRunProfile";
 import { useOnboarding } from "./hooks/useOnboarding";
 import SignIn from "./components/SignIn";
@@ -19,6 +20,13 @@ import { supabase } from "./supabase";
 export default function App() {
   const auth = useSession();
   const onboarding = useOnboarding(auth.session);
+  const [systemPreferencesOpen, setSystemPreferencesOpen] = useState(false);
+  useEffect(() => window.flick.onOpenSettings(() => {
+    if (!auth.session || !onboarding.ready || auth.passwordRecovery) setSystemPreferencesOpen(true);
+  }), [auth.session, onboarding.ready, auth.passwordRecovery]);
+  useEffect(() => {
+    if (systemPreferencesOpen) window.flick.reportPopoverHeight(520, false);
+  }, [systemPreferencesOpen]);
   const homeSession = onboarding.ready && !auth.passwordRecovery && !auth.isDeletingAccount ? auth.session : null;
   const device = useDevice(homeSession, () => void auth.handleSignOut());
   const fileState = useFiles(homeSession, device.deviceId);
@@ -48,6 +56,11 @@ export default function App() {
       void sendClip(text).then((error) => setSendStatus(error ?? "Sent to your devices."));
     });
   }, [clipboardSetting.clipsActive, sendClip]);
+
+  if (systemPreferencesOpen) return <main className="widget widget-auth">
+    <header className="topbar"><button type="button" className="back-button" onClick={() => setSystemPreferencesOpen(false)}>← Back</button></header>
+    <section className="content"><div className="settings-panel"><h1 className="settings-label">Settings</h1><AppPreferences /></div></section>
+  </main>;
 
   if (!auth.session || auth.passwordRecovery) {
     return (

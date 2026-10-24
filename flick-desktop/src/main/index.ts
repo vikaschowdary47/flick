@@ -28,6 +28,9 @@ import type {
   FileCard,
   ReceivedFileInput,
 } from "../shared/files";
+import { windowsFileName } from "./windows-behavior";
+import { findAuthCallback, isAuthCallbackUrl } from "./auth-links";
+import { notifyWindowsArrival } from "./notifications";
 import { designTokens } from "../design/tokens";
 import { setupClips } from "./clips";
 import {
@@ -40,6 +43,7 @@ import {
 } from "./tray";
 
 app.setName("Flick");
+if (process.platform === "win32") app.setAppUserModelId("dev.flickit.desktop");
 
 const currentDirectory = fileURLToPath(new URL(".", import.meta.url));
 const isDevelopment = !app.isPackaged;
@@ -59,12 +63,7 @@ let fileMutationQueue: Promise<void> = Promise.resolve();
 let accountCacheBlocked = false;
 
 const registryPath = join(app.getPath("userData"), "files.json");
-const AUTH_CALLBACK_PREFIX = "flick://auth-callback";
 let pendingAuthCallback: string | null = null;
-
-function isAuthCallbackUrl(value: string): boolean {
-  return value.startsWith(AUTH_CALLBACK_PREFIX);
-}
 
 function flushAuthCallback(): void {
   if (!pendingAuthCallback || !mainWindow || mainWindow.webContents.isLoadingMainFrame()) {
@@ -81,8 +80,10 @@ function handleAuthCallback(value: string): void {
   }
   pendingAuthCallback = value;
   flushAuthCallback();
-  mainWindow?.show();
-  mainWindow?.focus();
+  if (mainWindow) {
+    if (process.platform === "win32") showPopover();
+    else { mainWindow.show(); mainWindow.focus(); }
+  }
 }
 
 function registerProtocol(): void {
@@ -304,7 +305,8 @@ async function saveReceivedFile(input: unknown): Promise<FileCard> {
 
   return serializeFileMutation(async () => {
     if (accountCacheBlocked) throw new Error("Account cache is closed.");
-    const fileName = sanitizeReceivedFileName(input.name);
+    const sanitizedName = sanitizeReceivedFileName(input.name);
+    const fileName = process.platform === "win32" ? windowsFileName(sanitizedName) : sanitizedName;
     const fileId = input.id ?? randomUUID();
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(fileId)) {
       throw new TypeError("A valid UUID is required for the saved file ID.");
@@ -514,6 +516,7 @@ function createWindow(): void {
     // minHeight: 280,
     // maxHeight: 280,
     title: "Flick",
+    ...(process.platform === "win32" ? { icon: (app.isPackaged ? join(process.resourcesPath, "icon.ico") : join(app.getAppPath(), "build/icon.ico")) } : {}),
     show: false, // shown under the tray icon once ready
     skipTaskbar: true,
     alwaysOnTop: true,
@@ -535,7 +538,10 @@ function createWindow(): void {
   }
 
   attachWindow(mainWindow, () => isQuitting);
-  mainWindow.once("ready-to-show", showPopover);
+  mainWindow.once("ready-to-show", () => {
+    const backgroundStartup = process.platform === "win32" && process.argv.includes("--hidden") && !findAuthCallback(process.argv);
+    if (!backgroundStartup || pendingAuthCallback) showPopover();
+  });
   mainWindow.on("closed", () => {
     mainWindow = null;
   });
@@ -615,7 +621,12 @@ ipcMain.on("file:start-drag", (event, fileId: unknown) => {
 ipcMain.on("file:drag-ended", () => setDragInProgress(false));
 
 // A new file arrived over Realtime: dot on the tray icon if the popover is closed.
-ipcMain.on("tray:arrival", () => noteArrival());
+ipcMain.on("tray:arrival", (event, notice: unknown) => {
+  assertMainWindow(event);
+  const clip = notice && typeof notice === "object" && "kind" in notice && notice.kind === "clip";
+  if (process.platform === "win32" || !clip) noteArrival();
+  if (!accountCacheBlocked) notifyWindowsArrival(notice, showPopover);
+});
 
 ipcMain.handle("files:list", (event) => {
   assertMainWindow(event);
@@ -665,8 +676,9 @@ if (!hasSingleInstanceLock) {
   app.quit();
 } else {
   app.on("second-instance", (_event, commandLine) => {
-    const callback = commandLine.find(isAuthCallbackUrl);
+    const callback = findAuthCallback(commandLine);
     if (callback) handleAuthCallback(callback);
+    else if (process.platform === "win32" && mainWindow && !commandLine.includes("--hidden")) showPopover();
   });
 
   if (process.platform === "darwin") {
@@ -691,7 +703,7 @@ if (!hasSingleInstanceLock) {
       setupWindowModeIpc();
       setupClips(() => mainWindow, showPopover);
 
-      const initialCallback = process.argv.find(isAuthCallbackUrl);
+      const initialCallback = findAuthCallback(process.argv);
       if (initialCallback) handleAuthCallback(initialCallback);
 
       app.on("activate", () => {

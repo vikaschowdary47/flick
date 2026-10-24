@@ -1,0 +1,51 @@
+name: Windows desktop installer
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'flick-desktop/**'
+      - '.github/workflows/windows-desktop.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  installer:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: flick-desktop
+    env:
+      VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL || secrets.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY || secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+      VITE_FLICK_SHARE_BASE_URL: ${{ vars.VITE_FLICK_SHARE_BASE_URL }}
+      VITE_ENABLE_APPLE_SIGN_IN: ${{ vars.VITE_ENABLE_APPLE_SIGN_IN || 'false' }}
+      # Unsigned test installer. Set up Windows code signing before public distribution.
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: flick-desktop/package-lock.json
+      - name: Validate public Supabase configuration
+        shell: pwsh
+        run: |
+          if (-not $env:VITE_SUPABASE_URL -or -not $env:VITE_SUPABASE_PUBLISHABLE_KEY) {
+            throw 'Set repository variables VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY before building Flick.'
+          }
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run test:windows
+      - run: npm run package:win
+      - name: Upload NSIS installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: Flick-Windows-x64
+          path: flick-desktop/dist/windows/Flick-Setup.exe
+          if-no-files-found: error
+          retention-days: 14

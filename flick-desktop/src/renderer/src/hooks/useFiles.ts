@@ -53,6 +53,8 @@ export function useFiles(session: Session | null, deviceId: string | null = null
   const processFileRef = useRef<(file: CloudFileRow) => void>(() => {});
   const retryDownloadRef = useRef<(file: CloudFile) => void>(() => {});
   const removalTimersRef = useRef(new Map<string, number>());
+  const deviceIdRef = useRef(deviceId);
+  deviceIdRef.current = deviceId;
   const filesRef = useRef(files);
   const dismissedFileIdsRef = useRef(dismissedFileIds);
   filesRef.current = files;
@@ -367,7 +369,8 @@ export function useFiles(session: Session | null, deviceId: string | null = null
           console.info("New Flick file row:", payload.new);
           if (isCloudFile(payload.new)) {
             setArrivalPulse((pulse) => pulse + 1);
-            window.flick.notifyArrival();
+            const remote = deviceIdRef.current && payload.new.device_id && payload.new.device_id !== deviceIdRef.current;
+            window.flick.notifyArrival(remote ? { kind: "file", id: payload.new.id } : undefined);
             if (!firstArrivalRef.current) {
               firstArrivalRef.current = true;
               setShowConfetti(true);

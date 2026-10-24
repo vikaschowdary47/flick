@@ -135,6 +135,7 @@ export default function Widget({
   // Popover settings panel (replaces the list). Hiding the popover resets
   // both, so the next open shows the compact file list.
   const [settingsOpen, setSettingsOpen] = useState(false);
+  useEffect(() => window.flick.onOpenSettings(() => { setExpanded(true); setSettingsOpen(true); }), []);
   useEffect(
     () =>
       window.flick.onPopoverExpanded((next) => {

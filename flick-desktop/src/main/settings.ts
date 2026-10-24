@@ -1,5 +1,5 @@
 import { app } from "electron";
-import { readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 // Per-device app settings, saved in <userData>/settings.json (not synced).
@@ -16,13 +16,17 @@ export interface AppSettings {
   // Where the tray icon (and Option/Alt+Shift+F) shows Flick: a menu bar
   // popover that hides on click-away, or an always-on-top floating panel.
   showAs: ShowAs;
+  windowsShortcut: string;
+  windowsTipShown: boolean;
+  windowsStartupConfigured: boolean;
   // Last size/position of the resizable main window ("Open Flick").
   mainBounds: Bounds | null;
   // Last position/size of the floating panel.
   panelBounds: Bounds | null;
 }
 
-const DEFAULTS: AppSettings = { showAs: "popover", mainBounds: null, panelBounds: null };
+const DEFAULTS: AppSettings = { showAs: "popover", mainBounds: null, panelBounds: null,
+  windowsShortcut: "Ctrl+Shift+Space", windowsTipShown: false, windowsStartupConfigured: false };
 
 let cached: AppSettings | null = null;
 
@@ -40,6 +44,7 @@ function isBounds(value: unknown): value is Bounds {
 
 function write(settings: AppSettings): void {
   try {
+    mkdirSync(app.getPath("userData"), { recursive: true });
     writeFileSync(settingsPath(), JSON.stringify(settings, null, 2), "utf8");
   } catch (error: unknown) {
     console.error("Could not save Flick settings:", error);
@@ -53,7 +58,9 @@ export function getSettings(): AppSettings {
   try {
     const saved = JSON.parse(readFileSync(settingsPath(), "utf8")) as Record<string, unknown>;
     cached = {
-      // Older builds had "Keep on top"; on means the floating panel.
+      windowsShortcut: typeof saved.windowsShortcut === "string" ? saved.windowsShortcut : DEFAULTS.windowsShortcut,
+      windowsTipShown: saved.windowsTipShown === true,
+      windowsStartupConfigured: saved.windowsStartupConfigured === true,      // Older builds had "Keep on top"; on means the floating panel.
       showAs:
         saved.showAs === "panel" || saved.showAs === "popover"
           ? saved.showAs
