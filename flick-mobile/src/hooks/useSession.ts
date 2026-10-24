@@ -140,12 +140,17 @@ export function useSession() {
   }, []);
 
   const signUp = useCallback(async (email: string, password: string) => {
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email: email.trim(),
       password,
       options: { emailRedirectTo: authRedirectUrl(email) },
     });
-    return error ? friendlyAuthError(error.message) : null;
+    if (error) return friendlyAuthError(error.message);
+    // Confirmed accounts can return an obfuscated user instead of an error.
+    if (data.user?.identities?.length === 0) {
+      return "This email already has an account. Sign in or reset your password.";
+    }
+    return null;
   }, []);
 
   const resendSignUp = useCallback(async (email: string) => {
@@ -159,6 +164,12 @@ export function useSession() {
 
   const requestPasswordReset = useCallback(async (email: string) => {
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: authRedirectUrl(email) });
+    if (error?.code === "email_address_invalid") {
+      return "The email service rejected this address, so we couldn't send a password reset link. This doesn't mean your account is missing. Contact support if this is your email.";
+    }
+    if (error?.code === "email_address_not_authorized") {
+      return "Password reset emails aren't enabled for this address yet. Contact support to resolve the email service configuration.";
+    }
     return error ? friendlyAuthError(error.message) : null;
   }, []);
 

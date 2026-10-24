@@ -38,7 +38,8 @@ export const designTokens = {
     confetti: "2px",
   },
   fonts: {
-    family: '"Nunito", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    family:
+      '"Nunito", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
     weights: {
       semibold: 600,
       extrabold: 800,

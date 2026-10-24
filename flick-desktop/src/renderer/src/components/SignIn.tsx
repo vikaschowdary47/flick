@@ -8,6 +8,7 @@ import type { AuthCallbackNotice } from "../hooks/useSession";
 interface SignInProps {
   accountMenuRef: RefObject<HTMLDivElement | null>;
   authError: string;
+  setAuthError: (message: string) => void;
   authReady: boolean;
   email: string;
   handleDragEnter: (event: React.DragEvent<HTMLElement>) => void;
@@ -19,6 +20,8 @@ interface SignInProps {
   handleAppleSignIn: () => void;
   cancelAppleSignIn: () => void;
   isAppleSigningIn: boolean;
+  cancelGoogleSignIn: () => void;
+  isGoogleSigningIn: boolean;
   handleSignUp: (email: string, password: string) => Promise<string | null>;
   handleResendSignUp: (email: string) => Promise<string | null>;
   handleRequestPasswordReset: (email: string) => Promise<string | null>;
@@ -44,6 +47,7 @@ interface SignInProps {
 export default function SignIn({
   accountMenuRef,
   authError,
+  setAuthError,
   authReady,
   email,
   handleDragEnter,
@@ -55,6 +59,8 @@ export default function SignIn({
   handleAppleSignIn,
   cancelAppleSignIn,
   isAppleSigningIn,
+  cancelGoogleSignIn,
+  isGoogleSigningIn,
   handleSignUp,
   handleResendSignUp,
   handleRequestPasswordReset,
@@ -83,6 +89,15 @@ export default function SignIn({
   const [confirmPassword, setConfirmPassword] = useState("");
   const [localError, setLocalError] = useState("");
   const [cooldown, setCooldown] = useState(0);
+
+  useEffect(() => {
+    if (!authError && !localError) return;
+    const timer = window.setTimeout(() => {
+      setLocalError("");
+      setAuthError("");
+    }, 10_000);
+    return () => window.clearTimeout(timer);
+  }, [authError, localError, setAuthError]);
 
   useEffect(() => {
     if (passwordRecovery) setMode("resetPassword");
@@ -170,6 +185,12 @@ export default function SignIn({
         session={session}
         arrivalPulse={arrivalPulse}
       />
+      {(authError || localError) && (
+        <div className="auth-error auth-error-top">
+          <span role="alert">{localError || authError}</span>
+          <button type="button" className="auth-error-dismiss" aria-label="Dismiss error" onClick={() => { setLocalError(""); setAuthError(""); }}>×</button>
+        </div>
+      )}
       <section className="content content-auth" aria-labelledby="incoming-heading">
         {!authReady && (
           <p className="auth-status" role="status">
@@ -183,12 +204,6 @@ export default function SignIn({
         )}
         {authReady && supabaseConfigured && (
           <div className="sign-in-screen">
-            <div className="sign-in-mark brand-mark" aria-hidden="true">
-              <svg viewBox="0 0 32 32">
-                <path d="M10 22 22 10M12 10h10v10" />
-              </svg>
-            </div>
-            <p className="eyebrow">YOUR FILES, EVERYWHERE</p>
             <h1 id="incoming-heading">{mode === "signUp" ? "Join Flick" : mode === "resetPassword" ? "Choose a new password" : "Welcome to Flick"}</h1>
             <p className="sign-in-copy">
               {mode === "checkEmail" ? `Check ${email} for a link from Flick.` : "Sign in to catch files from your other devices."}
@@ -224,6 +239,9 @@ export default function SignIn({
                   </svg>
                   {isSigningIn ? "Signing in…" : "Continue with Google"}
                 </button>
+                {isGoogleSigningIn && (
+                  <button className="auth-link" type="button" onClick={cancelGoogleSignIn}>Cancel Google sign-in</button>
+                )}
                 {APPLE_SIGN_IN_ENABLED && <button type="button" className="apple-sign-in-button" onClick={handleAppleSignIn} disabled={isSigningIn}>
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M17.05 12.54c.03 3.07 2.69 4.09 2.72 4.1-.02.07-.43 1.46-1.41 2.9-.85 1.24-1.73 2.48-3.12 2.5-1.36.03-1.8-.81-3.36-.81-1.55 0-2.04.79-3.33.84-1.34.05-2.35-1.35-3.2-2.58-1.75-2.53-3.09-7.15-1.29-10.27a4.97 4.97 0 0 1 4.22-2.56c1.32-.03 2.56.89 3.36.89.79 0 2.28-1.1 3.84-.94.65.03 2.48.26 3.65 1.97-.1.06-2.18 1.27-2.08 3.96ZM14.49 4.94c.71-.86 1.19-2.05 1.06-3.24-1.02.04-2.25.68-2.98 1.54-.66.76-1.24 1.98-1.09 3.14 1.14.09 2.3-.58 3.01-1.44Z" /></svg>
                   Sign in with Apple
@@ -245,17 +263,10 @@ export default function SignIn({
                 <button className="sign-in-button" type="button" onClick={() => void resend()} disabled={isSigningIn || cooldown > 0}>{cooldown ? `Resend in ${cooldown}s` : "Resend email"}</button>
                 <button className="auth-link" type="button" onClick={() => setMode("signIn")}>Back to sign in</button>
               </>}
-              {(authError || localError) && <p className="auth-error" role="alert">{localError || authError}</p>}
             </form>
           </div>
         )}
       </section>
-      <footer className="footer">
-        <span className="helper-icon" aria-hidden="true">
-          ↓
-        </span>
-        <span>Drop files here, or flick something over!</span>
-      </footer>
     </main>
   );
 }

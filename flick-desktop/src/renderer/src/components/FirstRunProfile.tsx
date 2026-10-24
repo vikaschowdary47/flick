@@ -21,12 +21,13 @@ export default function FirstRunProfile({ initialName, initialType, loading, err
         {loading ? <p role="status">Loading your profile…</p> : error ? <>
           <p className="auth-error" role="alert">{error}</p>
           <button className="auth-link" onClick={onRetry}>Retry</button>
-        </> : <form className="auth-form" onSubmit={(event) => {
+        </> : <form className="auth-form profile-form" onSubmit={(event) => {
           event.preventDefault(); setBusy(true); setSaveError("");
           void onSave(name, type).then((message) => setSaveError(message ?? "")).finally(() => setBusy(false));
         }}>
           {saveError && <p className="auth-error" role="alert">{saveError}</p>}
-          <label>Display name<input value={name} maxLength={80} autoComplete="name" required disabled={busy}
+          <label className="profile-name-field" htmlFor="profile-display-name"><span>Display name</span>
+            <input id="profile-display-name" value={name} maxLength={80} autoComplete="name" required disabled={busy}
             onChange={(event) => { setEdited(true); setName(event.target.value); }} /></label>
           <fieldset className="profile-account-types" disabled={busy}><legend>Account type</legend>
             {(["personal", "business"] as const).map((value) => <label key={value}>
@@ -36,7 +37,7 @@ export default function FirstRunProfile({ initialName, initialType, loading, err
           </fieldset>
           <button className="sign-in-button" disabled={busy}>{busy ? "Saving…" : "Continue"}</button>
         </form>}
-        <button type="button" className="auth-link" onClick={onSignOut} disabled={busy}>Sign out</button>
+        <button type="button" className="auth-link profile-sign-out" onClick={onSignOut} disabled={busy}>Sign out</button>
       </div>
     </section>
   </main>;

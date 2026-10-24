@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   StyleSheet,
   Text,
   TextInput,
@@ -59,6 +60,12 @@ export function SignInScreen({
     passwordRecovery ? "resetPassword" : "signIn",
   );
   const [cooldown, setCooldown] = useState(0);
+
+  useEffect(() => {
+    if (!error) return;
+    const timer = setTimeout(() => setError(null), 10_000);
+    return () => clearTimeout(timer);
+  }, [error]);
 
   useEffect(() => {
     if (passwordRecovery) setMode("resetPassword");
@@ -174,6 +181,14 @@ export function SignInScreen({
         )}
 
         <View style={styles.form}>
+          {error && (
+            <View style={styles.errorBanner}>
+              <Text accessibilityRole="alert" style={styles.error}>{error}</Text>
+              <Pressable accessibilityRole="button" accessibilityLabel="Dismiss error" onPress={() => setError(null)} style={styles.errorDismiss}>
+                <Text style={styles.errorDismissText}>×</Text>
+              </Pressable>
+            </View>
+          )}
           {mode !== "checkEmail" && mode !== "resetPassword" && (
             <TextInput
               style={styles.input}
@@ -216,11 +231,6 @@ export function SignInScreen({
               editable={!busy}
               accessibilityLabel="Confirm password"
             />
-          )}
-          {error && (
-            <Text accessibilityRole="alert" style={styles.error}>
-              {error}
-            </Text>
           )}
           {mode === "signIn" && <>
             <PillButton label={busy ? "Signing in…" : "Sign in"} onPress={submit} busy={busy} disabled={!canSubmit} />
@@ -308,10 +318,30 @@ const makeStyles = (c: Palette) =>
       textAlign: "center",
     },
     error: {
+      flex: 1,
       color: c.text,
       fontFamily: tokens.fonts.semibold,
       fontSize: tokens.fontSizes.meta,
       textAlign: "center",
+    },
+    errorBanner: {
+      flexDirection: "row",
+      alignItems: "center",
+      borderWidth: 1,
+      borderColor: c.outline,
+      borderRadius: 12,
+      paddingLeft: 12,
+      backgroundColor: c.card,
+    },
+    errorDismiss: {
+      width: 44,
+      minHeight: 44,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    errorDismissText: {
+      color: c.text,
+      fontSize: 24,
     },
     notice: {
       maxWidth: 330,

@@ -39,6 +39,8 @@ export function useSession() {
   const apple = useAppleSignIn(setAuthError);
   const appleInProgress = apple.inProgress;
   const googleInProgress = useRef(false);
+  const googleAbort = useRef<AbortController | null>(null);
+  const [isGoogleSigningIn, setIsGoogleSigningIn] = useState(false);
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
   const accountMenuRef = useRef<HTMLDivElement>(null);
 
@@ -178,12 +180,15 @@ export function useSession() {
   // Google via Supabase OAuth with PKCE: the system browser signs in and
   // returns to the already-running app through flick://auth-callback.
   async function handleGoogleSignIn(): Promise<void> {
-    if (!supabase) {
+    if (!supabase || googleInProgress.current) {
       return;
     }
     setIsSigningIn(true);
     setAuthError("");
     googleInProgress.current = true;
+    const controller = new AbortController();
+    googleAbort.current = controller;
+    setIsGoogleSigningIn(true);
     try {
       const redirectTo = "flick://auth-callback";
       const { data, error } = await supabase.auth.signInWithOAuth({
@@ -193,33 +198,44 @@ export function useSession() {
       if (error || !data.url) {
         throw error ?? new Error("Could not start Google sign-in.");
       }
-      await window.flick.openAuthUrl(data.url);
+      if (controller.signal.aborted) throw new Error("Google sign-in was cancelled.");
       const callbackUrl = await new Promise<string>((resolve, reject) => {
         let finished = false;
         let unsubscribe: (() => void) | null = null;
         const timeout = window.setTimeout(() => {
-          finished = true;
-          unsubscribe?.();
-          reject(new Error("Google sign-in timed out."));
+          finish(() => reject(new Error("Google sign-in timed out.")));
         }, 5 * 60 * 1000);
         const finish = (callback: () => void) => {
           if (finished) return;
           finished = true;
           window.clearTimeout(timeout);
+          controller.signal.removeEventListener("abort", cancel);
           unsubscribe?.();
           callback();
         };
+        const cancel = () => finish(() => reject(new Error("Google sign-in was cancelled.")));
+        controller.signal.addEventListener("abort", cancel, { once: true });
         unsubscribe = window.flick.onAuthCallback((url) => {
           finish(() => resolve(url));
         });
         if (finished) unsubscribe();
+        if (!finished) {
+          void window.flick.openAuthUrl(data.url!).catch((error: unknown) => {
+            finish(() => reject(error));
+          });
+        }
       });
       const callback = new URL(callbackUrl);
-      const callbackError = callback.searchParams.get("error_description") ?? callback.searchParams.get("error");
+      const params = new URLSearchParams(callback.hash.replace(/^#/, ""));
+      callback.searchParams.forEach((value, key) => params.set(key, value));
+      if (params.get("error") === "access_denied" || params.get("error_code") === "access_denied") {
+        throw new Error("Google sign-in was cancelled.");
+      }
+      const callbackError = params.get("error_description") ?? params.get("error");
       if (callbackError) {
         throw new Error(callbackError);
       }
-      const code = callback.searchParams.get("code");
+      const code = params.get("code");
       if (!code) {
         throw new Error("Google sign-in didn't finish. Try again.");
       }
@@ -235,6 +251,8 @@ export function useSession() {
       );
     } finally {
       googleInProgress.current = false;
+      googleAbort.current = null;
+      setIsGoogleSigningIn(false);
       setIsSigningIn(false);
     }
   }
@@ -243,12 +261,17 @@ export function useSession() {
     if (!supabase) return "Flick is not connected.";
     setIsSigningIn(true);
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email: nextEmail.trim(),
         password: nextPassword,
         options: { emailRedirectTo: authRedirectUrl(nextEmail) },
       });
-      return error ? friendlyAuthError(error.message) : null;
+      if (error) return friendlyAuthError(error.message);
+      // Confirmed accounts can return an obfuscated user instead of an error.
+      if (data.user?.identities?.length === 0) {
+        return "This email already has an account. Sign in or reset your password.";
+      }
+      return null;
     } finally {
       setIsSigningIn(false);
     }
@@ -276,6 +299,12 @@ export function useSession() {
       const { error } = await supabase.auth.resetPasswordForEmail(nextEmail.trim(), {
         redirectTo: authRedirectUrl(nextEmail),
       });
+      if (error?.code === "email_address_invalid") {
+        return "The email service rejected this address, so we couldn't send a password reset link. This doesn't mean your account is missing. Contact support if this is your email.";
+      }
+      if (error?.code === "email_address_not_authorized") {
+        return "Password reset emails aren't enabled for this address yet. Contact support to resolve the email service configuration.";
+      }
       return error ? friendlyAuthError(error.message) : null;
     } finally {
       setIsSigningIn(false);
@@ -352,12 +381,15 @@ export function useSession() {
   return {
     accountMenuRef,
     authError,
+    setAuthError,
     authReady,
     email,
     handleGoogleSignIn,
     handleAppleSignIn: apple.signIn,
     cancelAppleSignIn: apple.cancel,
     isAppleSigningIn: apple.busy,
+    cancelGoogleSignIn: () => googleAbort.current?.abort(),
+    isGoogleSigningIn,
     handleSignIn,
     handleSignOut,
     handleDeleteAccount,

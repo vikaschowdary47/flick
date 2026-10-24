@@ -67,6 +67,7 @@ export default function App() {
       <SignIn
         accountMenuRef={auth.accountMenuRef}
         authError={auth.authError}
+        setAuthError={auth.setAuthError}
         authReady={auth.authReady}
         email={auth.email}
         handleDragEnter={fileState.handleDragEnter}
@@ -78,6 +79,8 @@ export default function App() {
         handleAppleSignIn={auth.handleAppleSignIn}
         cancelAppleSignIn={auth.cancelAppleSignIn}
         isAppleSigningIn={auth.isAppleSigningIn}
+        cancelGoogleSignIn={auth.cancelGoogleSignIn}
+        isGoogleSigningIn={auth.isGoogleSigningIn}
         handleSignUp={auth.handleSignUp}
         handleResendSignUp={auth.handleResendSignUp}
         handleRequestPasswordReset={auth.handleRequestPasswordReset}
