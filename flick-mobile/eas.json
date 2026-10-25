@@ -1,0 +1,42 @@
+{
+  "cli": {
+    "version": ">= 16.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "https://bqfzoiquzjldgxoolvvz.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY": "sb_publishable_ps4pu0WUX3S8-do2WuAqug_5rMagOCz",
+        "EXPO_PUBLIC_FLICK_SHARE_BASE_URL": "https://eqlshare.com/d"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "https://bqfzoiquzjldgxoolvvz.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY": "sb_publishable_ps4pu0WUX3S8-do2WuAqug_5rMagOCz",
+        "EXPO_PUBLIC_FLICK_SHARE_BASE_URL": "https://eqlshare.com/d"
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "https://bqfzoiquzjldgxoolvvz.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY": "sb_publishable_ps4pu0WUX3S8-do2WuAqug_5rMagOCz",
+        "EXPO_PUBLIC_FLICK_SHARE_BASE_URL": "https://eqlshare.com/d"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}
