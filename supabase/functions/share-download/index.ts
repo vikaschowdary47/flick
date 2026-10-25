@@ -8,10 +8,21 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 const BUCKET = "flick-files";
 const SIGNED_URL_SECONDS = 60;
 const CORS = {
-  "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "content-type",
   "Access-Control-Allow-Methods": "GET, OPTIONS",
 };
+
+function allowedOrigin(request: Request): string | null {
+  const origin = request.headers.get("Origin");
+  if (!origin) return null;
+  if (origin === "https://eqlshare.com" || origin === "https://www.eqlshare.com" || origin === "http://localhost:3000") return origin;
+  return /^https:\/\/([a-z0-9-]+\.)*vercel\.app$/i.test(origin) ? origin : null;
+}
+
+function corsHeaders(request: Request): Record<string, string> {
+  const origin = allowedOrigin(request);
+  return origin ? { ...CORS, "Access-Control-Allow-Origin": origin, Vary: "Origin" } : CORS;
+}
 
 type ShareRow = {
   id_hash: string;
@@ -37,10 +48,10 @@ type ShareMetadata = {
   expiresAt: string;
 };
 
-function json(body: unknown, status = 200, extraHeaders: Record<string, string> = {}): Response {
+function json(request: Request, body: unknown, status = 200, extraHeaders: Record<string, string> = {}): Response {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { ...CORS, "Cache-Control": "no-store", "Content-Type": "application/json", ...extraHeaders },
+    headers: { ...corsHeaders(request), "Cache-Control": "no-store", "Content-Type": "application/json", ...extraHeaders },
   });
 }
 
@@ -72,13 +83,13 @@ const supabase = supabaseUrl && serviceRoleKey
   : null;
 
 Deno.serve(async (request) => {
-  if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
-  if (request.method !== "GET") return json({ error: "Method not allowed" }, 405);
-  if (!supabase) return json({ error: "Missing Supabase environment" }, 500);
+  if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: corsHeaders(request) });
+  if (request.method !== "GET") return json(request, { error: "Method not allowed" }, 405);
+  if (!supabase) return json(request, { error: "Missing Supabase environment" }, 500);
 
   const rawId = routeId(request);
   if (!rawId || rawId.length < 22 || rawId.length > 128) {
-    return json({ error: "Link not found" }, 404);
+    return json(request, { error: "Link not found" }, 404);
   }
 
   const idHash = await sha256Hex(rawId);
@@ -91,12 +102,12 @@ Deno.serve(async (request) => {
   // Missing, revoked, and deleted-file links deliberately look identical so
   // this endpoint cannot be used to list or probe other users' files.
   if (error || !data || data.revoked_at || !data.file) {
-    return json({ error: "Link not found" }, 404);
+    return json(request, { error: "Link not found" }, 404);
   }
 
   const expiresAt = Math.min(new Date(data.expires_at).getTime(), fileExpiresAt(data.file));
   if (!Number.isFinite(expiresAt) || Date.now() >= expiresAt) {
-    return json({ error: "Link expired", expiresAt: new Date(expiresAt).toISOString() }, 410);
+    return json(request, { error: "Link expired", expiresAt: new Date(expiresAt).toISOString() }, 410);
   }
 
   const metadata: ShareMetadata = {
@@ -110,7 +121,7 @@ Deno.serve(async (request) => {
   // Metadata is safe to fetch when the page opens. Only the download action
   // spends a rate-limit bucket and receives a short-lived signed URL.
   if (new URL(request.url).searchParams.get("download") !== "1") {
-    return json(metadata);
+    return json(request, metadata);
   }
 
   const { data: allowed, error: rateError } = await supabase.rpc("flick_share_link_rate_limit", {
@@ -118,10 +129,10 @@ Deno.serve(async (request) => {
   });
   if (rateError) {
     console.error("share-download rate limit failed", rateError);
-    return json({ error: "Temporarily unavailable" }, 503);
+    return json(request, { error: "Temporarily unavailable" }, 503);
   }
   if (!allowed) {
-    return json({ error: "Too many requests" }, 429, { "Retry-After": "60" });
+    return json(request, { error: "Too many requests" }, 429, { "Retry-After": "60" });
   }
 
   const { data: signed, error: signedError } = await supabase.storage
@@ -129,10 +140,10 @@ Deno.serve(async (request) => {
     .createSignedUrl(data.file.storage_path, SIGNED_URL_SECONDS, { download: data.file.name });
   if (signedError || !signed?.signedUrl) {
     console.error("share-download signing failed", { storagePath: data.file.storage_path, signedError });
-    return json({ error: "Download temporarily unavailable" }, 503);
+    return json(request, { error: "Download temporarily unavailable" }, 503);
   }
 
-  return json({
+  return json(request, {
     ...metadata,
     downloadUrl: signed.signedUrl,
   });
