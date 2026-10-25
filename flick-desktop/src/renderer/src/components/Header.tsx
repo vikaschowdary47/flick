@@ -61,6 +61,17 @@ export default function Header({
   const prefersReducedMotion = useReducedMotion();
   const [draftName, setDraftName] = useState(deviceName ?? "");
   const [nameError, setNameError] = useState("");
+  const [isDarkMode, setIsDarkMode] = useState(() =>
+    typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches,
+  );
+
+  useEffect(() => {
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const syncTheme = () => setIsDarkMode(media.matches);
+    syncTheme();
+    media.addEventListener("change", syncTheme);
+    return () => media.removeEventListener("change", syncTheme);
+  }, []);
 
   useEffect(() => {
     if (isAccountMenuOpen) {
@@ -99,10 +110,10 @@ export default function Header({
             mass: designTokens.springs.newCard.mass,
           }}
         >
-          <picture>
-            <source media="(prefers-color-scheme: dark)" srcSet="./lockup-dark.png" />
-            <img src="./lockup-light.png" alt={APP_NAME} />
-          </picture>
+          <img
+            src={isDarkMode ? "./lockup-dark.png" : "./lockup-light.png"}
+            alt={APP_NAME}
+          />
         </motion.div>
       </div>
       )}
