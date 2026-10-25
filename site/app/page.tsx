@@ -12,28 +12,28 @@ const features = [
   ],
   [
     "⌁",
-    "Share drops",
-    "Send a link or QR code to friends and teams. No phone numbers needed.",
+    "Share by link",
+    "Send a link to friends and teams. No phone numbers needed.",
   ],
   [
     "◷",
     "Gone in 24h",
-    "Files auto-delete after a day, so your storage stays delightfully uncluttered.",
+    "Files delete themselves after a day unless you pin them, so nothing piles up.",
   ],
   [
     "✦",
     "Clips",
-    "Keep text, links and clipboard history handy across every device.",
+    "Send text and links between devices. Your laptop remembers recent clips too.",
   ],
   [
     "↥",
-    "Flick it",
-    "Send from the share sheet or right-click menu without breaking your flow.",
+    "Share from anywhere",
+    "Send from your phone's share sheet without breaking your flow.",
   ],
   [
     "◌",
     "Private by design",
-    "Encrypted in transit and temporary by default. Your stuff stays yours.",
+    "Encrypted, temporary by default, no ads and no tracking. Your stuff stays yours.",
   ],
 ];
 export default function Home() {
@@ -76,7 +76,7 @@ export default function Home() {
         <div className="section-label">01 / how it works</div>
         <div className="intro-heading">
           <h2>
-            Flick it over.
+            Send it over.
             <br />
             <span>Get on with it.</span>
           </h2>

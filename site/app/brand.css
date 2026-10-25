@@ -1,0 +1,35 @@
+/* eqlShare brand pass: the logo's mustard is the main accent (it replaces the
+   old Flick coral). Mustard is too light for text on cream, so accent words get
+   a mustard highlighter behind dark text instead. Loaded after the other sheets. */
+.hero h1 em, .feature-heading em, .intro-heading span, .faq-layout em, .not-found em {
+  color: var(--ink);
+  background: linear-gradient(transparent 58%, var(--primary) 58%, var(--primary) 90%, transparent 90%);
+  padding: 0 .04em;
+}
+.spark, .nav-link span, .upload-file span, .widget-file i, .cta-sticker { color: var(--primary); }
+.cta-sticker { color: var(--ink); }
+.phone-screen { background: var(--primary); color: var(--ink); }
+.step-icon.coral, .big-mark { background: var(--primary); }
+.feature-card:nth-child(3n+1) { background: var(--primary); }
+.feature-card:nth-child(3n+2) { background: var(--lilac); }
+.feature-card:nth-child(3n) { background: var(--mint); }
+.cta-section { background: var(--primary); }
+.share-button { background: var(--primary); color: var(--on-primary); }
+.footer nav { flex-wrap: wrap; row-gap: 8px; }
+.footer nav a:hover, .legal-card a { color: var(--ink); text-decoration: underline; text-decoration-color: var(--primary); text-decoration-thickness: 2px; text-underline-offset: 3px; }
+.faq-list p a { color: var(--ink); text-decoration: underline; text-decoration-color: var(--primary); text-decoration-thickness: 2px; }
+
+/* Legal pages: readable lists. */
+.legal-card ul, .legal-card ol { max-width: 650px; padding-left: 20px; color: var(--muted); }
+.legal-card li { margin: 6px 0; }
+.legal-card li strong, .legal-card p strong { color: var(--ink); }
+
+@media (prefers-color-scheme: dark) {
+  .hero h1 em, .feature-heading em, .intro-heading span, .faq-layout em, .not-found em { color: var(--primary); background: none; padding: 0; }
+  .footer nav a:hover, .legal-card a, .faq-list p a { color: var(--primary); }
+  .cta-section h2, .cta-section p, .cta-note { color: var(--on-primary); }
+}
+@media (prefers-color-scheme: dark) {
+  .cta-section .form-row button { background: var(--on-primary); color: #FFF8EE; }
+  .cta-section .form-row button span { color: var(--primary); }
+}
