@@ -84,7 +84,7 @@ Generated from the current desktop, mobile, website, Supabase functions, migrati
 - `https://eqlshare.com` and `https://www.eqlshare.com` website origins.
 - `https://eqlshare.com/d/<id>` share-download links.
 - `https://eqlshare.com/privacy`, `https://eqlshare.com/terms`, sitemap and robots endpoints.
-- `mailto:hello@eqlshare.com` contact links.
+- `mailto:support@eqlshare.com` contact links.
 - `flick://auth-callback` desktop/mobile OAuth and email confirmation callback.
 - `flick://file/<id>` and `flick://clip/<id>` widget/deep-link targets.
 - Supabase project URL from desktop/mobile environment configuration.
