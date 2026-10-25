@@ -129,7 +129,7 @@ export default function FileMenu({
       <button
         type="button"
         role="menuitem"
-        className="file-menu-item"
+        className="file-menu-item file-menu-item-share"
         onClick={() => choose(shareLinkActive ? onRevokeShareLink : onShareLink)}
       >
         <svg viewBox="0 0 24 24" aria-hidden="true">

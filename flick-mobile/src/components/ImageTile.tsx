@@ -76,7 +76,7 @@ const makeStyles = (c: Palette) =>
       shadowColor: c.shadow,
     },
     selected: {
-      backgroundColor: c.doneCard,
+      backgroundColor: c.accent,
     },
     thumb: {
       ...StyleSheet.absoluteFill,

@@ -1,11 +1,13 @@
-import { StyleSheet, Text, View } from "react-native";
-import { useThemedStyles } from "../design/ThemeProvider";
+import { StyleSheet, View } from "react-native";
+import Svg, { Path, Rect } from "react-native-svg";
+import { useTheme, useThemedStyles } from "../design/ThemeProvider";
 import type { Palette } from "../design/theme";
 import { tokens } from "../design/tokens";
 
 type Props = { size?: number };
 
 export function LogoMark({ size = tokens.layout.logoMark }: Props) {
+  const { palette } = useTheme();
   const styles = useThemedStyles(makeStyles);
   return (
     <View
@@ -13,7 +15,10 @@ export function LogoMark({ size = tokens.layout.logoMark }: Props) {
       importantForAccessibility="no"
       style={[styles.mark, { width: size, height: size, borderRadius: size * 0.34 }]}
     >
-      <Text style={[styles.arrow, { fontSize: size * 0.6 }]}>↗</Text>
+      <Svg width={size * 0.68} height={size * 0.68} viewBox="0 0 32 32">
+        <Rect x="7" y="6" width="18" height="5" rx="2.5" fill={palette.onAccent} />
+        <Path d="M8.5 16h15L16 26Z" fill={palette.onAccent} />
+      </Svg>
     </View>
   );
 }
@@ -28,9 +33,5 @@ const makeStyles = (c: Palette) =>
       justifyContent: "center",
       ...tokens.shadows.stickerPressed,
       shadowColor: c.shadow,
-    },
-    arrow: {
-      color: c.onAccent,
-      fontFamily: tokens.fonts.extrabold,
     },
   });

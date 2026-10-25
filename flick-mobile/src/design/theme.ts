@@ -2,6 +2,8 @@
 // Components read the active palette with useTheme() (src/design/ThemeProvider.tsx).
 // Sizes, radii, fonts and springs stay in tokens.ts.
 
+import { themeColors } from "../../../shared/themeColors";
+
 export type ThemeName = "playful" | "classy";
 export type AppearancePreference = "system" | "light" | "dark";
 export type ColorScheme = "light" | "dark";
@@ -37,23 +39,23 @@ export type Palette = {
 };
 
 // Base hues from DESIGN.md.
-const cream = "#FFF8EE";
-const navy = "#1B2140";
-const coral = "#F67381";
-const yellow = "#FFD66B";
-const mint = "#8EE3C8";
-const lilac = "#C9B8FF";
+const cream = themeColors.background;
+const ink = themeColors.text;
+const coral = themeColors.coral;
+const yellow = themeColors.yellow;
+const mint = themeColors.mint;
+const lilac = themeColors.lilac;
 
 const playfulLight: Palette = {
   background: cream,
   card: "#FFFFFF",
-  text: navy,
+  text: ink,
   textMuted: "#6B6F8A",
-  outline: navy,
-  shadow: navy,
-  accent: coral,
-  onAccent: navy, // navy on coral, never white (contrast)
-  onColor: navy,
+  outline: ink,
+  shadow: ink,
+  accent: themeColors.primary,
+  onAccent: themeColors.onPrimary,
+  onColor: ink,
   error: coral,
   sendingCard: mint,
   doneCard: lilac,
@@ -66,7 +68,7 @@ const playfulLight: Palette = {
   connectedPill: mint,
   signedOutPill: cream,
   offlinePill: yellow,
-  inverse: navy,
+  inverse: ink,
   onInverse: cream,
   inverseAccent: yellow,
   scrim: "rgba(27, 33, 64, 0.35)",
@@ -75,8 +77,8 @@ const playfulLight: Palette = {
 // Colored fills keep their light hues so navy text on them stays readable.
 const playfulDark: Palette = {
   ...playfulLight,
-  background: "#10142A",
-  card: "#1B2140",
+  background: themeColors.darkBackground,
+  card: "#263447",
   text: cream,
   textMuted: "#B8BCD6",
   outline: "#05070F",
@@ -84,8 +86,8 @@ const playfulDark: Palette = {
   fallbackTile: cream,
   signedOutPill: cream,
   inverse: cream,
-  onInverse: navy,
-  inverseAccent: "#B4363F",
+  onInverse: ink,
+  inverseAccent: themeColors.primary,
   scrim: "rgba(0, 0, 0, 0.55)",
 };
 
@@ -94,11 +96,11 @@ const classyLight: Palette = {
   card: "#FFFFFF",
   text: "#1F2329",
   textMuted: "#6A6F78",
-  outline: "#1F2329",
-  shadow: "#1F2329",
-  accent: "#2F3B52",
-  onAccent: "#FFFFFF",
-  onColor: "#1F2329",
+  outline: ink,
+  shadow: ink,
+  accent: themeColors.primary,
+  onAccent: themeColors.onPrimary,
+  onColor: ink,
   error: "#B3443F",
   sendingCard: "#DCE7E2",
   doneCard: "#E3E0EE",
@@ -119,14 +121,14 @@ const classyLight: Palette = {
 
 const classyDark: Palette = {
   ...classyLight,
-  background: "#121315",
-  card: "#1D1F23",
+  background: themeColors.darkBackground,
+  card: "#263447",
   text: "#EEEEEC",
   textMuted: "#A3A7AE",
   outline: "#000000",
   shadow: "#000000",
-  accent: "#B9C6DE",
-  onAccent: "#121315",
+  accent: themeColors.primary,
+  onAccent: themeColors.onPrimary,
   inverse: "#EEEEEC",
   onInverse: "#121315",
   inverseAccent: "#7A5C12",

@@ -1,7 +1,7 @@
 :root {
   font-family: var(--flick-font-family);
-  color: var(--flick-navy);
-  background: var(--flick-cream);
+  color: var(--flick-text);
+  background: var(--flick-background);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -25,7 +25,7 @@ body,
 
 body {
   overflow: hidden;
-  background: var(--flick-cream);
+  background: var(--flick-background);
 }
 
 button,
@@ -91,7 +91,7 @@ input:focus-visible {
   flex: 0 0 var(--flick-header-icon-size);
   place-items: center;
   border-radius: var(--flick-radius-brand-mark);
-  background: var(--flick-coral);
+  background: var(--flick-primary);
   box-shadow: 0 3px 0 var(--flick-navy);
 }
 
@@ -99,7 +99,7 @@ input:focus-visible {
   width: 22px;
   height: 22px;
   fill: none;
-  stroke: var(--flick-navy);
+  stroke: var(--flick-on-primary);
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-width: 2.5;
@@ -2657,7 +2657,7 @@ input:focus-visible {
   border-radius: var(--flick-radius-small);
 }
 .profile-account-types label { flex-direction: row; align-items: center; gap: 6px; }
-.profile-account-types input { width: 16px; min-height: 16px; height: 16px; padding: 0; accent-color: var(--flick-coral); }
+.profile-account-types input { width: 16px; min-height: 16px; height: 16px; padding: 0; accent-color: var(--flick-primary); }
 
 .apple-sign-in-button {
   display: flex;
@@ -2689,4 +2689,55 @@ input:focus-visible {
   background: var(--flick-cream);
   color: var(--flick-navy);
   font-weight: var(--flick-font-weight-extrabold);
+}
+
+/* eqlDrop primary treatment: amber surfaces always use ink, never white. */
+.add-file-button,
+.choose-files-button,
+.sign-in-button,
+.retry-download-button,
+.brand-mark,
+.home-tab[aria-selected="true"],
+.toggle[aria-checked="true"],
+.settings-segment[aria-checked="true"],
+.density-option[aria-checked="true"],
+.usage-bar-fill,
+.usage-bar-high .usage-bar-fill {
+  background: var(--flick-primary);
+  color: var(--flick-on-primary);
+}
+
+.add-file-button,
+.choose-files-button,
+.sign-in-button,
+.retry-download-button,
+.home-tab[aria-selected="true"],
+.settings-segment[aria-checked="true"],
+.density-option[aria-checked="true"] {
+  color: var(--flick-on-primary);
+}
+
+.brand-mark svg,
+.add-file-button svg,
+.choose-files-button svg,
+.sign-in-button svg,
+.home-tab[aria-selected="true"] svg {
+  stroke: var(--flick-on-primary);
+}
+
+.file-menu-item-share:hover:not(:disabled),
+.file-menu-item-share:focus-visible {
+  background: var(--flick-primary);
+  color: var(--flick-on-primary);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --flick-background: var(--flick-dark-background);
+    --flick-cream: var(--flick-dark-background);
+    --flick-white: #263447;
+    --flick-navy: #F9FAFB;
+    --flick-text: #F9FAFB;
+    --flick-muted: #CBD5E1;
+  }
 }

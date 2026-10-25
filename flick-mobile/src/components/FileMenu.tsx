@@ -59,7 +59,7 @@ export function FileMenu({ title, anchorY, items, onClose }: Props) {
             style={({ pressed }) => [styles.item, styles[item.fill], pressed && styles.pressed]}
           >
             {item.icon}
-            <Text style={styles.label}>{item.label}</Text>
+            <Text style={[styles.label, item.fill === "share" && styles.primaryLabel]}>{item.label}</Text>
           </Pressable>
         ))}
       </View>
@@ -106,7 +106,7 @@ const makeStyles = (c: Palette) =>
       backgroundColor: c.documentTile,
     },
     share: {
-      backgroundColor: c.archiveTile,
+      backgroundColor: c.accent,
     },
     pin: {
       backgroundColor: c.pinBadge,
@@ -121,5 +121,8 @@ const makeStyles = (c: Palette) =>
       color: c.onColor,
       fontFamily: tokens.fonts.extrabold,
       fontSize: tokens.fontSizes.body,
+    },
+    primaryLabel: {
+      color: c.onAccent,
     },
   });

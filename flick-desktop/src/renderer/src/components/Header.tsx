@@ -100,7 +100,8 @@ export default function Header({
           }}
         >
           <svg viewBox="0 0 32 32">
-            <path d="M10 22 22 10M12 10h10v10" />
+            <rect x="7" y="6" width="18" height="5" rx="2.5" fill="currentColor" stroke="none" />
+            <path d="M8.5 16h15L16 26Z" fill="currentColor" stroke="none" />
           </svg>
         </motion.div>
         <span className="brand-name">{APP_NAME}</span>

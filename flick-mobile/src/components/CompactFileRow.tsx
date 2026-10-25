@@ -66,7 +66,7 @@ const makeStyles = (c: Palette) =>
       shadowColor: c.shadow,
     },
     selected: {
-      backgroundColor: c.doneCard,
+      backgroundColor: c.accent,
     },
     icon: {
       width: tokens.compact.icon,
