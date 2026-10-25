@@ -16,7 +16,7 @@ export type AuthCallbackNotice = {
 };
 
 function authRedirectUrl(email?: string): string {
-  const redirect = new URL("flick://auth-callback");
+  const redirect = new URL("eqlshare://auth-callback");
   if (email) redirect.searchParams.set("email", email.trim());
   return redirect.toString();
 }
@@ -179,7 +179,7 @@ export function useSession() {
   }
 
   // Google via Supabase OAuth with PKCE: the system browser signs in and
-  // returns to the already-running app through flick://auth-callback.
+  // returns to the already-running app through eqlshare://auth-callback.
   async function handleGoogleSignIn(): Promise<void> {
     if (!supabase || googleInProgress.current) {
       return;
@@ -191,7 +191,7 @@ export function useSession() {
     googleAbort.current = controller;
     setIsGoogleSigningIn(true);
     try {
-      const redirectTo = "flick://auth-callback";
+      const redirectTo = "eqlshare://auth-callback";
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: { redirectTo, skipBrowserRedirect: true },

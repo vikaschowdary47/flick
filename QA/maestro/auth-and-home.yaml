@@ -1,0 +1,10 @@
+appId: dev.flickit.app
+---
+- launchApp
+- assertVisible: "Sign in to eqlShare"
+- assertVisible: "Sign in"
+- tapOn: "Don’t have an account? Sign up"
+- assertVisible: "Join eqlShare"
+- pressKey: BACK
+- assertVisible: "Sign in"
+

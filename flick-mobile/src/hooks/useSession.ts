@@ -23,7 +23,7 @@ export type AuthCallbackNotice = {
 };
 
 function authRedirectUrl(email?: string): string {
-  const redirect = makeRedirectUri({ scheme: "flick", path: "auth-callback" });
+  const redirect = makeRedirectUri({ scheme: "eqlshare", path: "auth-callback" });
   if (!email) return redirect;
   const url = new URL(redirect);
   url.searchParams.set("email", email.trim());

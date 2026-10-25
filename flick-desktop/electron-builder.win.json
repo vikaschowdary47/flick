@@ -15,6 +15,7 @@
     {
       "name": "eqlShare Authentication",
       "schemes": [
+        "eqlshare",
         "flick"
       ]
     }
@@ -64,5 +65,9 @@
       "from": "build/tray-windows-dark.png",
       "to": "tray-windows-dark.png"
     }
-  ]
+  ],
+  "electronLanguages": [
+    "en-US"
+  ],
+  "compression": "maximum"
 }

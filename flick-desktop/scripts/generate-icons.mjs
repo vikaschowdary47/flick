@@ -9,12 +9,13 @@ import { URL } from "node:url";
 import sharp from "sharp";
 
 const root = resolve(new URL("../..", import.meta.url).pathname);
-const svgPath = join(root, "eqlshare-icon.svg");
-const darkSvgPath = join(root, "eqlshare-icon-dark.svg");
-const monoSvgPath = join(root, "eqlshare-icon-mono.svg");
-const faviconSvgPath = join(root, "eqlshare-favicon.svg");
-const lockupLightSvgPath = join(root, "eqlshare-lockup-light.svg");
-const lockupDarkSvgPath = join(root, "eqlshare-lockup-dark.svg");
+const brand = join(root, "assets/brand");
+const svgPath = join(brand, "eqlshare-icon.svg");
+const darkSvgPath = join(brand, "eqlshare-icon-dark.svg");
+const monoSvgPath = join(brand, "eqlshare-icon-mono.svg");
+const faviconSvgPath = join(brand, "eqlshare-favicon.svg");
+const lockupLightSvgPath = join(brand, "eqlshare-lockup-light.svg");
+const lockupDarkSvgPath = join(brand, "eqlshare-lockup-dark.svg");
 const desktop = join(root, "flick-desktop");
 const mobile = join(root, "flick-mobile");
 const build = join(desktop, "build");
@@ -28,13 +29,20 @@ const lockupDarkSvg = await readFile(lockupDarkSvgPath, "utf8");
 
 const YELLOW = "#F5B83D";
 const INK = "#2B2210";
-const markSvg = (size, { safe = false, safeScale = 0.66, rounded = false, color = INK } = {}) => {
-  const scale = safe ? safeScale * size / 583 : size / 1024;
-  const offset = safe ? (size - 583 * scale) / 2 : 221 * scale;
-  const top = safe ? (size - 583 * scale) / 2 : 189 * scale;
-  const rx = rounded ? size * 0.18 : 0;
-  const bg = rounded ? `<rect width="${size}" height="${size}" rx="${rx}" fill="${YELLOW}"/>` : "";
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">${bg}<g fill="${color}" stroke="${color}" stroke-linejoin="round" transform="translate(${offset - 221 * scale} ${top - 189 * scale}) scale(${scale})"><rect x="221" y="189" width="583" height="126" rx="63" stroke="none"/><polygon points="260,433 764,433 512,772" stroke-width="79"/></g></svg>`;
+// The glyph (bar + rounded triangle) spans x 220..805, y 189..812 in the 1024 source,
+// so its visual centre is (512, 500). `glyphScale` is relative to the 1024 source.
+//   bg: "none" | "rounded" (Windows/Linux/legacy) | "circle" (Android round) | "mac" (macOS grid)
+const GLYPH = (color) => `<rect x="221" y="189" width="583" height="126" rx="63" fill="${color}"/><polygon points="260,433 764,433 512,772" fill="${color}" stroke="${color}" stroke-width="79" stroke-linejoin="round"/>`;
+const markSvg = (size, { glyphScale = 1, bg = "none", color = INK } = {}) => {
+  const k = size / 1024;
+  const backgrounds = {
+    none: "",
+    rounded: `<rect x="32" y="32" width="960" height="960" rx="200" fill="${YELLOW}"/>`,
+    circle: `<circle cx="512" cy="512" r="472" fill="${YELLOW}"/>`,
+    // macOS Big Sur+ icon grid: 824pt tile inside the 1024 canvas, with a soft shadow.
+    mac: `<defs><filter id="s" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur in="SourceAlpha" stdDeviation="14"/><feOffset dy="10" result="b"/><feComponentTransfer><feFuncA type="linear" slope="0.28"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><rect x="100" y="100" width="824" height="824" rx="185" fill="${YELLOW}" filter="url(#s)"/>`,
+  };
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><g transform="scale(${k})">${backgrounds[bg]}<g transform="translate(512 512) scale(${glyphScale}) translate(-512 -500)">${GLYPH(color)}</g></g></svg>`;
 };
 
 async function png(svg, size, options = {}) {
@@ -86,13 +94,22 @@ function ico(pngs) {
   return Buffer.concat([header, ...entries, ...pngs.map(({ data }) => data)]);
 }
 
-const full = await renderSvg(sourceSvg, 1024);
+// No alpha channel: App Store Connect rejects app icons that have one.
+const full = await sharp(await renderSvg(sourceSvg, 1024)).removeAlpha().png().toBuffer();
 const fullDark = await renderSvg(darkSvg, 1024);
 const mono = await renderSvg(monoSvg, 1024);
 const monoWhiteSvg = monoSvg.replaceAll("#000000", "#FFFFFF");
-const rounded = await png(markSvg, 1024, { rounded: true });
-const foreground = await png(markSvg, 1024, { safe: true });
-const monochrome = await renderSvg(monoSvg, 1024);
+// Windows/Linux/legacy Android: rounded tile with slim padding.
+const rounded = await png(markSvg, 1024, { bg: "rounded", glyphScale: 0.80 });
+const roundIcon = await png(markSvg, 1024, { bg: "circle", glyphScale: 0.70 });
+const macIcon = await png(markSvg, 1024, { bg: "mac", glyphScale: 0.70 });
+// Android adaptive layers: launchers show only the middle 72/108 and may crop to a
+// circle (66dp safe zone), so the glyph stays well inside it.
+const ADAPTIVE_GLYPH = 0.66;
+const foreground = await png(markSvg, 1024, { glyphScale: ADAPTIVE_GLYPH });
+const monochrome = await png(markSvg, 1024, { glyphScale: ADAPTIVE_GLYPH, color: "#000000" });
+// Notification icon: white silhouette on transparent, 96px (24dp @ xxxhdpi).
+const notification = await png(markSvg, 96, { glyphScale: 1.25, color: "#FFFFFF" });
 const background = await sharp({ create: { width: 1024, height: 1024, channels: 4, background: YELLOW } }).png().toBuffer();
 
 await save(join(mobile, "assets/icon.png"), full);
@@ -107,22 +124,23 @@ await save(join(mobile, "assets/favicon.png"), await renderSvg(faviconSvg, 512))
 await save(join(mobile, "assets/android-icon-background.png"), background);
 await save(join(mobile, "assets/android-icon-foreground.png"), foreground);
 await save(join(mobile, "assets/android-icon-monochrome.png"), monochrome);
-await save(join(mobile, "assets/notification-icon.png"), await renderSvg(monoWhiteSvg, 24));
-await save(join(mobile, "assets/android-icon-round.png"), rounded);
+await save(join(mobile, "assets/notification-icon.png"), notification);
+await save(join(mobile, "assets/android-icon-round.png"), roundIcon);
 await save(join(mobile, "assets/android-icon-legacy.png"), rounded);
 
 const densitySizes = { mdpi: 48, hdpi: 72, xhdpi: 96, xxhdpi: 144, xxxhdpi: 192 };
 for (const [density, size] of Object.entries(densitySizes)) {
   const dir = join(mobile, "android/app/src/main/res", `mipmap-${density}`);
-  await save(join(dir, "ic_launcher.webp"), await sharp(rounded).resize(size, size).webp().toBuffer());
-  await save(join(dir, "ic_launcher_round.webp"), await sharp(rounded).resize(size, size).webp().toBuffer());
-  await save(join(dir, "ic_launcher_background.webp"), await sharp(background).resize(size, size).webp().toBuffer());
-  await save(join(dir, "ic_launcher_foreground.webp"), await sharp(foreground).resize(size, size).webp().toBuffer());
-  await save(join(dir, "ic_launcher_monochrome.webp"), await sharp(monochrome).resize(size, size).webp().toBuffer());
+  const layer = Math.round(size * 108 / 48); // adaptive layers are 108dp, not 48dp
+  await save(join(dir, "ic_launcher.webp"), await sharp(rounded).resize(size, size).webp({ lossless: true }).toBuffer());
+  await save(join(dir, "ic_launcher_round.webp"), await sharp(roundIcon).resize(size, size).webp({ lossless: true }).toBuffer());
+  await save(join(dir, "ic_launcher_background.webp"), await sharp(background).resize(layer, layer).webp({ lossless: true }).toBuffer());
+  await save(join(dir, "ic_launcher_foreground.webp"), await sharp(foreground).resize(layer, layer).webp({ lossless: true }).toBuffer());
+  await save(join(dir, "ic_launcher_monochrome.webp"), await sharp(monochrome).resize(layer, layer).webp({ lossless: true }).toBuffer());
   await save(join(mobile, "android/app/src/main/res", `drawable-${density}`, "splashscreen_logo.png"), await sharp(full).resize(size, size).png().toBuffer());
   await save(join(mobile, "android/app/src/main/res", `drawable-${density}`, "splashscreen_logo_dark.png"), await sharp(fullDark).resize(size, size).png().toBuffer());
 }
-await save(join(mobile, "android/app/src/main/res/drawable/ic_notification.png"), await renderSvg(monoWhiteSvg, 24));
+await save(join(mobile, "android/app/src/main/res/drawable/ic_notification.png"), notification);
 
 const appIconSet = join(mobile, "ios/Flick/Images.xcassets/AppIcon.appiconset");
 await save(join(appIconSet, "App-Icon-1024x1024@1x.png"), full);
@@ -159,8 +177,8 @@ const iconset = join(build, "eqlshare.iconset");
 await rm(iconset, { recursive: true, force: true });
 await mkdir(iconset, { recursive: true });
 for (const size of [16, 32, 128, 256, 512, 1024]) {
-  await save(join(iconset, `icon_${size}x${size}.png`), await sharp(full).resize(size, size).png().toBuffer());
-  if (size <= 512) await save(join(iconset, `icon_${size}x${size}@2x.png`), await sharp(full).resize(size * 2, size * 2).png().toBuffer());
+  await save(join(iconset, `icon_${size}x${size}.png`), await sharp(macIcon).resize(size, size).png().toBuffer());
+  if (size <= 512) await save(join(iconset, `icon_${size}x${size}@2x.png`), await sharp(macIcon).resize(size * 2, size * 2).png().toBuffer());
 }
 try {
   execFileSync("iconutil", ["-c", "icns", iconset, "-o", join(build, "eqlshare.icns")], { stdio: "inherit" });
@@ -200,5 +218,12 @@ await save(join(desktopPublic, "manifest.webmanifest"), Buffer.from(JSON.stringi
     { src: "/pwa-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
   ],
 }, null, 2)));
+
+// Store listing icons (the feature graphic and Windows tiles in assets/store and
+// flick-desktop/build/appx are hand-made; regenerate them separately if the logo changes).
+const store = join(root, "assets/store");
+await save(join(store, "app-store/app-store-icon-1024.png"), full);
+await save(join(store, "play-store/play-store-icon-512.png"), await sharp(full).resize(512, 512).png().toBuffer());
+await save(join(store, "mac-app-store/mac-icon-1024.png"), macIcon);
 
 console.log("Generated eqlShare icons from", svgPath);

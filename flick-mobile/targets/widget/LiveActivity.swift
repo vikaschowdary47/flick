@@ -60,7 +60,7 @@ struct FlickLiveActivity: Widget {
         .activityBackgroundTint(FlickColor.cream)
         .activitySystemActionForegroundColor(FlickColor.navy)
         .foregroundStyle(FlickColor.navy)
-        .widgetURL(URL(string: "flick://open"))
+        .widgetURL(URL(string: "eqlshare://open"))
     } dynamicIsland: { context in
       DynamicIsland {
         DynamicIslandExpandedRegion(.leading) {
@@ -90,7 +90,7 @@ struct FlickLiveActivity: Widget {
       } minimal: {
         FlickCountBadge(count: context.state.count)
       }
-      .widgetURL(URL(string: "flick://open"))
+      .widgetURL(URL(string: "eqlshare://open"))
     }
   }
 }

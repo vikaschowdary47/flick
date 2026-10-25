@@ -20,7 +20,7 @@ ipcRenderer.on('settings:open', () => {
 })
 
 ipcRenderer.on('auth:callback', (_event, value: unknown) => {
-  if (typeof value !== 'string' || !value.startsWith('flick://auth-callback')) {
+  if (typeof value !== 'string' || !(value.startsWith('eqlshare://auth-callback') || value.startsWith('flick://auth-callback'))) {
     return
   }
   if (authCallbackListeners.size === 0) {

@@ -20,7 +20,7 @@ export type SnapshotItem = {
   expiresAt: string;
   pinned: boolean;
   thumb: string | null; // file name under thumbs/ in the shared container
-  url: string; // deep link: flick://file/<id> or flick://clip/<id>
+  url: string; // deep link: eqlshare://file/<id> or eqlshare://clip/<id>
 };
 
 export type WidgetSnapshot = {
@@ -78,7 +78,7 @@ export function buildSnapshot(input: {
     expiresAt: file.pinned ? "9999-12-31T00:00:00.000Z" : new Date(expiresAt(file)).toISOString(),
     pinned: file.pinned,
     thumb: input.thumbs[file.id] ?? null,
-    url: `flick://file/${file.id}`,
+    url: `eqlshare://file/${file.id}`,
   }));
   const clipItems: SnapshotItem[] = liveClips.map((clip) => ({
     id: clip.id,
@@ -91,7 +91,7 @@ export function buildSnapshot(input: {
     expiresAt: clip.expires_at,
     pinned: false,
     thumb: null,
-    url: `flick://clip/${clip.id}`,
+    url: `eqlshare://clip/${clip.id}`,
   }));
 
   // Pinned files first, then everything newest first.

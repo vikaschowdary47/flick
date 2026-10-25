@@ -28,6 +28,13 @@ body {
   background: var(--flick-background);
 }
 
+/* Desktop app: transparent page so nothing paints outside the rounded
+   .widget card (it has its own cream background). */
+:root.is-desktop-app,
+:root.is-desktop-app body {
+  background: transparent;
+}
+
 button,
 input {
   font: inherit;
@@ -1978,11 +1985,16 @@ input:focus-visible {
   padding: 0 10px;
 }
 
-.widget-compact .brand-lockup,
-.widget-compact .account-button {
+.widget-compact .brand-lockup {
   width: 130px;
   height: 30px;
   flex: 0 0 130px;
+}
+
+.widget-compact .account-button {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
 }
 
 .widget-compact .status-pill {
@@ -2026,15 +2038,20 @@ input:focus-visible {
   flex: 0 0 36px;
   gap: 8px;
   /* Room on the right for the avatar's ring and raised shadow. */
-  padding: 0 10px 0 8px;
+  padding: 0 12px 0 10px;
 }
 
 /* Lockup, status pill and avatar share one 28px height. */
-.widget-popover .brand-lockup,
-.widget-popover .account-button {
+.widget-popover .brand-lockup {
   width: 130px;
   height: 28px;
   flex: 0 0 130px;
+}
+
+.widget-popover .account-button {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
   box-shadow: 0 2px 0 var(--flick-navy);
 }
 
@@ -2047,6 +2064,7 @@ input:focus-visible {
   height: 28px;
   min-height: 28px;
   padding: 0 10px;
+  box-shadow: 0 2px 0 var(--flick-navy);
 }
 
 .widget-popover .header-actions {
@@ -2278,9 +2296,9 @@ input:focus-visible {
   place-items: center;
   border: 1.5px solid var(--flick-navy);
   border-radius: 9px;
-  background: var(--flick-coral);
+  background: var(--flick-primary);
   box-shadow: 0 2px 0 var(--flick-navy);
-  color: var(--flick-navy);
+  color: var(--flick-on-primary);
   font-weight: var(--flick-font-weight-extrabold);
 }
 

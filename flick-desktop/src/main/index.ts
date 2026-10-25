@@ -89,9 +89,9 @@ function handleAuthCallback(value: string): void {
 
 function registerProtocol(): void {
   if (isDevelopment && process.argv[1]) {
-    app.setAsDefaultProtocolClient("flick", process.execPath, [resolve(process.argv[1])]);
+    app.setAsDefaultProtocolClient("eqlshare", process.execPath, [resolve(process.argv[1])]);
   } else {
-    app.setAsDefaultProtocolClient("flick");
+    app.setAsDefaultProtocolClient("eqlshare");
   }
 }
 
@@ -523,7 +523,12 @@ function createWindow(): void {
     alwaysOnTop: true,
     frame: false,
     resizable: true,
-    backgroundColor: designTokens.colors.cream,
+    // macOS: a transparent, shadowless window so only our rounded card shows
+    // (otherwise the system's own corners, border and shadow peek out around it).
+    // Windows keeps a solid window: transparent windows can't be resized there.
+    ...(process.platform === "darwin"
+      ? { transparent: true, backgroundColor: "#00000000", hasShadow: false }
+      : { backgroundColor: designTokens.colors.cream }),
     webPreferences: {
       preload: join(currentDirectory, "../preload/index.cjs"),
       contextIsolation: true,

@@ -45,13 +45,15 @@ test('finds auth callback in cold and second-instance Windows arguments', () => 
   const callback = 'flick://auth-callback?code=test-code';
   assert.equal(findAuthCallback(['C:\\Program Files\\Flick\\Flick.exe', '--hidden', callback]), callback);
   assert.equal(findAuthCallback(['electron.exe', 'C:\\My App', callback]), callback);
-  for (const bad of ['flick://auth-callback.evil?code=x', 'https://auth-callback?code=x', 'flick://auth-callback/other', 'not a URL']) assert.equal(isAuthCallbackUrl(bad), false);
+  const current = 'eqlshare://auth-callback?code=test-code';
+  assert.equal(findAuthCallback(['eqlShare.exe', current]), current);
+  for (const bad of ['eqlshare://auth-callback.evil?code=x', 'eqlshare://auth-callback/other', 'flick://auth-callback.evil?code=x', 'https://auth-callback?code=x', 'flick://auth-callback/other', 'not a URL']) assert.equal(isAuthCallbackUrl(bad), false);
 });
 test('NSIS configuration uses the same app identity, protocol and exact installer name', () => {
   const config = JSON.parse(readFileSync(new URL('../electron-builder.win.json', import.meta.url)));
   assert.equal(config.appId, 'dev.flickit.desktop');
   assert.equal(config.nsis.artifactName, 'eqlShare-Setup.exe');
-  assert.deepEqual(config.protocols[0].schemes, ['flick']);
+  assert.deepEqual(config.protocols[0].schemes, ['eqlshare', 'flick']);
   assert.equal(config.nsis.createStartMenuShortcut, true);
   assert.deepEqual(config.extraResources, [
     { from: 'build/icon.ico', to: 'icon.ico' },

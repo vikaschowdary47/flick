@@ -1,7 +1,7 @@
 export function isAuthCallbackUrl(value: string): boolean {
   try {
     const url = new URL(value);
-    return url.protocol === 'flick:' && url.hostname === 'auth-callback'
+    return (url.protocol === 'eqlshare:' || url.protocol === 'flick:') && url.hostname === 'auth-callback'
       && (url.pathname === '' || url.pathname === '/') && !url.username && !url.password && !url.port;
   } catch { return false; }
 }

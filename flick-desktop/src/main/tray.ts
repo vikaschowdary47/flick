@@ -344,7 +344,23 @@ function showIn(next: WindowMode): void {
     return;
   }
   applyMode(window, next);
+  if (process.platform === "darwin") {
+    // Open on the desktop (Space) the user is on now, not the one the window was
+    // first shown on. Popover/panel stay on every Space; the main window is
+    // pulled to the current Space and then pinned there.
+    window.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true, skipTransformProcessType: true });
+  }
   window.show();
+  if (process.platform === "darwin") {
+    // A menu-bar (dock-less) app doesn't become active on its own, so the window
+    // never got focus: clicks outside didn't close it and the tray click re-opened it.
+    app.focus({ steal: true });
+    if (next === "main") {
+      setTimeout(() => {
+        if (!window.isDestroyed()) window.setVisibleOnAllWorkspaces(false, { skipTransformProcessType: true });
+      }, 100);
+    }
+  }
   window.focus();
   setArrivalDot(false);
   if (process.platform === "win32") void showWindowsTip(window);
@@ -384,9 +400,11 @@ export function togglePopover(source: "tray" | "shortcut" = "shortcut"): void {
     return;
   }
   const wanted = process.platform === "win32" ? "popover" : getSettings().showAs;
+  // macOS: the menu-bar icon is a toggle. If the popover/panel is showing, a click
+  // closes it, whether or not it currently has focus.
   const closeVisible = process.platform === "win32"
     ? window.isVisible() && window.isFocused()
-    : window.isVisible() && mode === wanted && (window.isFocused() || mode === "panel");
+    : window.isVisible() && (source === "tray" ? mode !== "main" || window.isFocused() : mode === wanted && (window.isFocused() || mode === "panel"));
   if (closeVisible) {
     window.hide();
   } else {

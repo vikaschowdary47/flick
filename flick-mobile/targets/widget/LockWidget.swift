@@ -76,7 +76,7 @@ struct FlickLockWidget: Widget {
     StaticConfiguration(kind: kind, provider: FlickProvider()) { entry in
       FlickLockView(entry: entry)
         .containerBackground(for: .widget) { Color.clear }
-        .widgetURL(URL(string: "flick://open"))
+        .widgetURL(URL(string: "eqlshare://open"))
     }
     .configurationDisplayName("eqlShare on the Lock Screen")
     .description("How many files and clips are waiting.")

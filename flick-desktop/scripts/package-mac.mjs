@@ -1,7 +1,7 @@
 // Local macOS test bundle. Distribution requires Developer ID signing/notarization.
 import process from 'node:process';
 import console from 'node:console';
-import { cp, mkdir, readFile, rename, writeFile } from 'node:fs/promises';
+import { cp, mkdir, readFile, readdir, rename, rm, writeFile } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
@@ -35,6 +35,17 @@ set('Add :CFBundleURLTypes array');
 set('Add :CFBundleURLTypes:0 dict');
 set('Add :CFBundleURLTypes:0:CFBundleURLName string eqlShare Authentication');
 set('Add :CFBundleURLTypes:0:CFBundleURLSchemes array');
-set('Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string flick');
+set('Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string eqlshare');
+set('Add :CFBundleURLTypes:0:CFBundleURLSchemes:1 string flick'); // old login links still in inboxes
+// Keep the app small: drop Electron's sample app and every UI language except English
+// (about 48 MB of Chromium locale files the app never uses).
+await rm(join(bundle, 'Contents/Resources/default_app.asar'), { force: true });
+const frameworkResources = join(bundle, 'Contents/Frameworks/Electron Framework.framework/Versions/A/Resources');
+for (const entry of await readdir(frameworkResources)) {
+  if (entry.endsWith('.lproj') && entry !== 'en.lproj') await rm(join(frameworkResources, entry), { recursive: true, force: true });
+}
+for (const entry of await readdir(join(bundle, 'Contents/Resources'))) {
+  if (entry.endsWith('.lproj') && entry !== 'en.lproj') await rm(join(bundle, 'Contents/Resources', entry), { recursive: true, force: true });
+}
 execFileSync('/usr/bin/codesign', ['--force', '--deep', '--sign', '-', bundle], { stdio: 'inherit' });
 console.log(`Built ${bundle}\nQuit development Electron before launching this bundle.\nThis ad-hoc signed bundle is for local testing, not distribution.`);

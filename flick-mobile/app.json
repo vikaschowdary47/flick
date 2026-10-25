@@ -65,6 +65,6 @@
       ],
       "@bacons/apple-targets"
     ],
-    "scheme": "flick"
+    "scheme": ["eqlshare", "flick"]
   }
 }

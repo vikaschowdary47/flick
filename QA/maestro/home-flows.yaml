@@ -1,0 +1,15 @@
+appId: dev.flickit.app
+---
+- launchApp
+- runFlow:
+    when:
+      visible: "Sign in"
+    file: auth-and-home.yaml
+- assertVisible: "Files"
+- assertVisible: "Clips"
+- tapOn: "Clips"
+- assertVisible: "Send clipboard"
+- tapOn: "Settings"
+- assertVisible: "Clipboard sharing"
+- pressKey: BACK
+

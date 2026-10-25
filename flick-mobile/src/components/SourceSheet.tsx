@@ -41,7 +41,12 @@ export function SourceSheet({ visible, onPick, onClose }: Props) {
         if (source) onPick(source);
       }}
     >
-      <Pressable accessibilityLabel="Close" style={styles.scrim} onPress={onClose} />
+      {/* Full-screen scrim behind the sheet, so the sheet's rounded top
+          corners show dimmed backdrop, not the bright app underneath. */}
+      <Pressable accessibilityLabel="Close" style={StyleSheet.absoluteFill} onPress={onClose}>
+        <View style={styles.scrim} />
+      </Pressable>
+      <View style={styles.spacer} pointerEvents="none" />
       <SafeAreaView edges={["bottom"]} style={styles.sheet}>
         <Text accessibilityRole="header" style={styles.heading}>
           What are you sending?
@@ -76,14 +81,21 @@ const makeStyles = (c: Palette) => ({
       flex: 1,
       backgroundColor: c.scrim,
     },
+    spacer: {
+      flex: 1,
+    },
     sheet: {
       gap: tokens.spacing.lg,
       padding: tokens.layout.screenPadding,
       borderTopLeftRadius: tokens.radii.window,
       borderTopRightRadius: tokens.radii.window,
       borderWidth: tokens.borderWidth.outline,
+      borderBottomWidth: 0,
       borderColor: c.outline,
       backgroundColor: c.background,
+      // Push the side outlines just off-screen: only the top edge and its
+      // rounded corners are outlined, nothing traces the phone's own corners.
+      marginHorizontal: -tokens.borderWidth.outline,
     },
     heading: {
       color: c.text,

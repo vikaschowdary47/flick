@@ -18,7 +18,7 @@ export function useAppleSignIn(setError: (message: string) => void) {
     setError("");
     try {
       const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: "apple", options: { redirectTo: "flick://auth-callback", skipBrowserRedirect: true },
+        provider: "apple", options: { redirectTo: "eqlshare://auth-callback", skipBrowserRedirect: true },
       });
       if (error || !data.url) throw error ?? new Error("Couldn't start Apple sign-in.");
       if (controller.signal.aborted) throw new Error("Apple sign-in was cancelled.");

@@ -26,3 +26,6 @@ coverage/
 .turbo/
 .vercel/
 *.tsbuildinfo
+
+# Windows Store tiles are source assets, not build output
+!flick-desktop/build/
