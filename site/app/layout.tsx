@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Nunito, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import "./share.css";
+import "./theme.css";
 
 const nunito = Nunito({ subsets: ["latin"], variable: "--font-body", display: "swap" });
 const space = Space_Grotesk({ subsets: ["latin"], variable: "--font-display", display: "swap" });
