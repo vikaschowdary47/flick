@@ -90,7 +90,7 @@ input:focus-visible {
   height: var(--flick-header-icon-size);
   flex: 0 0 var(--flick-header-icon-size);
   place-items: center;
-  border-radius: var(--flick-radius-brand-mark);
+  border-radius: 22%;
   background: var(--flick-primary);
 }
 
@@ -117,10 +117,15 @@ input:focus-visible {
 }
 
 .brand-name {
+  display: inline-flex;
   font-size: var(--flick-font-size-wordmark);
   font-weight: var(--flick-font-weight-extrabold);
   letter-spacing: -0.04em;
   line-height: 1;
+}
+
+.brand-name-muted {
+  color: color-mix(in srgb, var(--flick-text) 60%, transparent);
 }
 
 .header-actions {
@@ -191,10 +196,9 @@ input:focus-visible {
   width: var(--flick-button-target);
   height: var(--flick-button-target);
   place-items: center;
-  border: 1.5px solid var(--flick-navy);
+  border: 2px solid var(--flick-navy);
   border-radius: var(--flick-radius-circle);
   background: var(--flick-white);
-  box-shadow: var(--flick-button-shadow);
   cursor: pointer;
   transition:
     transform var(--flick-motion-duration) ease,
@@ -218,8 +222,7 @@ input:focus-visible {
 }
 
 .account-button:focus-visible {
-  outline: 2px solid var(--flick-navy);
-  outline-offset: 2px;
+  outline: none;
 }
 
 .account-popover {

@@ -8,16 +8,17 @@ type Props = { size?: number };
 export function LogoMark({ size = tokens.layout.logoMark }: Props) {
   const { scheme } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const radius = size * 0.22;
   return (
     <View
       accessibilityElementsHidden
       importantForAccessibility="no"
-      style={[styles.mark, { width: size, height: size, borderRadius: size * 0.34 }]}
+      style={[styles.mark, { width: size, height: size, borderRadius: radius }]}
     >
       <Image
         accessibilityIgnoresInvertColors
         source={scheme === "dark" ? require("../../assets/icon-dark.png") : require("../../assets/icon.png")}
-        style={[styles.image, { width: size, height: size, borderRadius: size * 0.34 }]}
+        style={[styles.image, { width: size, height: size, borderRadius: radius }]}
       />
     </View>
   );

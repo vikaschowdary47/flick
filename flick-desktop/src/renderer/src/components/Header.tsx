@@ -104,7 +104,10 @@ export default function Header({
             <img src="./icon.png" alt="" />
           </picture>
         </motion.div>
-        <span className="brand-name">{APP_NAME}</span>
+        <span className="brand-name">
+          <span className="brand-name-muted">{APP_NAME.slice(0, 3)}</span>
+          <span>{APP_NAME.slice(3)}</span>
+        </span>
       </div>
       )}
       <div className="header-actions">

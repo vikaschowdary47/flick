@@ -19,7 +19,8 @@ export function Header({ status, onMenu }: Props) {
       <View style={styles.brand}>
         <LogoMark />
         <Text accessibilityRole="header" style={styles.wordmark}>
-          {APP_NAME}
+          <Text style={styles.wordmarkMuted}>{APP_NAME.slice(0, 3)}</Text>
+          {APP_NAME.slice(3)}
         </Text>
       </View>
       <View style={styles.right}>
@@ -73,5 +74,9 @@ const makeStyles = (c: Palette) =>
       color: c.text,
       fontFamily: tokens.fonts.extrabold,
       fontSize: tokens.fontSizes.wordmark,
+    },
+    wordmarkMuted: {
+      color: c.text,
+      opacity: 0.6,
     },
   });
