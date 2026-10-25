@@ -92,7 +92,6 @@ input:focus-visible {
   place-items: center;
   border-radius: var(--flick-radius-brand-mark);
   background: var(--flick-primary);
-  box-shadow: 0 3px 0 var(--flick-navy);
 }
 
 .brand-mark picture,
@@ -216,6 +215,11 @@ input:focus-visible {
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-width: 1.8;
+}
+
+.account-button:focus-visible {
+  outline: 2px solid var(--flick-navy);
+  outline-offset: 2px;
 }
 
 .account-popover {
