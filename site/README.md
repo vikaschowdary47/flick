@@ -15,7 +15,7 @@ Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` in `.env.loca
 ## Supabase setup
 
 1. Create or open a Supabase project.
-2. In SQL Editor, run [`supabase/waitlist.sql`](./supabase/waitlist.sql).
+2. In SQL Editor, run [`supabase/waitlist.sql`](./supabase/waitlist.sql). This creates `marketing_waitlist`; it intentionally does not modify the app's existing `waitlist` table.
 3. Copy the project URL and anon key into `.env.local` (and later into Vercel environment variables).
 4. Confirm that the table has RLS enabled and that only the anonymous insert policy exists.
 
