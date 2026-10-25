@@ -1,9 +1,87 @@
 "use client";
 import { FormEvent, useState } from "react";
 import { supabase } from "../lib/supabase";
+
+type Status = "idle" | "loading" | "success" | "duplicate" | "invalid" | "config" | "failed";
+
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
 export function WaitlistForm({ compact = false }: { compact?: boolean }) {
-  const [email, setEmail] = useState(""); const [useType, setUseType] = useState(""); const [trap, setTrap] = useState(""); const [status, setStatus] = useState<"idle"|"loading"|"success"|"duplicate"|"config"|"error">("idle");
-  async function submit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); const normalizedEmail = email.trim().toLowerCase(); if (!normalizedEmail || !/^\S+@\S+\.\S+$/.test(normalizedEmail)) { setStatus("error"); return; } if (trap) { setStatus("success"); return; } if (!supabase) { setStatus("config"); return; } setStatus("loading"); const params = new URLSearchParams(window.location.search); const source = params.get("ref") || params.get("utm_source") || "direct"; const { error } = await supabase.from("marketing_waitlist").insert({ email: normalizedEmail, use_type: useType || null, source }); if (!error) { setStatus("success"); return; } setStatus(error.code === "23505" ? "duplicate" : "error"); }
-  if (status === "success") return <div className="form-success" role="status"><span>✦</span><div><strong>You’re on the list!</strong><small>We’ll let you know when eqlShare is ready.</small></div></div>;
-  return <form className={`waitlist-form ${compact ? "is-compact" : ""}`} onSubmit={submit} noValidate><div className="form-row"><label className="sr-only" htmlFor={`email-${compact ? "footer" : "hero"}`}>Email address</label><input id={`email-${compact ? "footer" : "hero"}`} type="email" required placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} /><select aria-label="Personal or Team use?" value={useType} onChange={(e) => setUseType(e.target.value)}><option value="">Personal or team?</option><option value="personal">Personal</option><option value="team">Team</option></select><button disabled={status === "loading"} type="submit">{status === "loading" ? "Joining…" : "Join the waitlist"}<span>↗</span></button></div><input className="honeypot" tabIndex={-1} autoComplete="off" aria-hidden="true" value={trap} onChange={(e) => setTrap(e.target.value)} />{status === "duplicate" && <p className="form-note">You’re already on the list — we’ve got you.</p>}{status === "config" && <p className="form-note error">The waitlist is not connected yet. Please try again soon.</p>}{status === "error" && <p className="form-note error">Please enter a valid email and try again.</p>}{!compact && <p className="form-note">No spam. Just a heads-up when we launch.</p>}</form>;
+  const [email, setEmail] = useState("");
+  const [useType, setUseType] = useState("");
+  const [trap, setTrap] = useState("");
+  const [status, setStatus] = useState<Status>("idle");
+  const [joined, setJoined] = useState("");
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (status === "loading") return;
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!EMAIL.test(normalizedEmail)) { setStatus("invalid"); return; }
+    // Bots fill the hidden field; pretend it worked and save nothing.
+    if (trap) { setJoined(normalizedEmail); setStatus("success"); return; }
+    if (!supabase) { setStatus("config"); return; }
+    setStatus("loading");
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const source = params.get("ref") || params.get("utm_source") || "direct";
+      const request = supabase.from("marketing_waitlist").insert({ email: normalizedEmail, use_type: useType || null, source });
+      const timeout = new Promise<{ error: { code: string } }>((resolve) => setTimeout(() => resolve({ error: { code: "timeout" } }), 12000));
+      const { error } = await Promise.race([request, timeout]);
+      if (!error || error.code === "23505") {
+        // Already on the list counts as success too: clear the form either way.
+        setJoined(normalizedEmail);
+        setEmail("");
+        setUseType("");
+        setStatus(error ? "duplicate" : "success");
+        return;
+      }
+      console.warn("Waitlist signup failed:", error);
+      setStatus("failed");
+    } catch (error) {
+      console.warn("Waitlist signup failed:", error);
+      setStatus("failed");
+    }
+  }
+
+  if (status === "success" || status === "duplicate") {
+    return (
+      <div className="form-success" role="status" aria-live="polite">
+        <span>✦</span>
+        <div>
+          <strong>{status === "success" ? "You're on the list!" : "You're already on the list."}</strong>
+          <small>We&apos;ll email {joined || "you"} when eqlShare is ready.</small>
+        </div>
+        <button type="button" className="form-success-again" onClick={() => { setStatus("idle"); setJoined(""); }}>Add another email</button>
+      </div>
+    );
+  }
+
+  const id = `email-${compact ? "footer" : "hero"}`;
+  return (
+    <form className={`waitlist-form ${compact ? "is-compact" : ""}`} onSubmit={submit} noValidate>
+      <div className="form-row">
+        <label className="sr-only" htmlFor={id}>Email address</label>
+        <input id={id} name="email" type="email" autoComplete="email" inputMode="email" required placeholder="you@example.com" value={email}
+          onChange={(e) => { setEmail(e.target.value); if (status !== "loading") setStatus("idle"); }}
+          aria-invalid={status === "invalid"} aria-describedby={`${id}-note`} />
+        <select aria-label="Personal or team use?" value={useType} onChange={(e) => setUseType(e.target.value)}>
+          <option value="">Personal or team?</option>
+          <option value="personal">Personal</option>
+          <option value="team">Team</option>
+        </select>
+        <button disabled={status === "loading"} type="submit">{status === "loading" ? "Joining…" : "Join the waitlist"}<span>↗</span></button>
+      </div>
+      {/* Hidden from people and autofill; only bots fill it. */}
+      <div className="honeypot" aria-hidden="true">
+        <label>Leave this empty<input tabIndex={-1} name="website_url_confirm" autoComplete="new-password" value={trap} onChange={(e) => setTrap(e.target.value)} /></label>
+      </div>
+      <p id={`${id}-note`} className={`form-note${["invalid", "config", "failed"].includes(status) ? " error" : ""}`} role={["invalid", "config", "failed"].includes(status) ? "alert" : undefined}>
+        {status === "invalid" && "Please enter a valid email address."}
+        {status === "config" && "The waitlist isn't connected yet. Please try again soon."}
+        {status === "failed" && <>Something went wrong on our side. Please try again, or email <a href="mailto:support@eqlshare.com">support@eqlshare.com</a>.</>}
+        {!["invalid", "config", "failed"].includes(status) && !compact && "No spam. Just a heads-up when we launch."}
+      </p>
+    </form>
+  );
 }

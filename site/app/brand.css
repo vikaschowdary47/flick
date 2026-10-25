@@ -33,3 +33,6 @@
   .cta-section .form-row button { background: var(--on-primary); color: #FFF8EE; }
   .cta-section .form-row button span { color: var(--primary); }
 }
+.form-success { flex-wrap: wrap; }
+.form-success-again { margin-left: auto; border: 0; background: none; font: inherit; font-size: 12px; font-weight: 800; color: var(--on-color); text-decoration: underline; cursor: pointer; }
+.form-note a { color: inherit; text-decoration: underline; }
