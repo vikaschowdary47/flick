@@ -16,6 +16,7 @@ import { tokens } from "../design/tokens";
 import type { AuthCallbackNotice } from "../hooks/useSession";
 import { LogoMark } from "./LogoMark";
 import { PillButton } from "./PillButton";
+import { GoogleIcon } from "./GoogleIcon";
 import { APP_NAME } from "../lib/appName";
 
 type Props = {
@@ -237,7 +238,13 @@ export function SignInScreen({
             <PillButton label={busy ? "Signing in…" : "Sign in"} onPress={submit} busy={busy} disabled={!canSubmit} />
             <Text style={styles.link} onPress={() => { setMode("resetRequest"); setError(null); }}>Forgot password?</Text>
             <Text style={styles.or}>or</Text>
-            <PillButton label="Continue with Google" variant="secondary" onPress={google} disabled={busy} />
+            <PillButton
+              label="Continue with Google"
+              variant="secondary"
+              onPress={google}
+              disabled={busy}
+              icon={<GoogleIcon />}
+            />
             {appleAvailable && <View pointerEvents={busy ? "none" : "auto"} accessibilityState={{ disabled: busy }}>
               <AppleAuthentication.AppleAuthenticationButton
                 buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}

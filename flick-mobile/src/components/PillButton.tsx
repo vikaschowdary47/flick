@@ -1,4 +1,5 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import type { ReactNode } from "react";
 import { useTheme, useThemedStyles } from "../design/ThemeProvider";
 import type { Palette } from "../design/theme";
 import { tokens } from "../design/tokens";
@@ -11,6 +12,7 @@ type Props = {
   size?: "regular" | "large";
   variant?: "primary" | "secondary";
   accessibilityHint?: string;
+  icon?: ReactNode;
 };
 
 export function PillButton({
@@ -21,6 +23,7 @@ export function PillButton({
   size = "regular",
   variant = "primary",
   accessibilityHint,
+  icon,
 }: Props) {
   const { palette } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -42,15 +45,18 @@ export function PillButton({
         inactive && styles.inactive,
       ]}
     >
-      {busy ? (
-        <ActivityIndicator color={secondary ? palette.text : palette.onAccent} />
-      ) : (
+      <View style={styles.content}>
+        {busy ? (
+          <ActivityIndicator color={secondary ? palette.text : palette.onAccent} />
+        ) : (
+          icon
+        )}
         <Text
           style={[styles.label, secondary && styles.secondaryLabel, size === "large" && styles.largeLabel]}
         >
           {label}
         </Text>
-      )}
+      </View>
     </Pressable>
   );
 }
@@ -66,6 +72,12 @@ const makeStyles = (c: Palette) =>
       borderColor: c.outline,
       alignItems: "center",
       justifyContent: "center",
+    },
+    content: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: tokens.spacing.sm,
     },
     secondary: {
       backgroundColor: c.card,
