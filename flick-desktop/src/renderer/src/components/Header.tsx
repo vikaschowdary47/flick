@@ -100,8 +100,8 @@ export default function Header({
           }}
         >
           <picture>
-            <source media="(prefers-color-scheme: dark)" srcSet="./lockup-dark.svg" />
-            <img src="./lockup-light.svg" alt={APP_NAME} />
+            <source media="(prefers-color-scheme: dark)" srcSet="./lockup-dark.png" />
+            <img src="./lockup-light.png" alt={APP_NAME} />
           </picture>
         </motion.div>
       </div>

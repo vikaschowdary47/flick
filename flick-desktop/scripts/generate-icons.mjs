@@ -45,6 +45,10 @@ async function renderSvg(svg, size) {
   return sharp(Buffer.from(svg)).resize(size, size).png().toBuffer();
 }
 
+async function renderLockup(svg) {
+  return sharp(Buffer.from(svg)).png().toBuffer();
+}
+
 async function fitSvg(svg, size, contentSize) {
   const content = await renderSvg(svg, contentSize);
   const offset = Math.floor((size - contentSize) / 2);
@@ -94,8 +98,8 @@ const background = await sharp({ create: { width: 1024, height: 1024, channels: 
 await save(join(mobile, "assets/icon.png"), full);
 await save(join(mobile, "assets/icon-dark.png"), fullDark);
 await save(join(mobile, "assets/icon-mono.png"), mono);
-await save(join(mobile, "assets/lockup-light.png"), await renderSvg(lockupLightSvg, 557));
-await save(join(mobile, "assets/lockup-dark.png"), await renderSvg(lockupDarkSvg, 557));
+await save(join(mobile, "assets/lockup-light.png"), await renderLockup(lockupLightSvg));
+await save(join(mobile, "assets/lockup-dark.png"), await renderLockup(lockupDarkSvg));
 await save(join(mobile, "assets/splash-icon.png"), full);
 await save(join(mobile, "assets/splash-icon-dark.png"), fullDark);
 await save(join(mobile, "assets/favicon.svg"), Buffer.from(faviconSvg));
@@ -180,6 +184,8 @@ await save(join(desktopPublic, "icon.png"), full);
 await save(join(desktopPublic, "icon-dark.png"), fullDark);
 await save(join(desktopPublic, "lockup-light.svg"), Buffer.from(lockupLightSvg));
 await save(join(desktopPublic, "lockup-dark.svg"), Buffer.from(lockupDarkSvg));
+await save(join(desktopPublic, "lockup-light.png"), await renderLockup(lockupLightSvg));
+await save(join(desktopPublic, "lockup-dark.png"), await renderLockup(lockupDarkSvg));
 await save(join(desktopPublic, "manifest.webmanifest"), Buffer.from(JSON.stringify({
   name: "eqlShare",
   short_name: "eqlShare",
