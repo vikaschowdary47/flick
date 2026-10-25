@@ -15,7 +15,9 @@ interface HeaderProps {
   isOnline: boolean;
   onSignOut: () => void;
   onDeleteAccount?: () => Promise<string | null>;
-  setIsAccountMenuOpen: (isOpen: boolean | ((current: boolean) => boolean)) => void;
+  setIsAccountMenuOpen: (
+    isOpen: boolean | ((current: boolean) => boolean),
+  ) => void;
   session: Session | null;
   arrivalPulse: number;
   deviceName?: string | null;
@@ -61,8 +63,10 @@ export default function Header({
   const prefersReducedMotion = useReducedMotion();
   const [draftName, setDraftName] = useState(deviceName ?? "");
   const [nameError, setNameError] = useState("");
-  const [isDarkMode, setIsDarkMode] = useState(() =>
-    typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches,
+  const [isDarkMode, setIsDarkMode] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches,
   );
 
   useEffect(() => {
@@ -94,28 +98,28 @@ export default function Header({
           ← Back
         </button>
       ) : (
-      <div className="brand">
-        <motion.div
-          className="brand-lockup"
-          aria-hidden="true"
-          animate={
-            arrivalPulse > 0 && !prefersReducedMotion
-              ? { rotate: [0, -7, 5, 0] }
-              : { rotate: 0 }
-          }
-          transition={{
-            type: "spring",
-            stiffness: designTokens.springs.newCard.stiffness,
-            damping: designTokens.springs.newCard.damping,
-            mass: designTokens.springs.newCard.mass,
-          }}
-        >
-          <img
-            src={isDarkMode ? "./lockup-dark.png" : "./lockup-light.png"}
-            alt={APP_NAME}
-          />
-        </motion.div>
-      </div>
+        <div className="brand">
+          <motion.div
+            className="brand-lockup"
+            aria-hidden="true"
+            animate={
+              arrivalPulse > 0 && !prefersReducedMotion
+                ? { rotate: [0, -7, 5, 0] }
+                : { rotate: 0 }
+            }
+            transition={{
+              type: "spring",
+              stiffness: designTokens.springs.newCard.stiffness,
+              damping: designTokens.springs.newCard.damping,
+              mass: designTokens.springs.newCard.mass,
+            }}
+          >
+            <img
+              src={isDarkMode ? "./lockup-light.png" : "./lockup-light.png"}
+              alt={APP_NAME}
+            />
+          </motion.div>
+        </div>
       )}
       <div className="header-actions">
         {onPopOut && (
@@ -148,8 +152,8 @@ export default function Header({
             !isOnline
               ? "status-pill-offline"
               : session
-                ? "status-pill-connected"
-                : "status-pill-signed-out"
+              ? "status-pill-connected"
+              : "status-pill-signed-out"
           }`}
           role="status"
         >
@@ -165,7 +169,9 @@ export default function Header({
             aria-controls={isAccountMenuOpen ? "account-menu" : undefined}
             title="Account"
             onClick={() =>
-              onOpenSettings ? onOpenSettings() : setIsAccountMenuOpen((isOpen) => !isOpen)
+              onOpenSettings
+                ? onOpenSettings()
+                : setIsAccountMenuOpen((isOpen) => !isOpen)
             }
           >
             <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -194,7 +200,11 @@ export default function Header({
                     </span>
                   )}
                   {onDensityChange && (
-                    <div className="density-setting" role="radiogroup" aria-label="Density">
+                    <div
+                      className="density-setting"
+                      role="radiogroup"
+                      aria-label="Density"
+                    >
                       <span className="density-label">Density</span>
                       {(["comfy", "compact"] as const).map((value) => (
                         <button
@@ -209,7 +219,9 @@ export default function Header({
                         </button>
                       ))}
                       {windowMode !== "main" && (
-                        <span className="density-note">The menu bar popover and panel are always compact.</span>
+                        <span className="density-note">
+                          The menu bar popover and panel are always compact.
+                        </span>
                       )}
                     </div>
                   )}
@@ -218,13 +230,17 @@ export default function Header({
                       <input
                         type="checkbox"
                         checked={clipboardSharing}
-                        onChange={(event) => onClipboardSharingChange(event.target.checked)}
+                        onChange={(event) =>
+                          onClipboardSharingChange(event.target.checked)
+                        }
                       />
                       <span>
                         <strong>Clipboard sharing</strong>
                         <br />
-                        Share text and links between your devices. {APP_NAME} only reads your
-                        clipboard when you tap Send clipboard.
+                        Share text and links between your devices. {
+                          APP_NAME
+                        }{" "}
+                        only reads your clipboard when you tap Send clipboard.
                       </span>
                     </label>
                   )}
@@ -256,7 +272,9 @@ export default function Header({
                       )}
                     </form>
                   )}
-                  {onDeleteAccount && <DeleteAccount onDelete={onDeleteAccount} />}
+                  {onDeleteAccount && (
+                    <DeleteAccount onDelete={onDeleteAccount} />
+                  )}
                   <button
                     className="sign-out-button"
                     type="button"
