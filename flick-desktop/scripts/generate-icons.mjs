@@ -17,8 +17,8 @@ const sourceSvg = await readFile(svgPath, "utf8");
 
 const YELLOW = "#F5B83D";
 const INK = "#2B2210";
-const markSvg = (size, { safe = false, rounded = false, color = INK } = {}) => {
-  const scale = safe ? 0.66 * size / 583 : size / 1024;
+const markSvg = (size, { safe = false, safeScale = 0.66, rounded = false, color = INK } = {}) => {
+  const scale = safe ? safeScale * size / 583 : size / 1024;
   const offset = safe ? (size - 583 * scale) / 2 : 221 * scale;
   const top = safe ? (size - 583 * scale) / 2 : 189 * scale;
   const rx = rounded ? size * 0.18 : 0;
@@ -88,7 +88,9 @@ await save(join(mobile, "ios/Flick/Images.xcassets/AppIcon.appiconset/App-Icon-1
 
 const icoSizes = [16, 24, 32, 48, 64, 96, 128, 256];
 await save(join(build, "icon.ico"), ico(await Promise.all(icoSizes.map(async (size) => ({ size, data: await sharp(rounded).resize(size, size).png().toBuffer() })))));
-const trayTemplate = await png(markSvg, 32, { safe: false, color: "#000000" });
+// Keep the menu-bar mark visually aligned with neighboring macOS status icons.
+// This is intentionally smaller than the app/adaptive icon safe zone.
+const trayTemplate = await png(markSvg, 32, { safe: true, safeScale: 0.50, color: "#000000" });
 await save(join(build, "tray-template.png"), trayTemplate);
 await save(join(build, "tray-template-dot.png"), await sharp(trayTemplate).composite([
   { input: Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"><circle cx="27" cy="5" r="3" fill="#F5B83D"/></svg>') },
