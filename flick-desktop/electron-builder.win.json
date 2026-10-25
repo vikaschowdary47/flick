@@ -55,6 +55,14 @@
     {
       "from": "build/tray-template-dot.png",
       "to": "tray-template-dot.png"
+    },
+    {
+      "from": "build/tray-windows-light.png",
+      "to": "tray-windows-light.png"
+    },
+    {
+      "from": "build/tray-windows-dark.png",
+      "to": "tray-windows-dark.png"
     }
   ]
 }

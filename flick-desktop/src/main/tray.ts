@@ -6,6 +6,7 @@ import {
   ipcMain,
   Menu,
   nativeImage,
+  nativeTheme,
   type NativeImage,
   screen,
   Tray,
@@ -36,9 +37,8 @@ let lastPopoverBlurHideAt = 0;
 let extraMenuItems: () => Electron.MenuItemConstructorOptions[] = () => [];
 
 // ---- icon ------------------------------------------------------------------
-// Drawn in code (like the drag icon) so there are no image assets to ship.
-// macOS: a black "template" arrow that the menu bar recolors for light/dark.
-// Windows/Linux: the coral sticker mark with a navy arrow.
+// macOS uses the monochrome template mark. Windows switches between black and
+// white marks as the system taskbar theme changes.
 
 function hexToRgb(hex: string): [number, number, number] {
   const value = Number.parseInt(hex.replace("#", ""), 16);
@@ -125,6 +125,12 @@ function trayImage(dot: boolean): NativeImage {
   const image = nativeImage.createFromPath(asset);
   image.setTemplateImage(true);
   return image;
+}
+
+function windowsTrayImage(): NativeImage {
+  const name = nativeTheme.shouldUseDarkColors ? "tray-windows-dark.png" : "tray-windows-light.png";
+  const asset = app.isPackaged ? join(process.resourcesPath, name) : join(app.getAppPath(), "build", name);
+  return nativeImage.createFromPath(asset);
 }
 
 // ---- window modes ------------------------------------------------------------
@@ -506,7 +512,7 @@ export function setupTray(windowGetter: () => BrowserWindow | null): void {
   }
 
   tray = process.platform === "win32"
-    ? new Tray((app.isPackaged ? join(process.resourcesPath, "icon.ico") : join(app.getAppPath(), "build/icon.ico")), "649d5631-5781-49ee-a2a0-c2a306bc4163")
+    ? new Tray(windowsTrayImage(), "649d5631-5781-49ee-a2a0-c2a306bc4163")
     : new Tray(trayImage(false));
   tray.setToolTip(APP_NAME);
   tray.on("click", () => togglePopover("tray"));
@@ -514,6 +520,9 @@ export function setupTray(windowGetter: () => BrowserWindow | null): void {
   // Linux AppIndicator has no click events, only a menu: always attach it.
   if (process.platform === "linux") {
     tray.setContextMenu(buildMenu());
+  }
+  if (process.platform === "win32") {
+    nativeTheme.on("updated", () => tray?.setImage(windowsTrayImage()));
   }
 
   const shortcut = process.platform === "win32" ? normalizeWindowsShortcut(getSettings().windowsShortcut) ?? "Ctrl+Shift+Space" : TOGGLE_SHORTCUT;

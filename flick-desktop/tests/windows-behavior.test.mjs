@@ -57,6 +57,8 @@ test('NSIS configuration uses the same app identity, protocol and exact installe
     { from: 'build/icon.ico', to: 'icon.ico' },
     { from: 'build/tray-template.png', to: 'tray-template.png' },
     { from: 'build/tray-template-dot.png', to: 'tray-template-dot.png' },
+    { from: 'build/tray-windows-light.png', to: 'tray-windows-light.png' },
+    { from: 'build/tray-windows-dark.png', to: 'tray-windows-dark.png' },
   ]);
   const icon = readFileSync(new URL('../build/icon.ico', import.meta.url));
   assert.equal(icon.readUInt16LE(2), 1);

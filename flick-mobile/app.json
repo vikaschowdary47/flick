@@ -19,6 +19,10 @@
       },
       "usesAppleSignIn": true
     },
+    "notification": {
+      "icon": "./assets/notification-icon.png",
+      "color": "#F5B83D"
+    },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#F5B83D",
@@ -30,12 +34,25 @@
       "package": "dev.flickit.app"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "themeColor": "#F5B83D"
     },
     "plugins": [
       "expo-font",
       "expo-status-bar",
       "expo-sharing",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#FFF8EE",
+          "image": "./assets/splash-icon.png",
+          "dark": {
+            "backgroundColor": "#1F2937",
+            "image": "./assets/splash-icon-dark.png"
+          },
+          "resizeMode": "contain"
+        }
+      ],
       "expo-web-browser",
       "expo-apple-authentication",
       [

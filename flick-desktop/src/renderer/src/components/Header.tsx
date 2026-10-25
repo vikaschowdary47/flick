@@ -99,10 +99,10 @@ export default function Header({
             mass: designTokens.springs.newCard.mass,
           }}
         >
-          <svg viewBox="0 0 32 32">
-            <rect x="7" y="6" width="18" height="5" rx="2.5" fill="currentColor" stroke="none" />
-            <path d="M8.5 16h15L16 26Z" fill="currentColor" stroke="none" />
-          </svg>
+          <picture>
+            <source media="(prefers-color-scheme: dark)" srcSet="/icon-dark.png" />
+            <img src="/icon.png" alt="" />
+          </picture>
         </motion.div>
         <span className="brand-name">{APP_NAME}</span>
       </div>
