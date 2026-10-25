@@ -166,12 +166,12 @@ export function useSession() {
         password,
       });
       if (error) {
-        setAuthError(error.message);
+        setAuthError(friendlyAuthError(error.message));
       }
     } catch (error: unknown) {
       console.error(`Could not sign in to ${APP_NAME}:`, error);
       setAuthError(
-        error instanceof Error ? error.message : `Could not sign in to ${APP_NAME}.`,
+        error instanceof Error ? friendlyAuthError(error.message) : `Could not sign in to ${APP_NAME}.`,
       );
     } finally {
       setIsSigningIn(false);
@@ -358,12 +358,12 @@ export function useSession() {
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error(`Could not sign out of ${APP_NAME}:`, error);
-        setAuthError(error.message);
+        setAuthError(friendlyAuthError(error.message));
       }
     } catch (error: unknown) {
       console.error(`Could not sign out of ${APP_NAME}:`, error);
       setAuthError(
-        error instanceof Error ? error.message : `Could not sign out of ${APP_NAME}.`,
+        error instanceof Error ? friendlyAuthError(error.message) : `Could not sign out of ${APP_NAME}.`,
       );
     }
   }
@@ -414,6 +414,7 @@ export function useSession() {
 }
 
 function friendlyAuthError(message: string): string {
+  if (/\b504\b|gateway timeout|timed out|timeout|5\d\d/.test(message)) return `Can't reach ${APP_NAME} right now. Please try again in a moment.`;
   if (/cancel|dismiss|closed|access_denied/i.test(message)) return "Google sign-in was cancelled.";
   if (/network|fetch/i.test(message)) return `Can't reach ${APP_NAME} right now. Check your connection.`;
   return message || "Could not sign in with Google.";

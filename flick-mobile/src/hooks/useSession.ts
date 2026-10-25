@@ -310,6 +310,7 @@ export function useSession() {
 }
 
 function friendlyAuthError(message: string): string {
+  if (/\b504\b|gateway timeout|timed out|timeout|5\d\d/.test(message)) return `Can't reach ${APP_NAME} right now. Please try again in a moment.`;
   if (/invalid login credentials/i.test(message)) return "That email or password didn't match.";
   if (/network|fetch/i.test(message)) return `Can't reach ${APP_NAME} right now. Check your connection.`;
   if (/email not confirmed/i.test(message)) return "Confirm your email first, then try again.";
