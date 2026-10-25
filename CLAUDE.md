@@ -34,7 +34,7 @@ This folder is the phone app (`flick-mobile`). The desktop app lives in a separa
 
 ## Upload flow
 
-1. User taps "Flick it" and picks a file with the document picker.
+1. User taps "eqlShare it" and picks a file with the document picker.
 2. Reject files over 50 MB with a friendly message.
 3. Upload to bucket `flick-files` at `<user_id>/<uuid>-<filename>`. React Native can't upload a plain File object, so read the file as an ArrayBuffer (via `expo-file-system`) before uploading.
 4. Insert a row in `files` (name, size, mime_type, storage_path, user_id).
@@ -47,12 +47,12 @@ Follow DESIGN.md in this folder (playful look: cream, coral, yellow, mint, lilac
 - All colors, radii, font names, sizes, shadow, and spring values live in `src/design/tokens.ts`. Never hard-code values.
 - Text on coral is navy, not white.
 - Touch targets at least 44px. Respect safe areas. Haptic tap on send and receive (later).
-- Mobile screen: wordmark and status pill, heading "Flick it to all your devices", selected file as a sticker card, "RECENTLY SENT" list with "Got it!" badges, and a large coral "Flick it" pill button in the thumb zone.
+- Mobile screen: wordmark and status pill, heading "eqlShare it to all your devices", selected file as a sticker card, "RECENTLY SENT" list with "Got it!" badges, and a large amber "eqlShare it" pill button in the thumb zone.
 
 ## Build order (one step at a time, stop and let me check after each)
 
 1. Expo project, tokens, Nunito, Supabase client, `useSession` hook.
-2. Sign-in screen and home screen (header, status pill, "Flick it" button), no uploads yet.
+2. Sign-in screen and home screen (header, status pill, "eqlShare it" button), no uploads yet.
 3. Upload flow (above) and card states.
 4. "Recently sent" list from the `files` table.
 5. Polish: sticker-card tilt, springy animations, haptics, reduced-motion support.

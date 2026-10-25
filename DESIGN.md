@@ -62,5 +62,5 @@ Empty state: "Nothing yet. Flick something over!"
 
 ## Mobile notes (later)
 - Same tokens, fonts, and microcopy.
-- Screen: wordmark and status pill ("2 devices online"), heading "Flick it to all your devices", the selected file as a lilac sticker card, a "RECENTLY SENT" list with "Got it!" badges, and a large coral "Flick it" pill button in the thumb zone.
+- Screen: wordmark and status pill ("2 devices online"), heading "eqlShare it to all your devices", the selected file as a lilac sticker card, a "RECENTLY SENT" list with "Got it!" badges, and a large amber "eqlShare it" pill button in the thumb zone.
 - Haptic tap on send and receive. Respect safe areas.

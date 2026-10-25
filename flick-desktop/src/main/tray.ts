@@ -19,7 +19,7 @@ import { APP_NAME } from "../shared/appName";
 import { type Bounds, getSettings, type ShowAs, updateSettings } from "./settings";
 
 // Menu bar (macOS) / system tray (Windows, Linux): the icon opens Flick as a
-// popover or a floating panel; "Open eqlDrop" opens the resizable main window.
+// popover or a floating panel; "Open eqlShare" opens the resizable main window.
 // The window stays alive while hidden, so files arriving in the background
 // are already listed.
 
@@ -137,7 +137,7 @@ function windowsTrayImage(): NativeImage {
 // One window (it does the syncing, so there is only ever one) shown three ways:
 // - popover: under the tray icon, compact, ~8 recent items, hides on click-away
 // - panel:   always-on-top floating mini panel, movable, stays open
-// - main:    resizable window from "Open eqlDrop", remembers its size
+// - main:    resizable window from "Open eqlShare", remembers its size
 export type WindowMode = "popover" | "panel" | "main";
 
 // The popover sizes itself to its content (the page reports its height),
@@ -147,7 +147,7 @@ const POPOVER_WIDTH = 360;
 const POPOVER_MIN_HEIGHT = 140;
 const POPOVER_MAX_HEIGHT = 560;
 const POPOVER_MAX_SHARE = 0.65; // of the screen's work area height
-// "Open eqlDrop" makes the same popover taller (never wider), up to this.
+// "Open eqlShare" makes the same popover taller (never wider), up to this.
 const EXPANDED_MAX_HEIGHT = 680;
 const EXPANDED_MAX_SHARE = 0.8;
 const RESIZE_MS = 180;
@@ -218,7 +218,7 @@ function fitPopover(window: BrowserWindow, animate = false): void {
   }, 1000 / 60);
 }
 
-// Ask the page to switch layouts ("Open eqlDrop" from the tray menu, or the
+// Ask the page to switch layouts ("Open eqlShare" from the tray menu, or the
 // reset on hide). The page renders, measures, and reports back with
 // popover:content-height, which does the resize.
 function requestPopoverExpanded(expanded: boolean): void {
@@ -370,7 +370,7 @@ export function showPopover(): void {
   showIn(process.platform === "win32" ? "popover" : getSettings().showAs);
 }
 
-// "Open eqlDrop": the resizable main window.
+// "Open eqlShare": the resizable main window.
 export function openMainWindow(): void {
   showIn("main");
 }
@@ -642,7 +642,7 @@ export function setupWindowModeIpc(): void {
   });
   // The popover page reports its natural height whenever its list changes.
   // The page reports its natural height and layout after every change. A
-  // layout change (Open eqlDrop / Show less) animates; anything else snaps.
+  // layout change (Open eqlShare / Show less) animates; anything else snaps.
   ipcMain.on("popover:content-height", (_event, height: unknown, expanded: unknown) => {
     if (typeof height !== "number" || !Number.isFinite(height)) {
       return;

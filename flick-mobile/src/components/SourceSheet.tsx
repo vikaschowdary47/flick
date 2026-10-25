@@ -18,7 +18,7 @@ const OPTIONS: { source: UploadSource; label: string; hint: string; fill: keyof 
   { source: "camera", label: "Take photo", hint: "Open the camera", fill: "archiveTile" },
 ];
 
-// Small sticker-style sheet that opens from the "eqlDrop it" button.
+// Small sticker-style sheet that opens from the "eqlShare it" button.
 export function SourceSheet({ visible, onPick, onClose }: Props) {
   const styles = useThemedStyles(makeStyles);
   // iOS can't present the picker while this sheet is still sliding away,

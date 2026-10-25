@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "eqlDrop",
+    "name": "eqlShare",
     "slug": "flick-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -58,8 +58,8 @@
       [
         "expo-image-picker",
         {
-        "photosPermission": "eqlDrop opens your photos so you can send the ones you pick to your other devices.",
-        "cameraPermission": "eqlDrop uses the camera when you tap Take photo, so you can send the picture to your other devices.",
+        "photosPermission": "eqlShare opens your photos so you can send the ones you pick to your other devices.",
+        "cameraPermission": "eqlShare uses the camera when you tap Take photo, so you can send the picture to your other devices.",
           "microphonePermission": false
         }
       ],

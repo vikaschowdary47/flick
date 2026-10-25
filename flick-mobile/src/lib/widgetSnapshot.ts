@@ -33,7 +33,7 @@ export type WidgetSnapshot = {
   latestClip: { id: string; content: string } | null;
   // Lock Screen shows counts only unless the user turned this on.
   showContentOnLockScreen: boolean;
-  // A widget that's switched off in Settings shows "Turned off in eqlDrop"
+  // A widget that's switched off in Settings shows "Turned off in eqlShare"
   // (iOS doesn't let apps remove widgets the user placed).
   homeEnabled: boolean;
   lockEnabled: boolean;

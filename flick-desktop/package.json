@@ -41,6 +41,6 @@
     "typescript-eslint": "^8.35.0",
     "vite": "^7.0.0"
   },
-  "description": "eqlDrop file and clipboard sharing desktop tray app",
-  "author": "eqlDrop"
+  "description": "eqlShare file and clipboard sharing desktop tray app",
+  "author": "eqlShare"
 }

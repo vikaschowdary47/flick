@@ -84,48 +84,19 @@ input:focus-visible {
 .brand {
   gap: 9px;
 }
-.brand-mark {
+.brand-lockup {
   display: grid;
-  width: var(--flick-header-icon-size);
-  height: var(--flick-header-icon-size);
-  flex: 0 0 var(--flick-header-icon-size);
+  width: 148px;
+  height: 32px;
+  flex: 0 0 148px;
   place-items: center;
-  border-radius: 22%;
-  background: var(--flick-primary);
 }
 
-.brand-mark picture,
-.brand-mark img {
+.brand-lockup picture,
+.brand-lockup img {
   width: 100%;
   height: 100%;
   display: block;
-}
-
-.brand-mark img {
-  border-radius: inherit;
-  object-fit: cover;
-}
-
-.brand-mark svg {
-  width: 22px;
-  height: 22px;
-  fill: none;
-  stroke: var(--flick-on-primary);
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 2.5;
-}
-
-.brand-name {
-  display: inline-flex;
-  font-size: var(--flick-font-size-wordmark);
-  font-weight: var(--flick-font-weight-extrabold);
-  letter-spacing: -0.04em;
-  line-height: 1;
-}
-
-.brand-name-muted {
-  color: color-mix(in srgb, var(--flick-text) 60%, transparent);
 }
 
 .header-actions {
@@ -2007,11 +1978,11 @@ input:focus-visible {
   padding: 0 10px;
 }
 
-.widget-compact .brand-mark,
+.widget-compact .brand-lockup,
 .widget-compact .account-button {
-  width: 30px;
+  width: 130px;
   height: 30px;
-  flex: 0 0 30px;
+  flex: 0 0 130px;
 }
 
 .widget-compact .status-pill {
@@ -2058,16 +2029,15 @@ input:focus-visible {
   padding: 0 10px 0 8px;
 }
 
-/* Logo tile, status pill and avatar share one 28px height. */
-.widget-popover .brand-mark,
+/* Lockup, status pill and avatar share one 28px height. */
+.widget-popover .brand-lockup,
 .widget-popover .account-button {
-  width: 28px;
+  width: 130px;
   height: 28px;
-  flex: 0 0 28px;
+  flex: 0 0 130px;
   box-shadow: 0 2px 0 var(--flick-navy);
 }
 
-.widget-popover .brand-mark svg,
 .widget-popover .account-button svg {
   width: 16px;
   height: 16px;
@@ -2085,10 +2055,6 @@ input:focus-visible {
 
 .widget-popover .account-button[aria-expanded="true"] {
   transform: none;
-}
-
-.widget-popover .brand-name {
-  font-size: 18px;
 }
 
 .widget-popover .content {
@@ -2710,12 +2676,11 @@ input:focus-visible {
   font-weight: var(--flick-font-weight-extrabold);
 }
 
-/* eqlDrop primary treatment: amber surfaces always use ink, never white. */
+/* eqlShare primary treatment: amber surfaces always use ink, never white. */
 .add-file-button,
 .choose-files-button,
 .sign-in-button,
 .retry-download-button,
-.brand-mark,
 .home-tab[aria-selected="true"],
 .toggle[aria-checked="true"],
 .settings-segment[aria-checked="true"],
@@ -2736,7 +2701,6 @@ input:focus-visible {
   color: var(--flick-on-primary);
 }
 
-.brand-mark svg,
 .add-file-button svg,
 .choose-files-button svg,
 .sign-in-button svg,

@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
   "appId": "dev.flickit.desktop",
-  "productName": "eqlDrop",
+  "productName": "eqlShare",
   "asar": true,
   "directories": {
     "output": "dist/windows",
@@ -13,7 +13,7 @@
   ],
   "protocols": [
     {
-      "name": "eqlDrop Authentication",
+      "name": "eqlShare Authentication",
       "schemes": [
         "flick"
       ]
@@ -29,16 +29,16 @@
       }
     ],
     "icon": "build/icon.ico",
-    "executableName": "eqlDrop"
+    "executableName": "eqlShare"
   },
   "nsis": {
-    "artifactName": "eqlDrop-Setup.exe",
+    "artifactName": "eqlShare-Setup.exe",
     "oneClick": false,
     "perMachine": false,
     "allowToChangeInstallationDirectory": true,
     "createDesktopShortcut": false,
     "createStartMenuShortcut": true,
-    "shortcutName": "eqlDrop",
+    "shortcutName": "eqlShare",
     "runAfterFinish": true,
     "deleteAppDataOnUninstall": false
   },

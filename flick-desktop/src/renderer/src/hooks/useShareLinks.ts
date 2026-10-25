@@ -4,7 +4,7 @@ import type { CloudFile } from "../types";
 import { expiresAt, MAX_FILE_SIZE } from "../types";
 import { supabase } from "../supabase";
 
-const SHARE_BASE_URL = import.meta.env.VITE_FLICK_SHARE_BASE_URL || "https://flickit.dev/d";
+const SHARE_BASE_URL = import.meta.env.VITE_FLICK_SHARE_BASE_URL || "https://eqlshare.com/d";
 const LINK_LIFETIME_MS = 24 * 60 * 60 * 1000;
 
 type ShareLinkRow = {

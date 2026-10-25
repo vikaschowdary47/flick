@@ -8,7 +8,7 @@ Send a file (or clip) to someone who isn't you: a friend, a client, a small grou
 ## User flow
 1. On any file or clip: menu → **Share link**.
 2. Pick: *Anyone with the link* (default) or *Only people I choose* (by email), and an expiry (1 hour, 24 hours — never longer than the file's own 24-hour life).
-3. Flick copies a link like `flick.link/f/8kq2xz`. Share it anywhere.
+3. eqlShare copies a link like `eqlshare.com/f/8kq2xz`. Share it anywhere.
 4. The recipient opens it in a browser: a sticker-style page with the file name, size, sender's display name, "Expires in 5h", a **Download** button, and "Sent with Flick — get the app" at the bottom.
 5. Groups (phase 2): a saved list of people ("Design team"); sharing to a group emails or notifies each member, and members with Flick get it in their list with "from Alex".
 6. The sender sees, per link: opened N times, downloaded N times, and a **Revoke** button.
@@ -31,7 +31,7 @@ Send a file (or clip) to someone who isn't you: a friend, a client, a small grou
 L: Edge Function, web page, two or three tables, link UI in both apps, revoke and stats, abuse controls. Groups add another M.
 
 ## Open questions
-1. Which domain for links (`flick.link`? `flickit.dev/s/`)?
+1. Which path on eqlshare.com should links use (`eqlshare.com/f/`)?
 2. Can recipients without Flick download, or must they sign up? (Recommendation: no sign-up for "anyone" links.)
 3. Is malware scanning required before launch, or only for "anyone" links above a size?
 4. Do shared files count against the *sender's* storage limit only? (Recommendation: yes.)

@@ -1,6 +1,6 @@
 import Foundation
 
-// Uploads to eqlDrop with the app's session (read from the App Group), using
+// Uploads to eqlShare with the app's session (read from the App Group), using
 // the same Supabase calls as the app: storage object, then the files row
 // (which is what makes it appear on the other devices). Text and links
 // become clips. Server-side rules (RLS, 50 MB, storage limit) still apply.
@@ -27,10 +27,10 @@ enum FlickShareError: LocalizedError {
 
   var errorDescription: String? {
     switch self {
-    case .notSignedIn: return "Open eqlDrop and sign in first."
-    case .tooLarge(let bytes): return "That one's \(bytes / 1_048_576) MB. eqlDrop handles files up to 50 MB."
-    case .storageFull: return "Storage full. Open eqlDrop to free up space."
-    case .clipsOff: return "Clips are turned off. Turn on Clipboard sharing in eqlDrop."
+    case .notSignedIn: return "Open eqlShare and sign in first."
+    case .tooLarge(let bytes): return "That one's \(bytes / 1_048_576) MB. eqlShare handles files up to 50 MB."
+    case .storageFull: return "Storage full. Open eqlShare to free up space."
+    case .clipsOff: return "Clips are turned off. Turn on Clipboard sharing in eqlShare."
     case .server(let message): return message
     }
   }
@@ -97,7 +97,7 @@ final class FlickUploader {
       let text = String(data: data, encoding: .utf8) ?? ""
       if text.contains("storage_limit") { throw FlickShareError.storageFull }
       if status == 401 || status == 403 { throw FlickShareError.notSignedIn }
-      throw FlickShareError.server("Couldn't flick that (\(status)).")
+      throw FlickShareError.server("Couldn't send that with eqlShare (\(status)).")
     }
   }
 

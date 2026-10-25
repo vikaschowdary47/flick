@@ -1,4 +1,4 @@
-# eqlDrop Desktop
+# eqlShare Desktop
 
 The desktop app is a small, always-on-top Electron window. After email sign-in,
 it lists the signed-in user's Supabase files and supports uploading through the
@@ -12,7 +12,7 @@ npm install
 npm run dev
 ```
 
-`npm run start` builds JavaScript and opens it through the development Electron executable. On macOS use `npm run package:mac` for a local eqlDrop.app with the auth callback scheme; distribution still requires Developer ID signing/notarization. `npm test` runs the lint
+`npm run start` builds JavaScript and opens it through the development Electron executable. On macOS use `npm run package:mac` for a local eqlShare.app with the auth callback scheme; distribution still requires Developer ID signing/notarization. `npm test` runs the lint
 and TypeScript checks; it does not launch the app. Use `npm run lint` and
 `npm run typecheck` to run either check separately, and `npm run build` to
 create production bundles.

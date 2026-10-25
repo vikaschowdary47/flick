@@ -1,4 +1,4 @@
-# eqlDrop design spec (playful look)
+# eqlShare design spec (playful look)
 
 Mockup reference: https://claude.ai/artifact/GWLSCTVZPw5VyT7h5TeRvE (boards "Desktop widget (playful)" and "Mobile app (playful)").
 
@@ -30,7 +30,7 @@ Shape and type
 - Sizes: wordmark 24px/800, heading 28px/800, card title 16px/800, meta 13px/600, eyebrow 13px/800 with 0.08em letter spacing.
 
 ## Desktop widget layout (about 440x520, resizable, frameless, always on top)
-1. Header (drag region): logo mark (32px coral rounded square with an up-right arrow), "eqlDrop" wordmark, and a status pill on the right.
+1. Header (drag region): eqlShare light/dark lockup and a status pill on the right.
 2. Eyebrow "ON THIS MAC" and heading like "3 files landed".
 3. Card list (12px gap). Each card: 52px thumbnail or type tile, file name, "size · state" line, and a "drag me" pill on hover when ready.
 4. Footer helper: "Drop files here, or send something over!"
@@ -46,7 +46,7 @@ Card states
 
 Sign-in: a compact centered screen with the logo above the form, same palette, pill inputs and a coral button.
 
-Empty state: "Nothing yet. Send something with eqlDrop!"
+Empty state: "Nothing yet. Send something with eqlShare!"
 
 ## Motion
 - New card: slides in with a springy overshoot.
@@ -62,5 +62,5 @@ Empty state: "Nothing yet. Send something with eqlDrop!"
 
 ## Mobile notes (later)
 - Same tokens, fonts, and microcopy.
-- Screen: wordmark and status pill ("2 devices online"), heading "eqlDrop it to all your devices", the selected file as a lilac sticker card, a "RECENTLY SENT" list with "Got it!" badges, and a large coral "eqlDrop it" pill button in the thumb zone.
+- Screen: wordmark and status pill ("2 devices online"), heading "eqlShare it to all your devices", the selected file as a lilac sticker card, a "RECENTLY SENT" list with "Got it!" badges, and a large amber "eqlShare it" pill button in the thumb zone.
 - Haptic tap on send and receive. Respect safe areas.

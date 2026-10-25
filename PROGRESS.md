@@ -17,7 +17,7 @@ For mobile-only detail (decisions, Expo Go steps) see [flick-mobile/PROGRESS.md]
 ### Screens
 
 - **Sign-in:** email and password pill inputs, a coral button, friendly errors.
-- **Home:** logo, "flick" wordmark, status pill, the heading "Flick it to all your devices", a big coral "Flick it" pill in the thumb zone (navy text), and "Sign out".
+- **Home:** eqlShare lockup, status pill, the heading "eqlShare it to all your devices", a big amber "eqlShare it" pill in the thumb zone (ink text), and "Sign out".
 - `App.tsx` only loads the fonts and chooses between sign-in and home.
 
 ### Features

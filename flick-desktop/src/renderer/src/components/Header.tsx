@@ -85,7 +85,7 @@ export default function Header({
       ) : (
       <div className="brand">
         <motion.div
-          className="brand-mark"
+          className="brand-lockup"
           aria-hidden="true"
           animate={
             arrivalPulse > 0 && !prefersReducedMotion
@@ -100,14 +100,10 @@ export default function Header({
           }}
         >
           <picture>
-            <source media="(prefers-color-scheme: dark)" srcSet="./icon-dark.png" />
-            <img src="./icon.png" alt="" />
+            <source media="(prefers-color-scheme: dark)" srcSet="./lockup-dark.svg" />
+            <img src="./lockup-light.svg" alt={APP_NAME} />
           </picture>
         </motion.div>
-        <span className="brand-name">
-          <span className="brand-name-muted">{APP_NAME.slice(0, 3)}</span>
-          <span>{APP_NAME.slice(3)}</span>
-        </span>
       </div>
       )}
       <div className="header-actions">

@@ -3,7 +3,7 @@ module.exports = (config) => ({
   type: "widget",
   // Not "FlickWidgets": that's the app's bridge module (modules/flick-widgets).
   name: "FlickWidgetExtension",
-  displayName: "eqlDrop",
+  displayName: "eqlShare",
   // Interactive widgets (Copy latest clip) need iOS 17.
   deploymentTarget: "17.0",
   bundleIdentifier: ".widgets",

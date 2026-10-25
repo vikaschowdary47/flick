@@ -3,7 +3,7 @@ import WidgetKit
 
 // Lock Screen widgets: counts only by default, since anything shown here is
 // visible without unlocking. Names/clip text appear only when the user turns
-// on "Show content on Lock Screen" in eqlDrop's Settings.
+// on "Show content on Lock Screen" in eqlShare's Settings.
 struct FlickLockView: View {
   @Environment(\.widgetFamily) var environmentFamily
   let entry: FlickEntry
@@ -19,12 +19,12 @@ struct FlickLockView: View {
     let showContent = snapshot.showContentOnLockScreen
 
     if !snapshot.lockOn {
-      Text(family == .accessoryCircular ? "off" : "eqlDrop · turned off in eqlDrop")
+      Text(family == .accessoryCircular ? "off" : "eqlShare · turned off in eqlShare")
         .font(.system(size: 12, weight: .semibold, design: .rounded))
     } else {
     switch family {
     case .accessoryInline:
-      Text(items.isEmpty ? "eqlDrop · nothing new" : "eqlDrop · \(summary(files: files, clips: clips))")
+      Text(items.isEmpty ? "eqlShare · nothing new" : "eqlShare · \(summary(files: files, clips: clips))")
 
     case .accessoryCircular:
       ZStack {
@@ -32,14 +32,14 @@ struct FlickLockView: View {
         VStack(spacing: 0) {
           Text("\(items.count)")
             .font(.system(size: 20, weight: .heavy, design: .rounded))
-          Text("eqlDrop")
+          Text("eqlShare")
             .font(.system(size: 9, weight: .heavy, design: .rounded))
         }
       }
 
     default: // .accessoryRectangular
       VStack(alignment: .leading, spacing: 2) {
-        Text("eqlDrop").font(.system(size: 13, weight: .heavy, design: .rounded))
+            Text("eqlShare").font(.system(size: 13, weight: .heavy, design: .rounded))
         if let latest, showContent {
           Text(latest.title)
             .font(.system(size: 13, weight: .semibold, design: .rounded))
@@ -52,7 +52,7 @@ struct FlickLockView: View {
             .font(.system(size: 13, weight: .semibold, design: .rounded))
             .lineLimit(1)
           if !items.isEmpty {
-            Text("Open eqlDrop to see them")
+            Text("Open eqlShare to see them")
               .font(.system(size: 11, weight: .semibold, design: .rounded))
               .foregroundStyle(.secondary)
           }
@@ -78,7 +78,7 @@ struct FlickLockWidget: Widget {
         .containerBackground(for: .widget) { Color.clear }
         .widgetURL(URL(string: "flick://open"))
     }
-    .configurationDisplayName("eqlDrop on the Lock Screen")
+    .configurationDisplayName("eqlShare on the Lock Screen")
     .description("How many files and clips are waiting.")
     .supportedFamilies([.accessoryInline, .accessoryCircular, .accessoryRectangular])
   }

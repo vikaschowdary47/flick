@@ -3,12 +3,12 @@
 <plist version="1.0">
 <dict>
   <key>CFBundleDisplayName</key>
-  <string>eqlDrop it</string>
+  <string>eqlShare it</string>
   <key>NSExtension</key>
   <dict>
     <key>NSExtensionAttributes</key>
     <dict>
-      <!-- What "eqlDrop it" accepts (App Review rejects TRUEPREDICATE). -->
+      <!-- What "eqlShare it" accepts (App Review rejects TRUEPREDICATE). -->
       <key>NSExtensionActivationRule</key>
       <dict>
         <key>NSExtensionActivationSupportsImageWithMaxCount</key>

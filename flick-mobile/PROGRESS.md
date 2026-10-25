@@ -1,11 +1,11 @@
-# eqlDrop Mobile: progress
+# eqlShare Mobile: progress
 
 ## Done (build steps 1–4)
 
 | Step | What | Commit |
 |---|---|---|
 | 1 | Expo SDK 57 TypeScript project (strict), tokens, Nunito 600/800, Supabase client, `useSession` (session kept in AsyncStorage) | `79feede` |
-| 2 | Sign-in screen (email/password pills, coral button) and home screen (logo, wordmark, status pill, coral "eqlDrop it" pill in the thumb zone) | `178e2d1` |
+| 2 | Sign-in screen (email/password pills, coral button) and home screen (logo, wordmark, status pill, coral "eqlShare it" pill in the thumb zone) | `178e2d1` |
 | 3 | Upload flow: document picker → 50 MB check → upload bytes to `flick-files/<user_id>/<uuid>-<filename>` → insert row in `files`. Card states: uploading (mint, "On its way…"), "Got it!" (lilac), error (coral outline) | `01f0f71` |
 | 4 | "RECENTLY SENT": your latest 20 rows from `files` as sticker cards. Pull to refresh, and live updates over Realtime | (latest commit) |
 
@@ -100,6 +100,6 @@ If you change the secret later, update both `supabase secrets set CRON_SECRET=..
 4. Put the iPhone on the **same Wi-Fi** as the Mac. Open the iPhone **Camera**, scan the QR code in the terminal, and tap the banner to open it in Expo Go.
    - If it can't connect (some routers or VPNs block it), stop with Ctrl+C and run `npx expo start --tunnel`.
 5. **Test sign-in:** use the same email and password you use in the desktop app. You should land on the home screen with a mint "Connected" pill. Close Expo Go completely and reopen it: you should still be signed in.
-6. **Test an upload:** start the desktop app and sign in there too. On the phone, tap **eqlDrop it** and pick a small file from Files (for example, a PDF). The card goes mint "On its way…", then lilac "Got it!". The file should appear in the desktop widget. Once the laptop downloads it, its "Recently sent" row gets a "Got it!" badge.
-7. **Test the size limit:** pick something over 50 MB. You should get the friendly "eqlDrop handles files up to 50.0 MB" message and nothing is uploaded.
+6. **Test an upload:** start the desktop app and sign in there too. On the phone, tap **eqlShare it** and pick a small file from Files (for example, a PDF). The card goes mint "On its way…", then lilac "Got it!". The file should appear in the desktop widget. Once the laptop downloads it, its "Recently sent" row gets a "Got it!" badge.
+7. **Test the size limit:** pick something over 50 MB. You should get the friendly "eqlShare handles files up to 50.0 MB" message and nothing is uploaded.
 8. After you change the code, shake the phone (or press `r` in the terminal) to reload.

@@ -94,7 +94,7 @@ public class FlickWidgetsModule: Module {
       }
     }
 
-    // The share extension ("eqlDrop it") uploads with the app's session: the
+    // The share extension ("eqlShare it") uploads with the app's session: the
     // app keeps a copy here (tokens, project URL, publishable key, device id).
     // The extension may refresh it and write it back; the app adopts that.
     AsyncFunction("writeSession") { (json: String) in

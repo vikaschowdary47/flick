@@ -1,9 +1,9 @@
 /** @type {import('@bacons/apple-targets/app.plugin').ConfigFunction} */
 module.exports = (config) => ({
-  // "eqlDrop it" in the iOS share sheet.
+  // "eqlShare it" in the iOS share sheet.
   type: "share",
   name: "FlickShareExtension",
-  displayName: "eqlDrop it",
+  displayName: "eqlShare it",
   deploymentTarget: "17.0",
   bundleIdentifier: ".share",
   frameworks: ["SwiftUI", "UniformTypeIdentifiers"],

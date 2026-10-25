@@ -84,8 +84,8 @@ struct ItemRow: View {
 struct TurnedOffState: View {
   var body: some View {
     VStack(spacing: 4) {
-      Text("eqlDrop").font(.system(size: 14, weight: .heavy, design: .rounded))
-      Text("Turned off in eqlDrop")
+      Text("eqlShare").font(.system(size: 14, weight: .heavy, design: .rounded))
+      Text("Turned off in eqlShare")
         .font(.system(size: 12, weight: .semibold, design: .rounded))
         .foregroundStyle(.secondary)
         .multilineTextAlignment(.center)
@@ -103,7 +103,7 @@ struct EmptyState: View {
         .foregroundStyle(FlickColor.navy)
       Text("Nothing yet")
         .font(.system(size: 13, weight: .heavy, design: .rounded))
-      Text("Send something with eqlDrop")
+      Text("Send something with eqlShare")
         .font(.system(size: 11, weight: .semibold, design: .rounded))
         .foregroundStyle(.secondary)
     }
@@ -139,7 +139,7 @@ struct FlickHomeView: View {
     let latest = items[0]
     return VStack(alignment: .leading, spacing: 6) {
       HStack {
-        Text("eqlDrop").font(.system(size: 14, weight: .heavy, design: .rounded))
+        Text("eqlShare").font(.system(size: 14, weight: .heavy, design: .rounded))
         Spacer()
         Text("\(items.count)")
           .font(.system(size: 11, weight: .heavy, design: .rounded))
@@ -169,7 +169,7 @@ struct FlickHomeView: View {
   func medium(_ items: [SnapshotItem]) -> some View {
     VStack(alignment: .leading, spacing: 6) {
       HStack {
-        Text("eqlDrop").font(.system(size: 14, weight: .heavy, design: .rounded))
+        Text("eqlShare").font(.system(size: 14, weight: .heavy, design: .rounded))
         Spacer()
         if entry.snapshot.latestClip != nil {
           CopyClipButton()
@@ -199,7 +199,7 @@ struct FlickHomeWidget: Widget {
       FlickHomeView(entry: entry)
         .containerBackground(for: .widget) { FlickColor.cream }
     }
-    .configurationDisplayName("eqlDrop")
+    .configurationDisplayName("eqlShare")
     .description("Your latest files and clips.")
     .supportedFamilies([.systemSmall, .systemMedium])
   }

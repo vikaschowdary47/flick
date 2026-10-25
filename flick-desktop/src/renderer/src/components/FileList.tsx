@@ -27,7 +27,7 @@ interface FileListProps {
   deviceId: string | null;
   deviceNames: Record<string, string>;
   density: Density;
-  // Popover: just the newest few items, no sections, plus "Open eqlDrop".
+  // Popover: just the newest few items, no sections, plus "Open eqlShare".
   recentOnly?: number;
   // Popover "+N" image tile: expand the popover to show everything.
   onShowMore?: () => void;
@@ -375,7 +375,7 @@ export function popoverSelection(files: CloudFile[], limit: number): { shown: Cl
 }
 
 // Menu bar popover: images as a single row of 4 (the last tile becomes "+N"
-// when there are more), then rows. "Open eqlDrop" sits in the fixed footer.
+// when there are more), then rows. "Open eqlShare" sits in the fixed footer.
 function RecentFiles({
   files,
   limit,

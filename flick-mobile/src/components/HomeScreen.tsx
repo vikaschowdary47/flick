@@ -105,7 +105,7 @@ export function HomeScreen({ userId, email, onSignOut, onDeleteAccount }: Props)
     lockEnabled: device.widgetMode.lock,
     showContentOnLockScreen: device.widgetMode.lock_content,
   });
-  // "eqlDrop it" share extension: keep its copy of the session current.
+  // "eqlShare it" share extension: keep its copy of the session current.
   useShareSession(device.deviceId);
   useLiveActivity({
     files: recent.files,

@@ -9,10 +9,12 @@ import { URL } from "node:url";
 import sharp from "sharp";
 
 const root = resolve(new URL("../..", import.meta.url).pathname);
-const svgPath = join(root, "eqldrop-icon.svg");
-const darkSvgPath = join(root, "eqldrop-icon-dark.svg");
-const monoSvgPath = join(root, "eqldrop-icon-mono.svg");
-const faviconSvgPath = join(root, "eqldrop-favicon.svg");
+const svgPath = join(root, "eqlshare-icon.svg");
+const darkSvgPath = join(root, "eqlshare-icon-dark.svg");
+const monoSvgPath = join(root, "eqlshare-icon-mono.svg");
+const faviconSvgPath = join(root, "eqlshare-favicon.svg");
+const lockupLightSvgPath = join(root, "eqlshare-lockup-light.svg");
+const lockupDarkSvgPath = join(root, "eqlshare-lockup-dark.svg");
 const desktop = join(root, "flick-desktop");
 const mobile = join(root, "flick-mobile");
 const build = join(desktop, "build");
@@ -21,6 +23,8 @@ const sourceSvg = await readFile(svgPath, "utf8");
 const darkSvg = await readFile(darkSvgPath, "utf8");
 const monoSvg = await readFile(monoSvgPath, "utf8");
 const faviconSvg = await readFile(faviconSvgPath, "utf8");
+const lockupLightSvg = await readFile(lockupLightSvgPath, "utf8");
+const lockupDarkSvg = await readFile(lockupDarkSvgPath, "utf8");
 
 const YELLOW = "#F5B83D";
 const INK = "#2B2210";
@@ -90,6 +94,8 @@ const background = await sharp({ create: { width: 1024, height: 1024, channels: 
 await save(join(mobile, "assets/icon.png"), full);
 await save(join(mobile, "assets/icon-dark.png"), fullDark);
 await save(join(mobile, "assets/icon-mono.png"), mono);
+await save(join(mobile, "assets/lockup-light.png"), await renderSvg(lockupLightSvg, 557));
+await save(join(mobile, "assets/lockup-dark.png"), await renderSvg(lockupDarkSvg, 557));
 await save(join(mobile, "assets/splash-icon.png"), full);
 await save(join(mobile, "assets/splash-icon-dark.png"), fullDark);
 await save(join(mobile, "assets/favicon.svg"), Buffer.from(faviconSvg));
@@ -145,7 +151,7 @@ for (const size of [16, 24, 32, 48, 64, 128, 256]) {
   await save(join(build, "linux", `${size}x${size}.png`), await sharp(rounded).resize(size, size).png().toBuffer());
 }
 
-const iconset = join(build, "eqldrop.iconset");
+const iconset = join(build, "eqlshare.iconset");
 await rm(iconset, { recursive: true, force: true });
 await mkdir(iconset, { recursive: true });
 for (const size of [16, 32, 128, 256, 512, 1024]) {
@@ -153,7 +159,7 @@ for (const size of [16, 32, 128, 256, 512, 1024]) {
   if (size <= 512) await save(join(iconset, `icon_${size}x${size}@2x.png`), await sharp(full).resize(size * 2, size * 2).png().toBuffer());
 }
 try {
-  execFileSync("iconutil", ["-c", "icns", iconset, "-o", join(build, "eqldrop.icns")], { stdio: "inherit" });
+  execFileSync("iconutil", ["-c", "icns", iconset, "-o", join(build, "eqlshare.icns")], { stdio: "inherit" });
 } catch {
   console.warn("iconutil is unavailable; the PNG/ICO assets were still generated.");
 }
@@ -172,9 +178,11 @@ for (const size of [192, 512]) {
 }
 await save(join(desktopPublic, "icon.png"), full);
 await save(join(desktopPublic, "icon-dark.png"), fullDark);
+await save(join(desktopPublic, "lockup-light.svg"), Buffer.from(lockupLightSvg));
+await save(join(desktopPublic, "lockup-dark.svg"), Buffer.from(lockupDarkSvg));
 await save(join(desktopPublic, "manifest.webmanifest"), Buffer.from(JSON.stringify({
-  name: "eqlDrop",
-  short_name: "eqlDrop",
+  name: "eqlShare",
+  short_name: "eqlShare",
   start_url: ".",
   display: "standalone",
   theme_color: YELLOW,
@@ -187,4 +195,4 @@ await save(join(desktopPublic, "manifest.webmanifest"), Buffer.from(JSON.stringi
   ],
 }, null, 2)));
 
-console.log("Generated eqlDrop icons from", svgPath);
+console.log("Generated eqlShare icons from", svgPath);

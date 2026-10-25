@@ -19,7 +19,7 @@ export interface AppSettings {
   windowsShortcut: string;
   windowsTipShown: boolean;
   windowsStartupConfigured: boolean;
-  // Last size/position of the resizable main window ("Open eqlDrop").
+  // Last size/position of the resizable main window ("Open eqlShare").
   mainBounds: Bounds | null;
   // Last position/size of the floating panel.
   panelBounds: Bounds | null;

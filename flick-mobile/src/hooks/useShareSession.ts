@@ -5,7 +5,7 @@ import { widgetsBridge } from "../../modules/flick-widgets";
 import { cacheEpoch, cacheEpochActive } from "../lib/cache";
 import { supabase } from "../lib/supabase";
 
-// Shares the signed-in session with the "eqlDrop it" share extension through
+// Shares the signed-in session with the "eqlShare it" share extension through
 // the App Group, so sharing from other apps uploads as you. The extension
 // may refresh the tokens (writing by: "extension"); when Flick next comes to
 // the foreground it adopts that newer session, so neither side gets signed

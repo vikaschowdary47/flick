@@ -130,7 +130,7 @@ export default function Widget({
   // The popover and floating panel are always compact; the main window
   // follows the Comfy/Compact setting.
   const isPopover = windowMode === "popover";
-  // "Open eqlDrop" expands the popover in place (the main process animates the
+  // "Open eqlShare" expands the popover in place (the main process animates the
   // resize); click-away or "Show less" brings back the compact popover.
   const [expanded, setExpanded] = useState(false);
   // Popover settings panel (replaces the list). Hiding the popover resets

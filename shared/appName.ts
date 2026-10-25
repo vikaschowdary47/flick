@@ -1,1 +1,1 @@
-export const APP_NAME = "eqlDrop";
+export const APP_NAME = "eqlShare";

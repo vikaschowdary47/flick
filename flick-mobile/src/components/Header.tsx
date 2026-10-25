@@ -1,10 +1,8 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
-import { useThemedStyles } from "../design/ThemeProvider";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { useTheme, useThemedStyles } from "../design/ThemeProvider";
 import type { Palette } from "../design/theme";
 import { tokens } from "../design/tokens";
-import { LogoMark } from "./LogoMark";
 import { StatusPill, type Status } from "./StatusPill";
-import { APP_NAME } from "../lib/appName";
 
 type Props = {
   status: Status;
@@ -14,14 +12,17 @@ type Props = {
 
 export function Header({ status, onMenu }: Props) {
   const styles = useThemedStyles(makeStyles);
+  const { scheme } = useTheme();
   return (
     <View style={styles.row}>
       <View style={styles.brand}>
-        <LogoMark />
-        <Text accessibilityRole="header" style={styles.wordmark}>
-          <Text style={styles.wordmarkMuted}>{APP_NAME.slice(0, 3)}</Text>
-          {APP_NAME.slice(3)}
-        </Text>
+        <Image
+          accessibilityIgnoresInvertColors
+          accessibilityLabel="eqlShare"
+          source={scheme === "dark" ? require("../../assets/lockup-dark.png") : require("../../assets/lockup-light.png")}
+          resizeMode="contain"
+          style={styles.lockup}
+        />
       </View>
       <View style={styles.right}>
         <StatusPill status={status} />
@@ -70,13 +71,8 @@ const makeStyles = (c: Palette) =>
       fontSize: tokens.fontSizes.heading,
       lineHeight: tokens.fontSizes.heading,
     },
-    wordmark: {
-      color: c.text,
-      fontFamily: tokens.fonts.extrabold,
-      fontSize: tokens.fontSizes.wordmark,
-    },
-    wordmarkMuted: {
-      color: c.text,
-      opacity: 0.6,
+    lockup: {
+      width: 148,
+      height: 32,
     },
   });

@@ -6,7 +6,7 @@ import { expiresAt } from "../lib/format";
 import type { FileRow } from "../lib/types";
 import type { LimitKind } from "../lib/limits";
 
-const SHARE_BASE_URL = process.env.EXPO_PUBLIC_FLICK_SHARE_BASE_URL || "https://flickit.dev/d";
+const SHARE_BASE_URL = process.env.EXPO_PUBLIC_FLICK_SHARE_BASE_URL || "https://eqlshare.com/d";
 const LINK_LIFETIME_MS = 24 * 60 * 60 * 1000;
 const MAX_FILE_BYTES = 50 * 1024 * 1024;
 
