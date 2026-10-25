@@ -100,8 +100,8 @@ export default function Header({
           }}
         >
           <picture>
-            <source media="(prefers-color-scheme: dark)" srcSet="/icon-dark.png" />
-            <img src="/icon.png" alt="" />
+            <source media="(prefers-color-scheme: dark)" srcSet="./icon-dark.png" />
+            <img src="./icon.png" alt="" />
           </picture>
         </motion.div>
         <span className="brand-name">{APP_NAME}</span>
