@@ -1,1 +1,28 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Framework and build output
+.next/
+**/.next/
+dist/
+**/dist/
+out/
+build/
+**/build/
+coverage/
+
+# Local environment files and secrets
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# Logs and local tooling
+*.log
+.DS_Store
+.turbo/
+.vercel/
 *.tsbuildinfo

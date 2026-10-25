@@ -1,0 +1,2 @@
+type BrandMarkProps = { size?: number; className?: string };
+export function BrandMark({ size = 34, className = "" }: BrandMarkProps) { return <svg className={className} width={size} height={size} viewBox="0 0 40 40" fill="none" aria-hidden="true"><rect x="1.5" y="1.5" width="37" height="37" rx="12" fill="currentColor" stroke="currentColor" strokeWidth="3"/><path d="M12 14h16M12 21h11M21 21v9M21 30l6-6M21 30l-6-6" stroke="#FFF8EE" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/></svg>; }
