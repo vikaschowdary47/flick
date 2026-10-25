@@ -11,6 +11,7 @@ import type { Density } from "../density";
 import { CloudFile, formatSender, getFileVisualType } from "../types";
 import type { PendingRemoval } from "../hooks/useFiles";
 import { useNow } from "../hooks/useNow";
+import { APP_NAME } from "../../../shared/appName";
 
 interface FileListProps {
   files: CloudFile[];
@@ -26,7 +27,7 @@ interface FileListProps {
   deviceId: string | null;
   deviceNames: Record<string, string>;
   density: Density;
-  // Popover: just the newest few items, no sections, plus "Open Flick".
+  // Popover: just the newest few items, no sections, plus "Open eqlDrop".
   recentOnly?: number;
   // Popover "+N" image tile: expand the popover to show everything.
   onShowMore?: () => void;
@@ -169,7 +170,7 @@ export default function FileList({
           <span className="popover-empty-icon" aria-hidden="true">
             ↗
           </span>
-          Nothing yet — flick something from your phone
+          Nothing yet — send something from your phone
         </p>
       )}
 
@@ -184,7 +185,7 @@ export default function FileList({
             </svg>
           </div>
           <h2>Nothing yet.</h2>
-          <p>Flick something over!</p>
+          <p>Send something over!</p>
           <button
             className="choose-files-button"
             type="button"
@@ -374,7 +375,7 @@ export function popoverSelection(files: CloudFile[], limit: number): { shown: Cl
 }
 
 // Menu bar popover: images as a single row of 4 (the last tile becomes "+N"
-// when there are more), then rows. "Open Flick" sits in the fixed footer.
+// when there are more), then rows. "Open eqlDrop" sits in the fixed footer.
 function RecentFiles({
   files,
   limit,
@@ -401,7 +402,7 @@ function RecentFiles({
             <button
               type="button"
               className="compact-tile-more-images"
-              aria-label={`${images.length - tiles.length} more images. Open Flick`}
+              aria-label={`${images.length - tiles.length} more images. Open ${APP_NAME}`}
               onClick={onShowMore}
             >
               +{images.length - tiles.length}

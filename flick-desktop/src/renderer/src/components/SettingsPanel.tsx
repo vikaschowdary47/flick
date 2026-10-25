@@ -3,6 +3,7 @@ import DeleteAccount from "./DeleteAccount";
 import { useEffect, useState } from "react";
 import { DEVICE_NAME_MAX } from "../hooks/useDevice";
 import type { Usage } from "../limits";
+import { APP_NAME } from "../../../shared/appName";
 
 interface SettingsPanelProps {
   email: string | null;
@@ -118,7 +119,7 @@ export default function SettingsPanel({
           <div>
             <p className="settings-label">Clipboard sharing</p>
             <p className="settings-help">
-              Share text and links between your devices. Flick only reads your clipboard when you tap Send clipboard.
+              Share text and links between your devices. {APP_NAME} only reads your clipboard when you tap Send clipboard.
             </p>
           </div>
           <Toggle label="Clipboard sharing" checked={clipboardSharing} onChange={onClipboardSharingChange} />

@@ -12,6 +12,7 @@ import { uploadThumbnail } from "../lib/thumbs";
 import { limitFromError, type LimitKind } from "../lib/limits";
 import { MIME_BY_EXTENSION, resolveMimeType } from "../lib/mime";
 import type { PickedFile, UploadState } from "../lib/types";
+import { APP_NAME } from "../lib/appName";
 
 // One picked item, before it's read and uploaded.
 type Candidate = {
@@ -164,7 +165,7 @@ export function useUpload(onUploaded?: () => void, deviceId?: string | null) {
             kind: "error",
             file: first.picked,
             message:
-              candidates.length > 1 ? `${failures.length} of ${candidates.length} didn't flick. ${message}` : message,
+              candidates.length > 1 ? `${failures.length} of ${candidates.length} couldn't send. ${message}` : message,
           });
         }
       } catch (error) {
@@ -229,8 +230,8 @@ async function takePhoto(): Promise<Candidate[] | null> {
   if (!permission.granted) {
     throw new PermissionError(
       permission.canAskAgain
-        ? "Flick needs the camera to take a photo."
-        : "Camera access is off. Turn it on for Flick in Settings to take a photo.",
+        ? `${APP_NAME} needs the camera to take a photo.`
+        : `Camera access is off. Turn it on for ${APP_NAME} in Settings to take a photo.`,
     );
   }
   const result = await ImagePicker.launchCameraAsync({ mediaTypes: ["images"], quality: 1 });
@@ -300,17 +301,17 @@ function describeError(error: unknown): Record<string, unknown> {
 
 function friendlyUploadError(error: unknown): string {
   if (error instanceof TooLargeError)
-    return `That one's ${formatBytes(error.bytes)}. Flick handles files up to ${formatBytes(MAX_FILE_BYTES)}.`;
+    return `That one's ${formatBytes(error.bytes)}. ${APP_NAME} handles files up to ${formatBytes(MAX_FILE_BYTES)}.`;
   const { message: raw, status } = describeError(error);
   const message = String(raw ?? "");
   if (/network|fetch|timed? ?out/i.test(message)) return "Connection dropped. Check your Wi-Fi and try again.";
   if (/jwt|token|unauthori[sz]ed|row-level security/i.test(message) || status === 401 || status === 403)
     return "Your session expired. Sign in again.";
-  if (/too large|payload|exceeded/i.test(message) || status === 413) return "That file is too big for Flick (50 MB max).";
-  if (/mime|content.?type|not supported/i.test(message) || status === 415) return "Flick couldn't accept that file type.";
+  if (/too large|payload|exceeded/i.test(message) || status === 413) return `That file is too big for ${APP_NAME} (50 MB max).`;
+  if (/mime|content.?type|not supported/i.test(message) || status === 415) return `${APP_NAME} couldn't accept that file type.`;
   if (/empty file/.test(message)) return "That file looks empty. Try picking it again.";
   if (/copy|read|no such file|permission|not found|unable to/i.test(message))
-    return "Couldn't read that file from your phone. Try saving it to Files first, then flick it.";
-  if (/duplicate|already exists/i.test(message)) return "That file is already flicking. Try again in a moment.";
-  return message ? `Couldn't flick that file: ${message}` : "Couldn't flick that file. Try again.";
+    return "Couldn't read that file from your phone. Try saving it to Files first, then send it.";
+  if (/duplicate|already exists/i.test(message)) return "That file is already being sent. Try again in a moment.";
+  return message ? `Couldn't send that file: ${message}` : "Couldn't send that file. Try again.";
 }

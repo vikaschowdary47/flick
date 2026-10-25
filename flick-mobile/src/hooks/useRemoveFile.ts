@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { FILES_BUCKET, supabase } from "../lib/supabase";
 import type { FileRow } from "../lib/types";
 
-// Same as the desktop "Remove from Flick": after a short undo window the row
+// Same as the desktop "Remove from eqlDrop": after a short undo window the row
 // and the stored file are deleted, so the file disappears on every device.
 const UNDO_MS = 5000;
 

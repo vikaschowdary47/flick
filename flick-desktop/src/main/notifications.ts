@@ -1,4 +1,5 @@
 import { Notification } from "electron";
+import { APP_NAME } from "../shared/appName";
 import type { ArrivalNotice } from "../shared/appSettings";
 
 const seen = new Set<string>();
@@ -12,12 +13,12 @@ export function notifyWindowsArrival(value: unknown, open: () => void): void {
   seen.add(key);
   if (seen.size > 512) seen.delete(seen.values().next().value!);
   // Do not put clipboard contents or file names on the Windows lock screen.
-  const toast = new Notification({ title: notice.kind === "file" ? "A file arrived in Flick" : "A clip arrived in Flick",
-    body: notice.kind === "file" ? "A file from another device is ready. Click to open Flick." : "A clip from another device is ready. Click to open Flick." });
+  const toast = new Notification({ title: notice.kind === "file" ? `A file arrived in ${APP_NAME}` : `A clip arrived in ${APP_NAME}`,
+    body: notice.kind === "file" ? `A file from another device is ready. Click to open ${APP_NAME}.` : `A clip from another device is ready. Click to open ${APP_NAME}.` });
   if (active.size >= 5) { const oldest = active.values().next().value; oldest?.close(); if (oldest) active.delete(oldest); }
   active.add(toast);
   toast.on("click", open);
   toast.on("close", () => active.delete(toast));
-  toast.on("failed", (_event, error) => { active.delete(toast); console.warn("Couldn't show Flick notification:", error); });
+  toast.on("failed", (_event, error) => { active.delete(toast); console.warn(`Couldn't show ${APP_NAME} notification:`, error); });
   toast.show();
 }

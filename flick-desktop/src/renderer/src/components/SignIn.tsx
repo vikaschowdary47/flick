@@ -4,6 +4,7 @@ import type { Session } from "@supabase/supabase-js";
 import { APPLE_SIGN_IN_ENABLED } from "../hooks/useAppleSignIn";
 import Header from "./Header";
 import type { AuthCallbackNotice } from "../hooks/useSession";
+import { APP_NAME } from "../../../shared/appName";
 
 interface SignInProps {
   accountMenuRef: RefObject<HTMLDivElement | null>;
@@ -165,7 +166,7 @@ export default function SignIn({
     >
       {isDraggingFiles && (
         <div className="drop-overlay" aria-hidden="true">
-          Drop files to upload to Flick
+          Drop files to upload to {APP_NAME}
         </div>
       )}
       {showConfetti && !prefersReducedMotion && (
@@ -204,9 +205,9 @@ export default function SignIn({
         )}
         {authReady && supabaseConfigured && (
           <div className="sign-in-screen">
-            <h1 id="incoming-heading">{mode === "signUp" ? "Join Flick" : mode === "resetPassword" ? "Choose a new password" : "Welcome to Flick"}</h1>
+            <h1 id="incoming-heading">{mode === "signUp" ? `Join ${APP_NAME}` : mode === "resetPassword" ? "Choose a new password" : `Welcome to ${APP_NAME}`}</h1>
             <p className="sign-in-copy">
-              {mode === "checkEmail" ? `Check ${email} for a link from Flick.` : "Sign in to catch files from your other devices."}
+              {mode === "checkEmail" ? `Check ${email} for a link from ${APP_NAME}.` : "Sign in to catch files from your other devices."}
             </p>
             {authCallbackNotice && <p className="auth-status" role="alert">
               {authCallbackNotice.kind === "confirmed"

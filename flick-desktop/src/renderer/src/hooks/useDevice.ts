@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { limitFromError } from "../limits";
 import { supabase } from "../supabase";
+import { APP_NAME } from "../../../shared/appName";
 
 export const DEVICE_NAME_MAX = 30;
 
@@ -75,7 +76,7 @@ export function useDevice(session: Session | null, onRemoved: () => void) {
         if (limitFromError(error) === "devices") {
           setLimitHit(true);
         } else {
-          console.error("Could not register this Flick device:", error);
+          console.error(`Could not register this ${APP_NAME} device:`, error);
         }
         return;
       }
@@ -88,7 +89,7 @@ export function useDevice(session: Session | null, onRemoved: () => void) {
       void loadDevices();
     } catch (error: unknown) {
       // Uploads still work; cards just won't say who sent them.
-      console.error("Could not register this Flick device:", error);
+      console.error(`Could not register this ${APP_NAME} device:`, error);
     }
   }, [userId, loadDevices]);
 
@@ -155,7 +156,7 @@ export function useDevice(session: Session | null, onRemoved: () => void) {
   // this one if it was blocked by the device limit.
   async function removeDevice(id: string): Promise<string | null> {
     if (!supabase) {
-      return "Flick isn't connected.";
+      return `${APP_NAME} isn't connected.`;
     }
     const { error } = await supabase.rpc("remove_device", { p_device_id: id });
     if (error) {

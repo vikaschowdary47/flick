@@ -1,5 +1,6 @@
 import { type BrowserWindow, clipboard, globalShortcut, ipcMain } from "electron";
 import { setExtraTrayMenuItems } from "./tray";
+import { APP_NAME } from "../shared/appName";
 
 // Clips plumbing in the main process: reading/writing the clipboard on
 // request, Option/Alt+Shift+C, and the tray's "Send clipboard" item. The
@@ -29,7 +30,7 @@ function setActive(next: boolean): void {
     globalShortcut.unregister(SEND_SHORTCUT);
   }
   if (active && !globalShortcut.register(SEND_SHORTCUT, sendClipboard)) {
-    console.warn(`Flick couldn't register ${SEND_SHORTCUT}; another app may be using it.`);
+    console.warn(`${APP_NAME} couldn't register ${SEND_SHORTCUT}; another app may be using it.`);
   }
 }
 

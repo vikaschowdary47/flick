@@ -12,6 +12,7 @@ import { formatBytes } from "../lib/format";
 import type { Usage } from "../lib/limits";
 import { DeleteAccount } from "./DeleteAccount";
 import { PillButton } from "./PillButton";
+import { APP_NAME } from "../lib/appName";
 
 type Props = {
   visible: boolean;
@@ -176,7 +177,7 @@ export function SettingsSheet({ onDeleteAccount, visible, onClose, deviceName, o
             <Text style={styles.eyebrow}>CLIPBOARD SHARING</Text>
             <View style={styles.cacheRow}>
               <Text style={styles.cacheText}>
-                Share text and links between your devices. Flick only reads your clipboard when you tap Send
+                Share text and links between your devices. {APP_NAME} only reads your clipboard when you tap Send
                 clipboard.
               </Text>
               <Switch

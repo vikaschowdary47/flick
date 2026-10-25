@@ -50,13 +50,17 @@ test('finds auth callback in cold and second-instance Windows arguments', () => 
 test('NSIS configuration uses the same app identity, protocol and exact installer name', () => {
   const config = JSON.parse(readFileSync(new URL('../electron-builder.win.json', import.meta.url)));
   assert.equal(config.appId, 'dev.flickit.desktop');
-  assert.equal(config.nsis.artifactName, 'Flick-Setup.exe');
+  assert.equal(config.nsis.artifactName, 'eqlDrop-Setup.exe');
   assert.deepEqual(config.protocols[0].schemes, ['flick']);
   assert.equal(config.nsis.createStartMenuShortcut, true);
-  assert.deepEqual(config.extraResources, [{ from: 'build/icon.ico', to: 'icon.ico' }]);
+  assert.deepEqual(config.extraResources, [
+    { from: 'build/icon.ico', to: 'icon.ico' },
+    { from: 'build/tray-template.png', to: 'tray-template.png' },
+    { from: 'build/tray-template-dot.png', to: 'tray-template-dot.png' },
+  ]);
   const icon = readFileSync(new URL('../build/icon.ico', import.meta.url));
   assert.equal(icon.readUInt16LE(2), 1);
-  assert.equal(icon.readUInt16LE(4), 7);
+  assert.equal(icon.readUInt16LE(4), 8);
 });
 
 test('Windows disk names strip reserved characters and avoid device names', () => {

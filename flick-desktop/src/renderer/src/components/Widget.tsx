@@ -9,6 +9,7 @@ import type { PendingRemoval } from "../hooks/useFiles";
 import FileList, { popoverSelection } from "./FileList";
 import SettingsPanel from "./SettingsPanel";
 import Header from "./Header";
+import { APP_NAME } from "../../../shared/appName";
 
 interface WidgetProps {
   accountMenuRef: RefObject<HTMLDivElement | null>;
@@ -129,7 +130,7 @@ export default function Widget({
   // The popover and floating panel are always compact; the main window
   // follows the Comfy/Compact setting.
   const isPopover = windowMode === "popover";
-  // "Open Flick" expands the popover in place (the main process animates the
+  // "Open eqlDrop" expands the popover in place (the main process animates the
   // resize); click-away or "Show less" brings back the compact popover.
   const [expanded, setExpanded] = useState(false);
   // Popover settings panel (replaces the list). Hiding the popover resets
@@ -233,7 +234,7 @@ export default function Widget({
     >
       {isDraggingFiles && (
         <div className="drop-overlay" aria-hidden="true">
-          Drop files to upload to Flick
+          Drop files to upload to {APP_NAME}
         </div>
       )}
       {showConfetti && !prefersReducedMotion && (
@@ -353,7 +354,7 @@ export default function Widget({
             </button>
           ) : (
             <button type="button" className="popover-open" onClick={() => setExpanded(true)}>
-              {popoverHidden > 0 ? `Open Flick · +${popoverHidden} more` : "Open Flick"}
+              {popoverHidden > 0 ? `Open ${APP_NAME} · +${popoverHidden} more` : `Open ${APP_NAME}`}
             </button>
           )}
         </footer>

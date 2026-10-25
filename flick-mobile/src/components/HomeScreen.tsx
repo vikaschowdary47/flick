@@ -21,6 +21,7 @@ import { usePinFile } from "../hooks/usePinFile";
 import { useRecentFiles } from "../hooks/useRecentFiles";
 import { useRemoveFile } from "../hooks/useRemoveFile";
 import { useUpload } from "../hooks/useUpload";
+import { APP_NAME } from "../lib/appName";
 import { pruneCache } from "../lib/cache";
 import { formatExpiry, formatSender } from "../lib/format";
 import type { FileRow } from "../lib/types";
@@ -104,7 +105,7 @@ export function HomeScreen({ userId, email, onSignOut, onDeleteAccount }: Props)
     lockEnabled: device.widgetMode.lock,
     showContentOnLockScreen: device.widgetMode.lock_content,
   });
-  // "Flick it" share extension: keep its copy of the session current.
+  // "eqlDrop it" share extension: keep its copy of the session current.
   useShareSession(device.deviceId);
   useLiveActivity({
     files: recent.files,
@@ -297,7 +298,7 @@ export function HomeScreen({ userId, email, onSignOut, onDeleteAccount }: Props)
   const filesHeader = compact ? (
     <View style={styles.compactHeader}>
       <Animated.Text accessibilityRole="header" style={[styles.heading, headingStyle]}>
-        Flick it to all your devices
+        {APP_NAME} it to all your devices
       </Animated.Text>
       <UploadCard state={upload} onDismiss={reset} />
       <StorageNudge usage={usage.usage} files={recent.files} onRemove={remover.removeNow} />
@@ -311,7 +312,7 @@ export function HomeScreen({ userId, email, onSignOut, onDeleteAccount }: Props)
     <View style={styles.top}>
       <Header status={connection.status} />
       <Text accessibilityRole="header" style={styles.heading}>
-        Flick it to all your devices
+        {APP_NAME} it to all your devices
       </Text>
       {tabs}
       <UploadCard state={upload} onDismiss={reset} />
@@ -328,7 +329,7 @@ export function HomeScreen({ userId, email, onSignOut, onDeleteAccount }: Props)
   );
   const filesEmpty = (
     <Text style={styles.empty}>
-      {recent.loading ? "Loading…" : recent.error ?? "Nothing yet. Flick something over!"}
+      {recent.loading ? "Loading…" : recent.error ?? `Nothing yet. Send something with ${APP_NAME}!`}
     </Text>
   );
 
@@ -342,7 +343,7 @@ export function HomeScreen({ userId, email, onSignOut, onDeleteAccount }: Props)
               <>
                 <Header status={connection.status} />
                 <Text accessibilityRole="header" style={styles.heading}>
-                  Flick it to all your devices
+                  {APP_NAME} it to all your devices
                 </Text>
                 {tabs}
               </>
@@ -402,7 +403,7 @@ export function HomeScreen({ userId, email, onSignOut, onDeleteAccount }: Props)
           </View>
         )}
         <PillButton
-          label="Flick it"
+          label={`${APP_NAME} it`}
           size="large"
           onPress={() => setSourceOpen(true)}
           busy={upload.kind === "uploading"}

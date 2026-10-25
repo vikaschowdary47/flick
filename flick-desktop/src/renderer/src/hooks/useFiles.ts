@@ -5,6 +5,7 @@ import { limitFromError, type LimitKind } from "../limits";
 import { supabase } from "../supabase";
 import { uploadThumbnail } from "../thumbs";
 import { CloudFile, CloudFileRow, compareFiles, isCloudFile, MAX_FILE_SIZE } from "../types";
+import { APP_NAME } from "../../../shared/appName";
 
 const REMOVAL_UNDO_DELAY = 5000;
 
@@ -243,7 +244,7 @@ export function useFiles(session: Session | null, deviceId: string | null = null
           });
         }
       } catch (error: unknown) {
-        console.error(`Could not download "${file.name}" from Flick:`, error);
+        console.error(`Could not download "${file.name}" from ${APP_NAME}:`, error);
         updateFile(file, "error", {
           downloadError:
             error instanceof Error ? error.message : "File download failed.",
@@ -255,12 +256,12 @@ export function useFiles(session: Session | null, deviceId: string | null = null
 
     const queueFile = (value: unknown): void => {
       if (!isCloudFile(value)) {
-        console.error("Flick received an invalid file row.");
+        console.error(`${APP_NAME} received an invalid file row.`);
         return;
       }
       const file = value;
       if (file.user_id !== userId) {
-        console.error("Flick received an invalid file row.");
+        console.error(`${APP_NAME} received an invalid file row.`);
         return;
       }
       void processCloudFile(file);
@@ -310,7 +311,7 @@ export function useFiles(session: Session | null, deviceId: string | null = null
         }
       } catch (error: unknown) {
         // The real Supabase error (message, code, details, hint) for debugging.
-        console.error("Could not load this user's Flick files:", error);
+        console.error(`Could not load this user's ${APP_NAME} files:`, error);
         if (isMounted) {
           const detail =
             typeof error === "object" && error !== null
@@ -366,7 +367,7 @@ export function useFiles(session: Session | null, deviceId: string | null = null
           filter: `user_id=eq.${userId}`,
         },
         (payload) => {
-          console.info("New Flick file row:", payload.new);
+          console.info(`New ${APP_NAME} file row:`, payload.new);
           if (isCloudFile(payload.new)) {
             setArrivalPulse((pulse) => pulse + 1);
             const remote = deviceIdRef.current && payload.new.device_id && payload.new.device_id !== deviceIdRef.current;
@@ -426,7 +427,7 @@ export function useFiles(session: Session | null, deviceId: string | null = null
           refreshFiles();
         }
         if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
-          console.error("Flick Realtime subscription failed:", error ?? status);
+        console.error(`${APP_NAME} Realtime subscription failed:`, error ?? status);
           refreshFiles();
         }
       });
@@ -444,11 +445,11 @@ export function useFiles(session: Session | null, deviceId: string | null = null
         .removeChannel(channel)
         .then((status) => {
           if (status !== "ok") {
-            console.error("Could not remove Flick Realtime channel:", status);
+            console.error(`Could not remove ${APP_NAME} Realtime channel:`, status);
           }
         })
         .catch((error: unknown) => {
-          console.error("Could not remove Flick Realtime channel:", error);
+          console.error(`Could not remove ${APP_NAME} Realtime channel:`, error);
         });
     };
   }, [session?.user.id]);
@@ -663,7 +664,7 @@ export function useFiles(session: Session | null, deviceId: string | null = null
     // Row first: an orphaned storage object is invisible, but a row without
     // its object would show up everywhere as a broken file.
     if (!supabase) {
-      throw new Error("Flick isn't connected to Supabase.");
+      throw new Error(`${APP_NAME} isn't connected to Supabase.`);
     }
     const { data, error } = await supabase
       .from("files")
@@ -717,14 +718,14 @@ export function useFiles(session: Session | null, deviceId: string | null = null
             current.filter((item) => item.id !== file.id),
           );
         } catch (error: unknown) {
-          console.error(`Could not remove "${file.name}" from Flick:`, error);
+          console.error(`Could not remove "${file.name}" from ${APP_NAME}:`, error);
           setPendingRemovals((current) =>
             current.filter((item) => item.id !== file.id),
           );
           setUploadError(
             error instanceof Error
-              ? `Could not remove "${file.name}" from Flick: ${error.message}`
-              : `Could not remove "${file.name}" from Flick.`,
+              ? `Could not remove "${file.name}" from ${APP_NAME}: ${error.message}`
+              : `Could not remove "${file.name}" from ${APP_NAME}.`,
           );
         }
       })();

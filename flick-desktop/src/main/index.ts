@@ -33,6 +33,7 @@ import { findAuthCallback, isAuthCallbackUrl } from "./auth-links";
 import { notifyWindowsArrival } from "./notifications";
 import { designTokens } from "../design/tokens";
 import { setupClips } from "./clips";
+import { APP_NAME } from "../shared/appName";
 import {
   attachWindow,
   noteArrival,
@@ -42,7 +43,7 @@ import {
   showPopover,
 } from "./tray";
 
-app.setName("Flick");
+app.setName(APP_NAME);
 if (process.platform === "win32") app.setAppUserModelId("dev.flickit.desktop");
 
 const currentDirectory = fileURLToPath(new URL(".", import.meta.url));
@@ -140,7 +141,7 @@ function createDemoFileIcon(): NativeImage {
 
 function assertMainWindow(event: IpcMainInvokeEvent): void {
   if (!mainWindow || event.sender !== mainWindow.webContents) {
-    throw new Error("File operations are only available to the Flick window.");
+    throw new Error(`File operations are only available to the ${APP_NAME} window.`);
   }
 }
 
@@ -217,7 +218,7 @@ async function loadFiles(): Promise<void> {
         !Array.isArray(registry.ignoredPaths) ||
         !registry.ignoredPaths.every((path) => typeof path === "string")
   ) {
-    throw new Error(`Flick's saved file list is invalid: ${registryPath}`);
+    throw new Error(`${APP_NAME}'s saved file list is invalid: ${registryPath}`);
   }
   const fileRecords = legacyFiles ? storedFiles : registry.files!;
   const restoredIgnoredPaths = new Set(legacyFiles ? [] : registry.ignoredPaths);
@@ -386,7 +387,7 @@ async function addDroppedFiles(input: unknown): Promise<DroppedFilesResult> {
       if (!isDroppedFileInput(item)) {
         result.rejected.push({
           name: "Dropped item",
-          reason: "Flick could not read this item.",
+          reason: `${APP_NAME} could not read this item.`,
         });
         continue;
       }
@@ -419,7 +420,7 @@ async function addDroppedFiles(input: unknown): Promise<DroppedFilesResult> {
       }
 
       if (!fileStats.isFile()) {
-        result.rejected.push({ name, reason: "Only files can be added to Flick." });
+        result.rejected.push({ name, reason: `Only files can be added to ${APP_NAME}.` });
         continue;
       }
 
@@ -515,7 +516,7 @@ function createWindow(): void {
     // maxWidth: 360,
     // minHeight: 280,
     // maxHeight: 280,
-    title: "Flick",
+    title: APP_NAME,
     ...(process.platform === "win32" ? { icon: (app.isPackaged ? join(process.resourcesPath, "icon.ico") : join(app.getAppPath(), "build/icon.ico")) } : {}),
     show: false, // shown under the tray icon once ready
     skipTaskbar: true,
@@ -713,7 +714,7 @@ if (!hasSingleInstanceLock) {
       });
     })
     .catch((error: unknown) => {
-      console.error("Failed to start Flick desktop:", error);
+      console.error(`Failed to start ${APP_NAME} desktop:`, error);
       app.quit();
     });
 

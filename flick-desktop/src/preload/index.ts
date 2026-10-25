@@ -5,6 +5,7 @@ import type {
   FileCard,
   ReceivedFileInput,
 } from '../shared/files'
+import { APP_NAME } from '../shared/appName'
 
 type FilesDroppedListener = (result: DroppedFilesResult) => void
 
@@ -47,14 +48,14 @@ function notifyFilesDropped(result: DroppedFilesResult): void {
     try {
       listener(result)
     } catch (error) {
-      console.error('Flick file-drop listener failed:', error)
+      console.error(`${APP_NAME} file-drop listener failed:`, error)
     }
   }
 }
 
 ipcRenderer.on('files:added', (_event, value: unknown) => {
   if (!Array.isArray(value) || !value.every(isFileCard)) {
-    console.error('Flick received an invalid file-list update.')
+      console.error(`${APP_NAME} received an invalid file-list update.`)
     return
   }
 
@@ -90,7 +91,7 @@ contextBridge.exposeInMainWorld('flick', {
     const input: ReceivedFileInput = { name, bytes, id }
     const result: unknown = await ipcRenderer.invoke('files:save-received', input)
     if (!isFileCard(result)) {
-      throw new Error('Flick returned an invalid saved-file record.')
+      throw new Error(`${APP_NAME} returned an invalid saved-file record.`)
     }
     const file = result
     notifyFilesDropped({ files: [file], rejected: [] })

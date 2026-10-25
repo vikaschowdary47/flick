@@ -9,7 +9,7 @@ import WidgetKit
 // it opens Flick with ?copy=1 and the app copies it.
 struct CopyLatestClipIntent: AppIntent {
   static var title: LocalizedStringResource = "Copy latest clip"
-  static var description = IntentDescription("Copies your newest Flick clip to the clipboard.")
+  static var description = IntentDescription("Copies your newest eqlDrop clip to the clipboard.")
 
   func perform() async throws -> some IntentResult {
     if let clip = SharedStore.load().latestClip {

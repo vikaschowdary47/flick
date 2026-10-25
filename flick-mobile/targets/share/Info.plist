@@ -3,12 +3,12 @@
 <plist version="1.0">
 <dict>
   <key>CFBundleDisplayName</key>
-  <string>Flick it</string>
+  <string>eqlDrop it</string>
   <key>NSExtension</key>
   <dict>
     <key>NSExtensionAttributes</key>
     <dict>
-      <!-- What "Flick it" accepts (App Review rejects TRUEPREDICATE). -->
+      <!-- What "eqlDrop it" accepts (App Review rejects TRUEPREDICATE). -->
       <key>NSExtensionActivationRule</key>
       <dict>
         <key>NSExtensionActivationSupportsImageWithMaxCount</key>

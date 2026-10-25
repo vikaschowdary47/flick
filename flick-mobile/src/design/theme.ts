@@ -13,7 +13,7 @@ export type Palette = {
   textMuted: string;
   outline: string; // sticker borders
   shadow: string; // flat sticker shadow
-  accent: string; // main button ("Flick it")
+  accent: string; // main button ("eqlDrop it")
   onAccent: string; // text on the accent
   onColor: string; // text on any colored fill (cards, tiles, pills)
   error: string;

@@ -1,6 +1,6 @@
 import Foundation
 
-// Uploads to Flick with the app's session (read from the App Group), using
+// Uploads to eqlDrop with the app's session (read from the App Group), using
 // the same Supabase calls as the app: storage object, then the files row
 // (which is what makes it appear on the other devices). Text and links
 // become clips. Server-side rules (RLS, 50 MB, storage limit) still apply.
@@ -27,10 +27,10 @@ enum FlickShareError: LocalizedError {
 
   var errorDescription: String? {
     switch self {
-    case .notSignedIn: return "Open Flick and sign in first."
-    case .tooLarge(let bytes): return "That one's \(bytes / 1_048_576) MB. Flick handles files up to 50 MB."
-    case .storageFull: return "Storage full. Open Flick to free up space."
-    case .clipsOff: return "Clips are turned off. Turn on Clipboard sharing in Flick."
+    case .notSignedIn: return "Open eqlDrop and sign in first."
+    case .tooLarge(let bytes): return "That one's \(bytes / 1_048_576) MB. eqlDrop handles files up to 50 MB."
+    case .storageFull: return "Storage full. Open eqlDrop to free up space."
+    case .clipsOff: return "Clips are turned off. Turn on Clipboard sharing in eqlDrop."
     case .server(let message): return message
     }
   }

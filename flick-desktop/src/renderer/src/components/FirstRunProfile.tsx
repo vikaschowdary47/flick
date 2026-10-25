@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useState } from "react";
 import type { AccountType } from "../hooks/useOnboarding";
+import { APP_NAME } from "../../../shared/appName";
 
 type Props = {
   initialName: string; initialType: AccountType; loading: boolean; error: string;
@@ -16,8 +17,8 @@ export default function FirstRunProfile({ initialName, initialType, loading, err
   return <main className="widget widget-auth">
     <section className="content content-auth">
       <div className="sign-in-screen">
-        <h1>Make Flick yours</h1>
-        <p className="sign-in-copy">Choose your name and how you'll use Flick.</p>
+        <h1>Make {APP_NAME} yours</h1>
+        <p className="sign-in-copy">Choose your name and how you'll use {APP_NAME}.</p>
         {loading ? <p role="status">Loading your profile…</p> : error ? <>
           <p className="auth-error" role="alert">{error}</p>
           <button className="auth-link" onClick={onRetry}>Retry</button>

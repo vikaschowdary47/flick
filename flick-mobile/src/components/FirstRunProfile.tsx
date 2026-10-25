@@ -6,6 +6,7 @@ import type { Palette } from "../design/theme";
 import { tokens } from "../design/tokens";
 import type { AccountType } from "../hooks/useOnboarding";
 import { PillButton } from "./PillButton";
+import { APP_NAME } from "../lib/appName";
 
 type Props = { initialName: string; initialType: AccountType; loading: boolean; error: string;
   onRetry: () => void; onSave: (name: string, type: AccountType) => Promise<string | null>; onSignOut: () => void };
@@ -20,8 +21,8 @@ export function FirstRunProfile({ initialName, initialType, loading, error, onRe
   useEffect(() => { if (!edited) setName(initialName); }, [initialName, edited]);
   return <SafeAreaView style={styles.safe}><KeyboardAvoidingView style={styles.safe} behavior={Platform.OS === "ios" ? "padding" : undefined}>
     <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-      <Text accessibilityRole="header" style={styles.heading}>Make Flick yours</Text>
-      <Text style={styles.text}>Choose your name and how you'll use Flick.</Text>
+      <Text accessibilityRole="header" style={styles.heading}>Make {APP_NAME} yours</Text>
+      <Text style={styles.text}>Choose your name and how you'll use {APP_NAME}.</Text>
       {loading ? <ActivityIndicator color={palette.text} /> : error ? <>
         <Text accessibilityRole="alert" style={styles.text}>{error}</Text><PillButton label="Retry" onPress={onRetry} />
       </> : <>

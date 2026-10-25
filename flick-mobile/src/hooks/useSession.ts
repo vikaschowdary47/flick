@@ -10,6 +10,7 @@ import { widgetsBridge } from "../../modules/flick-widgets";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { clearAccountCache, clearCache, setAccountCacheEnabled } from "../lib/cache";
 import { supabase } from "../lib/supabase";
+import { APP_NAME } from "../lib/appName";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -277,9 +278,9 @@ export function useSession() {
         await widgetsBridge.endLiveActivity();
         await AsyncStorage.multiRemove(["flick.liveActivity.seenAt.v1", "flick.uiDensity.v1", "flick.clipboardSharing.v1", `flick.device.v1.${session.user.id}`]);
       } catch { cleanupFailed = true; }
-      Alert.alert("Account deleted", ["Your Flick account and cloud data have been deleted.",
-        data.appleRevocationRequired ? "Also revoke Flick in Settings → your Apple Account → Sign in with Apple → Flick → Stop Using Sign in with Apple." : "",
-        cleanupFailed ? "Some local data couldn't be removed. Clear Flick's app data before sharing this device." : ""].filter(Boolean).join("\n\n"));
+      Alert.alert("Account deleted", [`Your ${APP_NAME} account and cloud data have been deleted.`,
+        data.appleRevocationRequired ? `Also revoke ${APP_NAME} in Settings → your Apple Account → Sign in with Apple → ${APP_NAME} → Stop Using Sign in with Apple.` : "",
+        cleanupFailed ? `Some local data couldn't be removed. Clear ${APP_NAME}'s app data before sharing this device.` : ""].filter(Boolean).join("\n\n"));
       return null;
     } catch { return "Couldn't delete your account. Check your connection and retry."; }
     finally { deletingAccount.current = false; }
@@ -310,7 +311,7 @@ export function useSession() {
 
 function friendlyAuthError(message: string): string {
   if (/invalid login credentials/i.test(message)) return "That email or password didn't match.";
-  if (/network|fetch/i.test(message)) return "Can't reach Flick right now. Check your connection.";
+  if (/network|fetch/i.test(message)) return `Can't reach ${APP_NAME} right now. Check your connection.`;
   if (/email not confirmed/i.test(message)) return "Confirm your email first, then try again.";
   if (/cancel|dismiss|closed|access_denied/i.test(message)) return "Sign-in was cancelled.";
   return message;

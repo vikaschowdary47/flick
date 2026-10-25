@@ -16,6 +16,7 @@ import { tokens } from "../design/tokens";
 import type { AuthCallbackNotice } from "../hooks/useSession";
 import { LogoMark } from "./LogoMark";
 import { PillButton } from "./PillButton";
+import { APP_NAME } from "../lib/appName";
 
 type Props = {
   onSignIn: (email: string, password: string) => Promise<string | null>;
@@ -167,10 +168,10 @@ export function SignInScreen({
       >
         <LogoMark size={tokens.layout.signInMark} />
         <Text accessibilityRole="header" style={styles.heading}>
-          {mode === "signUp" ? "Join flick" : mode === "resetPassword" ? "Choose a new password" : "Sign in to flick"}
+          {mode === "signUp" ? `Join ${APP_NAME}` : mode === "resetPassword" ? "Choose a new password" : `Sign in to ${APP_NAME}`}
         </Text>
         <Text style={styles.sub}>
-          {mode === "checkEmail" ? `Check ${email} for a link from Flick.` : "Sign in to send files to all your devices."}
+          {mode === "checkEmail" ? `Check ${email} for a link from ${APP_NAME}.` : "Sign in to send files to all your devices."}
         </Text>
         {authCallbackNotice && (
           <Text accessibilityRole="alert" style={styles.notice}>

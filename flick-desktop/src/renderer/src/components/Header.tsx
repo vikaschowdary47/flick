@@ -6,6 +6,7 @@ import type { Usage } from "../limits";
 import type { Density } from "../density";
 import type { Session } from "@supabase/supabase-js";
 import { designTokens } from "../../../design/tokens";
+import { APP_NAME } from "../../../shared/appName";
 
 interface HeaderProps {
   accountMenuRef: RefObject<HTMLDivElement | null>;
@@ -102,7 +103,7 @@ export default function Header({
             <path d="M10 22 22 10M12 10h10v10" />
           </svg>
         </motion.div>
-        <span className="brand-name">flick</span>
+        <span className="brand-name">{APP_NAME}</span>
       </div>
       )}
       <div className="header-actions">
@@ -211,7 +212,7 @@ export default function Header({
                       <span>
                         <strong>Clipboard sharing</strong>
                         <br />
-                        Share text and links between your devices. Flick only reads your
+                        Share text and links between your devices. {APP_NAME} only reads your
                         clipboard when you tap Send clipboard.
                       </span>
                     </label>

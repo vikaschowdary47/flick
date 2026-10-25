@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
   "appId": "dev.flickit.desktop",
-  "productName": "Flick",
+  "productName": "eqlDrop",
   "asar": true,
   "directories": {
     "output": "dist/windows",
@@ -13,7 +13,7 @@
   ],
   "protocols": [
     {
-      "name": "Flick Authentication",
+      "name": "eqlDrop Authentication",
       "schemes": [
         "flick"
       ]
@@ -29,16 +29,16 @@
       }
     ],
     "icon": "build/icon.ico",
-    "executableName": "Flick"
+    "executableName": "eqlDrop"
   },
   "nsis": {
-    "artifactName": "Flick-Setup.exe",
+    "artifactName": "eqlDrop-Setup.exe",
     "oneClick": false,
     "perMachine": false,
     "allowToChangeInstallationDirectory": true,
     "createDesktopShortcut": false,
     "createStartMenuShortcut": true,
-    "shortcutName": "Flick",
+    "shortcutName": "eqlDrop",
     "runAfterFinish": true,
     "deleteAppDataOnUninstall": false
   },
@@ -47,6 +47,14 @@
     {
       "from": "build/icon.ico",
       "to": "icon.ico"
+    },
+    {
+      "from": "build/tray-template.png",
+      "to": "tray-template.png"
+    },
+    {
+      "from": "build/tray-template-dot.png",
+      "to": "tray-template-dot.png"
     }
   ]
 }

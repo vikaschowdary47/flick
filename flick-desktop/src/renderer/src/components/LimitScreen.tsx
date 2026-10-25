@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { DeviceRow } from "../hooks/useDevice";
 import { useWaitlist } from "../hooks/useWaitlist";
 import type { LimitKind, Usage } from "../limits";
+import { APP_NAME } from "../../../shared/appName";
 
 interface LimitScreenProps {
   limit: LimitKind | null; // null hides the screen
@@ -51,7 +52,7 @@ function copy(limit: LimitKind, usage: Usage | null): { title: string; body: str
   if (limit === "sharing") {
     return {
       title: "Share links are for files up to 50 MB",
-      body: "Flick links use the same 50 MB file limit. We’ll let you know when larger links are available.",
+      body: `${APP_NAME} links use the same 50 MB file limit. We’ll let you know when larger links are available.`,
     };
   }
   return {

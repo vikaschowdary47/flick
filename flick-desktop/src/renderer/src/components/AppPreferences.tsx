@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { DesktopAppSettings } from "../../../shared/appSettings";
+import { APP_NAME } from "../../../shared/appName";
 
 // Themed on/off switch: coral when on, cream when off, navy outline.
 export function Toggle({
@@ -65,7 +66,7 @@ export function AppPreferences() {
       )}
 
       {app?.isWindows && <section className="settings-group">
-        <label className="settings-label" htmlFor="settings-shortcut">Open / close Flick shortcut</label>
+        <label className="settings-label" htmlFor="settings-shortcut">Open / close {APP_NAME} shortcut</label>
         <input id="settings-shortcut" className="settings-input" value={shortcutDraft} maxLength={60}
           placeholder="Ctrl+Shift+Space" disabled={savingShortcut} spellCheck={false}
           onChange={(event) => setShortcutDraft(event.target.value)} />
@@ -79,7 +80,7 @@ export function AppPreferences() {
           }).catch(() => setAppMessage("Couldn't save that shortcut. Try again.")).finally(() => setSavingShortcut(false));
         }}>{savingShortcut ? "Saving…" : "Save shortcut"}</button>
         {!app.shortcutRegistered && <p className="settings-help" role="alert">{app.shortcutError ?? "The shortcut is unavailable. Choose another combination."}</p>}
-        {!app.canLaunchAtLogin && <p className="settings-help">Install Flick to enable Start with Windows.</p>}
+        {!app.canLaunchAtLogin && <p className="settings-help">Install {APP_NAME} to enable Start with Windows.</p>}
       </section>}
       {appMessage && <p className="settings-help" role="status">{appMessage}</p>}
 

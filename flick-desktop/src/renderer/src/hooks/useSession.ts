@@ -8,6 +8,7 @@ import {
 import type { Session } from "@supabase/supabase-js";
 import { useAppleSignIn } from "./useAppleSignIn";
 import { supabase } from "../supabase";
+import { APP_NAME } from "../../../shared/appName";
 
 export type AuthCallbackNotice = {
   kind: "confirmed" | "reset";
@@ -168,9 +169,9 @@ export function useSession() {
         setAuthError(error.message);
       }
     } catch (error: unknown) {
-      console.error("Could not sign in to Flick:", error);
+      console.error(`Could not sign in to ${APP_NAME}:`, error);
       setAuthError(
-        error instanceof Error ? error.message : "Could not sign in to Flick.",
+        error instanceof Error ? error.message : `Could not sign in to ${APP_NAME}.`,
       );
     } finally {
       setIsSigningIn(false);
@@ -258,7 +259,7 @@ export function useSession() {
   }
 
   async function handleSignUp(nextEmail: string, nextPassword: string): Promise<string | null> {
-    if (!supabase) return "Flick is not connected.";
+    if (!supabase) return `${APP_NAME} is not connected.`;
     setIsSigningIn(true);
     try {
       const { data, error } = await supabase.auth.signUp({
@@ -278,7 +279,7 @@ export function useSession() {
   }
 
   async function handleResendSignUp(nextEmail: string): Promise<string | null> {
-    if (!supabase) return "Flick is not connected.";
+    if (!supabase) return `${APP_NAME} is not connected.`;
     setIsSigningIn(true);
     try {
       const { error } = await supabase.auth.resend({
@@ -293,7 +294,7 @@ export function useSession() {
   }
 
   async function handleRequestPasswordReset(nextEmail: string): Promise<string | null> {
-    if (!supabase) return "Flick is not connected.";
+    if (!supabase) return `${APP_NAME} is not connected.`;
     setIsSigningIn(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(nextEmail.trim(), {
@@ -312,7 +313,7 @@ export function useSession() {
   }
 
   async function handleUpdatePassword(nextPassword: string): Promise<string | null> {
-    if (!supabase) return "Flick is not connected.";
+    if (!supabase) return `${APP_NAME} is not connected.`;
     setIsSigningIn(true);
     try {
       const { error } = await supabase.auth.updateUser({ password: nextPassword });
@@ -338,9 +339,9 @@ export function useSession() {
       await supabase.auth.signOut({ scope: "local" });
       setSession(null);
       setEmail(""); setPassword(""); setPasswordRecovery(false); setAuthCallbackNotice(null);
-      const notice = ["Your Flick account and cloud data have been deleted.",
-        data.appleRevocationRequired ? "Also revoke Flick in Apple Account → Sign-In & Security → Sign in with Apple → Flick → Stop Using Sign in with Apple." : "",
-        cleanupFailed ? "Some downloaded files could not be removed. Clear Flick's local downloads before sharing this device." : ""].filter(Boolean).join("\n\n");
+      const notice = [`Your ${APP_NAME} account and cloud data have been deleted.`,
+        data.appleRevocationRequired ? `Also revoke ${APP_NAME} in Apple Account → Sign-In & Security → Sign in with Apple → ${APP_NAME} → Stop Using Sign in with Apple.` : "",
+        cleanupFailed ? `Some downloaded files could not be removed. Clear ${APP_NAME}'s local downloads before sharing this device.` : ""].filter(Boolean).join("\n\n");
       window.alert(notice);
       return null;
     } catch { return "Couldn't delete your account. Check your connection and retry."; }
@@ -356,13 +357,13 @@ export function useSession() {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) {
-        console.error("Could not sign out of Flick:", error);
+        console.error(`Could not sign out of ${APP_NAME}:`, error);
         setAuthError(error.message);
       }
     } catch (error: unknown) {
-      console.error("Could not sign out of Flick:", error);
+      console.error(`Could not sign out of ${APP_NAME}:`, error);
       setAuthError(
-        error instanceof Error ? error.message : "Could not sign out of Flick.",
+        error instanceof Error ? error.message : `Could not sign out of ${APP_NAME}.`,
       );
     }
   }
@@ -414,6 +415,6 @@ export function useSession() {
 
 function friendlyAuthError(message: string): string {
   if (/cancel|dismiss|closed|access_denied/i.test(message)) return "Google sign-in was cancelled.";
-  if (/network|fetch/i.test(message)) return "Can't reach Flick right now. Check your connection.";
+  if (/network|fetch/i.test(message)) return `Can't reach ${APP_NAME} right now. Check your connection.`;
   return message || "Could not sign in with Google.";
 }

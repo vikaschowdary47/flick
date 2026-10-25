@@ -18,7 +18,7 @@ const OPTIONS: { source: UploadSource; label: string; hint: string; fill: keyof 
   { source: "camera", label: "Take photo", hint: "Open the camera", fill: "archiveTile" },
 ];
 
-// Small sticker-style sheet that opens from the "Flick it" button.
+// Small sticker-style sheet that opens from the "eqlDrop it" button.
 export function SourceSheet({ visible, onPick, onClose }: Props) {
   const styles = useThemedStyles(makeStyles);
   // iOS can't present the picker while this sheet is still sliding away,
@@ -44,7 +44,7 @@ export function SourceSheet({ visible, onPick, onClose }: Props) {
       <Pressable accessibilityLabel="Close" style={styles.scrim} onPress={onClose} />
       <SafeAreaView edges={["bottom"]} style={styles.sheet}>
         <Text accessibilityRole="header" style={styles.heading}>
-          What are you flicking?
+          What are you sending?
         </Text>
         <View style={styles.options}>
           {OPTIONS.map((option) => (

@@ -4,6 +4,7 @@ import type { Palette } from "../design/theme";
 import { tokens } from "../design/tokens";
 import type { UploadState } from "../lib/types";
 import { FileCard } from "./FileCard";
+import { APP_NAME } from "../lib/appName";
 
 type Props = { state: UploadState; onDismiss: () => void };
 
@@ -22,7 +23,7 @@ export function UploadCard({ state, onDismiss }: Props) {
   const file = state.file!;
   const tone = state.kind === "uploading" ? "sending" : state.kind === "done" ? "done" : "error";
   const status =
-    state.kind === "uploading" ? "On its way…" : state.kind === "done" ? "Got it! Flicked to your devices" : state.message;
+    state.kind === "uploading" ? "On its way…" : state.kind === "done" ? `Got it! Sent with ${APP_NAME}` : state.message;
 
   return (
     <View accessibilityLiveRegion="polite" style={styles.wrap}>

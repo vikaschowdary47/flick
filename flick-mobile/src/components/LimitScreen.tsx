@@ -8,6 +8,7 @@ import type { DeviceRow } from "../hooks/useDevice";
 import { useWaitlist } from "../hooks/useWaitlist";
 import { useFeatureFlags } from "../hooks/useFeatureFlags";
 import type { LimitKind, Usage } from "../lib/limits";
+import { APP_NAME } from "../lib/appName";
 import { LogoMark } from "./LogoMark";
 import { PillButton } from "./PillButton";
 
@@ -57,7 +58,7 @@ function copy(limit: LimitKind, usage: Usage | null): { title: string; body: str
   if (limit === "sharing") {
     return {
       title: "Share links are for files up to 50 MB",
-      body: "Flick links use the same 50 MB file limit. We’ll let you know when larger links are available.",
+      body: `${APP_NAME} links use the same 50 MB file limit. We’ll let you know when larger links are available.`,
     };
   }
   const max = usage?.maxDevices;
@@ -125,7 +126,7 @@ export function LimitScreen({
                       <Pressable
                         accessibilityRole="button"
                         accessibilityLabel={`Remove ${device.name}`}
-                        accessibilityHint="Signs that device out of Flick"
+                        accessibilityHint={`Signs that device out of ${APP_NAME}`}
                         disabled={removingId !== null}
                         onPress={async () => {
                           setRemovingId(device.id);

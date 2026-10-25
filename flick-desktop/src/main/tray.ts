@@ -14,10 +14,11 @@ import { join } from "node:path";
 import type { DesktopAppSettings } from "../shared/appSettings";
 import { windowsPanelBounds, normalizeWindowsShortcut, replaceShortcut } from "./windows-behavior";
 import { designTokens } from "../design/tokens";
+import { APP_NAME } from "../shared/appName";
 import { type Bounds, getSettings, type ShowAs, updateSettings } from "./settings";
 
 // Menu bar (macOS) / system tray (Windows, Linux): the icon opens Flick as a
-// popover or a floating panel; "Open Flick" opens the resizable main window.
+// popover or a floating panel; "Open eqlDrop" opens the resizable main window.
 // The window stays alive while hidden, so files arriving in the background
 // are already listed.
 
@@ -58,6 +59,8 @@ function distanceToSegment(
   return Math.hypot(px - (ax + t * dx), py - (ay + t * dy));
 }
 
+// Kept as a fallback for older packaged resources.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function drawIcon(size: number, template: boolean, dot: boolean): Buffer {
   const bitmap = Buffer.alloc(size * size * 4); // BGRA
   const s = size / 16;
@@ -116,20 +119,11 @@ function drawIcon(size: number, template: boolean, dot: boolean): Buffer {
 }
 
 function trayImage(dot: boolean): NativeImage {
-  const template = process.platform === "darwin";
-  const image = nativeImage.createEmpty();
-  for (const scaleFactor of [1, 2]) {
-    const size = 16 * scaleFactor;
-    image.addRepresentation({
-      scaleFactor,
-      width: size,
-      height: size,
-      buffer: drawIcon(size, template, dot),
-    });
-  }
-  if (template) {
-    image.setTemplateImage(true);
-  }
+  const asset = app.isPackaged
+    ? join(process.resourcesPath, dot ? "tray-template-dot.png" : "tray-template.png")
+    : join(app.getAppPath(), "build", dot ? "tray-template-dot.png" : "tray-template.png");
+  const image = nativeImage.createFromPath(asset);
+  image.setTemplateImage(true);
   return image;
 }
 
@@ -137,7 +131,7 @@ function trayImage(dot: boolean): NativeImage {
 // One window (it does the syncing, so there is only ever one) shown three ways:
 // - popover: under the tray icon, compact, ~8 recent items, hides on click-away
 // - panel:   always-on-top floating mini panel, movable, stays open
-// - main:    resizable window from "Open Flick", remembers its size
+// - main:    resizable window from "Open eqlDrop", remembers its size
 export type WindowMode = "popover" | "panel" | "main";
 
 // The popover sizes itself to its content (the page reports its height),
@@ -147,7 +141,7 @@ const POPOVER_WIDTH = 360;
 const POPOVER_MIN_HEIGHT = 140;
 const POPOVER_MAX_HEIGHT = 560;
 const POPOVER_MAX_SHARE = 0.65; // of the screen's work area height
-// "Open Flick" makes the same popover taller (never wider), up to this.
+// "Open eqlDrop" makes the same popover taller (never wider), up to this.
 const EXPANDED_MAX_HEIGHT = 680;
 const EXPANDED_MAX_SHARE = 0.8;
 const RESIZE_MS = 180;
@@ -218,7 +212,7 @@ function fitPopover(window: BrowserWindow, animate = false): void {
   }, 1000 / 60);
 }
 
-// Ask the page to switch layouts ("Open Flick" from the tray menu, or the
+// Ask the page to switch layouts ("Open eqlDrop" from the tray menu, or the
 // reset on hide). The page renders, measures, and reports back with
 // popover:content-height, which does the resize.
 function requestPopoverExpanded(expanded: boolean): void {
@@ -356,8 +350,8 @@ async function showWindowsTip(window: BrowserWindow): Promise<void> {
   try {
     const shortcut = getSettings().windowsShortcut;
     await dialog.showMessageBox(window, {
-      type: "info", title: "Flick is in your system tray", message: "Flick stays in your system tray when you close this panel.",
-      detail: `Use ${shortcut} to open or close Flick from anywhere.${shortcutError ? " This shortcut is currently unavailable; choose another in Settings." : ""}\n\nTo keep the icon visible, open the taskbar's hidden-icons arrow and drag Flick onto the visible tray. You can also enable Flick in Windows Settings → Personalization → Taskbar → Other system tray icons (Windows 11) or Select which icons appear on the taskbar (Windows 10).\n\nRight-click Flick's tray icon for Open, Settings, or Quit.`,
+      type: "info", title: `${APP_NAME} is in your system tray`, message: `${APP_NAME} stays in your system tray when you close this panel.`,
+      detail: `Use ${shortcut} to open or close ${APP_NAME} from anywhere.${shortcutError ? " This shortcut is currently unavailable; choose another in Settings." : ""}\n\nTo keep the icon visible, open the taskbar's hidden-icons arrow and drag ${APP_NAME} onto the visible tray. You can also enable ${APP_NAME} in Windows Settings → Personalization → Taskbar → Other system tray icons (Windows 11) or Select which icons appear on the taskbar (Windows 10).\n\nRight-click ${APP_NAME}'s tray icon for Open, Settings, or Quit.`,
       buttons: ["Got it"], defaultId: 0, noLink: true,
     });
     updateSettings({ windowsTipShown: true });
@@ -370,7 +364,7 @@ export function showPopover(): void {
   showIn(process.platform === "win32" ? "popover" : getSettings().showAs);
 }
 
-// "Open Flick": the resizable main window.
+// "Open eqlDrop": the resizable main window.
 export function openMainWindow(): void {
   showIn("main");
 }
@@ -450,7 +444,7 @@ function buildMenu(): Menu {
   };
   const template: Electron.MenuItemConstructorOptions[] = [
     {
-      label: "Open Flick",
+      label: `Open ${APP_NAME}`,
       click: () => {
         showIn("popover");
         requestPopoverExpanded(true);
@@ -488,7 +482,7 @@ function buildMenu(): Menu {
       : []),
     ...extraMenuItems(),
     { type: "separator" },
-    { label: "Quit Flick", role: "quit" },
+    { label: `Quit ${APP_NAME}`, role: "quit" },
   ];
   return Menu.buildFromTemplate(template);
 }
@@ -514,7 +508,7 @@ export function setupTray(windowGetter: () => BrowserWindow | null): void {
   tray = process.platform === "win32"
     ? new Tray((app.isPackaged ? join(process.resourcesPath, "icon.ico") : join(app.getAppPath(), "build/icon.ico")), "649d5631-5781-49ee-a2a0-c2a306bc4163")
     : new Tray(trayImage(false));
-  tray.setToolTip("Flick");
+  tray.setToolTip(APP_NAME);
   tray.on("click", () => togglePopover("tray"));
   tray.on("right-click", () => tray?.popUpContextMenu(buildMenu()));
   // Linux AppIndicator has no click events, only a menu: always attach it.
@@ -596,7 +590,7 @@ function desktopSettings(): DesktopAppSettings {
 }
 
 function assertSettingsSender(event: Electron.IpcMainInvokeEvent): void {
-  if (event.sender !== getWindow()?.webContents) throw new Error("Settings are only available to the Flick window.");
+  if (event.sender !== getWindow()?.webContents) throw new Error(`Settings are only available to the ${APP_NAME} window.`);
 }
 
 export function setupWindowModeIpc(): void {
@@ -630,7 +624,7 @@ export function setupWindowModeIpc(): void {
     assertSettingsSender(event);
     if (typeof on !== "boolean") throw new Error("A boolean startup preference is required.");
     if (process.platform === "win32") {
-      if (!app.isPackaged) throw new Error("Install Flick to enable Start with Windows.");
+    if (!app.isPackaged) throw new Error(`Install ${APP_NAME} to enable Start with Windows.`);
       app.setLoginItemSettings({ openAtLogin: on, path: process.execPath, args: ["--hidden"] });
       updateSettings({ windowsStartupConfigured: true });
     } else if (process.platform === "darwin") app.setLoginItemSettings({ openAtLogin: on });
@@ -639,7 +633,7 @@ export function setupWindowModeIpc(): void {
   });
   // The popover page reports its natural height whenever its list changes.
   // The page reports its natural height and layout after every change. A
-  // layout change (Open Flick / Show less) animates; anything else snaps.
+  // layout change (Open eqlDrop / Show less) animates; anything else snaps.
   ipcMain.on("popover:content-height", (_event, height: unknown, expanded: unknown) => {
     if (typeof height !== "number" || !Number.isFinite(height)) {
       return;

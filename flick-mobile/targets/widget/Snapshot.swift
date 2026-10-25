@@ -29,7 +29,7 @@ struct WidgetSnapshot: Codable {
   let clipCount: Int
   let latestClip: LatestClip?
   let showContentOnLockScreen: Bool
-  // Switched off in Flick's Settings (missing in older snapshots = on).
+  // Switched off in eqlDrop's Settings (missing in older snapshots = on).
   var homeEnabled: Bool? = nil
   var lockEnabled: Bool? = nil
 

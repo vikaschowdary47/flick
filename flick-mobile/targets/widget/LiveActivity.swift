@@ -32,7 +32,7 @@ struct FlickActivityBanner: View {
         Text(newFilesText(state))
           .font(.system(size: 15, weight: .heavy, design: .rounded))
           .lineLimit(1)
-        Text("Tap to open Flick")
+        Text("Tap to open eqlDrop")
           .font(.system(size: 12, weight: .semibold, design: .rounded))
           .foregroundStyle(.secondary)
       }
@@ -79,7 +79,7 @@ struct FlickLiveActivity: Widget {
             .lineLimit(1)
         }
         DynamicIslandExpandedRegion(.bottom) {
-          Text("Tap to open Flick")
+          Text("Tap to open eqlDrop")
             .font(.system(size: 12, weight: .semibold, design: .rounded))
             .foregroundStyle(.secondary)
         }

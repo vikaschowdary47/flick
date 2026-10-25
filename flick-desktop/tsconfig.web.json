@@ -13,6 +13,8 @@
   },
   "include": [
     "src/design/**/*.ts",
+    "src/shared/**/*.ts",
+    "../shared/**/*.ts",
     "src/renderer/**/*.ts",
     "src/renderer/**/*.tsx"
   ]

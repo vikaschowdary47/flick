@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Flick",
+    "name": "eqlDrop",
     "slug": "flick-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -21,7 +21,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#F5B83D",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -41,8 +41,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Flick opens your photos so you can send the ones you pick to your other devices.",
-          "cameraPermission": "Flick uses the camera when you tap Take photo, so you can send the picture to your other devices.",
+        "photosPermission": "eqlDrop opens your photos so you can send the ones you pick to your other devices.",
+        "cameraPermission": "eqlDrop uses the camera when you tap Take photo, so you can send the picture to your other devices.",
           "microphonePermission": false
         }
       ],

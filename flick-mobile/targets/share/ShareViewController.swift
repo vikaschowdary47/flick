@@ -2,7 +2,7 @@ import SwiftUI
 import UIKit
 import UniformTypeIdentifiers
 
-// "Flick it" from the iOS share sheet: a small sticker sheet that uploads
+// "eqlDrop it" from the iOS share sheet: a small sticker sheet that uploads
 // what was shared (photos as JPEG, files as they are, text/links as clips)
 // and closes itself when done.
 final class ShareViewController: UIViewController {
@@ -133,7 +133,7 @@ struct ShareSheetView: View {
             .frame(width: 34, height: 34)
             .background(RoundedRectangle(cornerRadius: 11).fill(coral))
             .overlay(RoundedRectangle(cornerRadius: 11).stroke(navy, lineWidth: 1.5))
-          Text("Flick it").font(.system(size: 20, weight: .heavy, design: .rounded))
+          Text("eqlDrop it").font(.system(size: 20, weight: .heavy, design: .rounded))
           Spacer()
         }
         content
