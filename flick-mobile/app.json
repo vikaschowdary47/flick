@@ -19,10 +19,6 @@
       },
       "usesAppleSignIn": true
     },
-    "notification": {
-      "icon": "./assets/notification-icon.png",
-      "color": "#F5B83D"
-    },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#F5B83D",
