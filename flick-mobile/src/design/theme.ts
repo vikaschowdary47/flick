@@ -4,7 +4,7 @@
 
 import { themeColors } from "../../../shared/themeColors";
 
-export type ThemeName = "playful" | "classy";
+export type ThemeName = "playful" | "classy" | "drop";
 export type AppearancePreference = "system" | "light" | "dark";
 export type ColorScheme = "light" | "dark";
 
@@ -135,7 +135,67 @@ const classyDark: Palette = {
   scrim: "rgba(0, 0, 0, 0.55)",
 };
 
+// "Drop" (redesign v2, docs/PLAN_redesign_v2.md): minimal and native.
+// Neutral surfaces, hairline edges, amber only for sending. Not offered in Settings yet.
+const dropLight: Palette = {
+  background: "#F3F2EF",
+  card: "#FFFFFF",
+  text: "#1A1712",
+  textMuted: "#5E5A52", // 6.1:1 on background
+  outline: "rgba(26, 23, 18, 0.12)", // hairline
+  shadow: "transparent",
+  accent: themeColors.primary,
+  onAccent: themeColors.onPrimary,
+  onColor: "#1A1712",
+  error: "#C2384A", // 5.3:1 on white
+  sendingCard: "#FFFFFF",
+  doneCard: "#FFFFFF",
+  imageTile: "#ECEAE5",
+  documentTile: "#ECEAE5",
+  archiveTile: "#ECEAE5",
+  fallbackTile: "#ECEAE5",
+  pinBadge: "#FFF3D6",
+  dangerFill: "#F6DADD",
+  connectedPill: "#E3F1E8",
+  signedOutPill: "#ECEAE5",
+  offlinePill: "#FFF3D6",
+  inverse: "#1A1712",
+  onInverse: "#F3F2EF",
+  inverseAccent: themeColors.primary,
+  scrim: "rgba(26, 23, 18, 0.35)",
+};
+
+// Dark fills are dark too, so text on them (onColor) is light.
+const dropDark: Palette = {
+  background: "#000000",
+  card: "#161513",
+  text: "#F4F1EA",
+  textMuted: "#A8A398", // 7.3:1 on card
+  outline: "rgba(244, 241, 234, 0.12)",
+  shadow: "transparent",
+  accent: themeColors.primary,
+  onAccent: themeColors.onPrimary,
+  onColor: "#F4F1EA",
+  error: "#FF6B7A", // 6.6:1 on card
+  sendingCard: "#161513",
+  doneCard: "#161513",
+  imageTile: "#26251F",
+  documentTile: "#26251F",
+  archiveTile: "#26251F",
+  fallbackTile: "#26251F",
+  pinBadge: "#2E2615",
+  dangerFill: "#4A2730",
+  connectedPill: "#1E3A2A",
+  signedOutPill: "#26251F",
+  offlinePill: "#2E2615",
+  inverse: "#F4F1EA",
+  onInverse: "#1A1712",
+  inverseAccent: "#8A5A00", // 5.9:1 on the light toast
+  scrim: "rgba(0, 0, 0, 0.6)",
+};
+
 export const palettes: Record<ThemeName, Record<ColorScheme, Palette>> = {
   playful: { light: playfulLight, dark: playfulDark },
   classy: { light: classyLight, dark: classyDark },
+  drop: { light: dropLight, dark: dropDark },
 };

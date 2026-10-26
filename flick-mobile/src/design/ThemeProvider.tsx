@@ -29,7 +29,7 @@ function isSaved(value: unknown): value is Saved {
   return (
     !!v &&
     (v.appearance === "system" || v.appearance === "light" || v.appearance === "dark") &&
-    (v.themeName === "playful" || v.themeName === "classy")
+    (v.themeName === "playful" || v.themeName === "classy" || v.themeName === "drop")
   );
 }
 
