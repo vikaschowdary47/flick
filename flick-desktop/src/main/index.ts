@@ -41,6 +41,7 @@ import {
   setupTray,
   setupWindowModeIpc,
   showPopover,
+  openMainWindow,
 } from "./tray";
 
 app.setName(APP_NAME);
@@ -712,9 +713,15 @@ if (!hasSingleInstanceLock) {
       const initialCallback = findAuthCallback(process.argv);
       if (initialCallback) handleAuthCallback(initialCallback);
 
+      // macOS sends "activate" when the user opens eqlShare again (Finder,
+      // Spotlight, Launchpad) while it's already running. It has no Dock icon,
+      // and its menu bar icon can be hidden behind the notch, so always show
+      // the window rather than doing nothing.
       app.on("activate", () => {
         if (BrowserWindow.getAllWindows().length === 0) {
           createWindow();
+        } else {
+          openMainWindow();
         }
       });
     })
