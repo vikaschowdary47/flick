@@ -115,7 +115,7 @@ export default function Header({
             }}
           >
             <img
-              src={isDarkMode ? "./lockup-light.png" : "./lockup-light.png"}
+              src={isDarkMode ? "./lockup-dark.png" : "./lockup-light.png"}
               alt={APP_NAME}
             />
           </motion.div>

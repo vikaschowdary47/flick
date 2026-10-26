@@ -3,22 +3,29 @@
 import { createRef } from "react";
 import ReactDOM from "react-dom/client";
 import type { Session } from "@supabase/supabase-js";
-import "@fontsource/nunito/600.css";
-import "@fontsource/nunito/800.css";
+import "@fontsource/hanken-grotesk/400.css"
+import "@fontsource/hanken-grotesk/500.css";
+import "@fontsource/hanken-grotesk/600.css";
 import { designTokenCssVariables } from "../../design/tokens";
 import ClipsPanel from "./components/ClipsPanel";
 import LimitScreen from "./components/LimitScreen";
+import SignIn from "./components/SignIn";
 import Widget from "./components/Widget";
 import type { ClipRow } from "./clips";
 import type { CloudFile } from "./types";
 import "./styles.css";
 
-for (const [name, value] of Object.entries(designTokenCssVariables)) {
-  document.documentElement.style.setProperty(name, value);
-}
+// Tokens go in a zero-specificity rule at the top of <head>, so the
+// stylesheet's dark-mode block can override them (inline styles couldn't).
+const tokenStyle = document.createElement("style");
+tokenStyle.textContent = `:where(:root){${Object.entries(designTokenCssVariables)
+  .map(([name, value]) => `${name}:${value};`)
+  .join("")}}`;
+document.head.prepend(tokenStyle);
 
 const params = new URLSearchParams(location.search);
 const state = params.get("state") ?? "files";
+// state=signin: the signed-out screen.
 // state=mixed&files=N&clips=M: N files and M clips (Clips tab available).
 const fileCount = Number(params.get("files") ?? 0);
 const clipCount = Number(params.get("clips") ?? 0);
@@ -73,8 +80,49 @@ const sampleClips: ClipRow[] = Array.from({ length: clipCount }, (_, i) => ({
 const noop = () => {};
 const session = { user: { id: "preview", email: "you@example.com" } } as unknown as Session;
 
+const signInPreview = (
+  <SignIn
+    accountMenuRef={createRef<HTMLDivElement>()}
+    authError=""
+    setAuthError={noop}
+    authReady
+    email=""
+    handleDragEnter={noop}
+    handleDragLeave={noop}
+    handleDragOver={noop}
+    handleDrop={noop}
+    handleSignIn={(event) => event.preventDefault()}
+    handleGoogleSignIn={noop}
+    handleAppleSignIn={noop}
+    cancelAppleSignIn={noop}
+    isAppleSigningIn={false}
+    cancelGoogleSignIn={noop}
+    isGoogleSigningIn={false}
+    handleSignUp={async () => null}
+    handleResendSignUp={async () => null}
+    handleRequestPasswordReset={async () => null}
+    handleUpdatePassword={async () => null}
+    passwordRecovery={false}
+    authCallbackNotice={null}
+    handleSignOut={noop}
+    isAccountMenuOpen={false}
+    isDraggingFiles={false}
+    isOnline
+    isSigningIn={false}
+    onOutsideClick={noop}
+    password=""
+    session={null}
+    setEmail={noop}
+    setIsAccountMenuOpen={noop}
+    setPassword={noop}
+    supabaseConfigured
+    arrivalPulse={0}
+    showConfetti={false}
+  />
+);
+
 ReactDOM.createRoot(document.getElementById("root")!).render(
-  <>
+  state === "signin" ? signInPreview : <>
   {state === "limit" && (
     <LimitScreen
       limit="storage"

@@ -170,7 +170,7 @@ export default function FileList({
           <span className="popover-empty-icon" aria-hidden="true">
             ↗
           </span>
-          Nothing yet — send something from your phone
+          Nothing has landed yet. Send something from your phone.
         </p>
       )}
 
