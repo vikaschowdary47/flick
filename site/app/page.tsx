@@ -5,38 +5,6 @@ import { SiteFooter } from "../components/site-footer";
 import { WaitlistForm } from "../components/waitlist-form";
 import { AuthCodeForwarder } from "../components/auth-code-forwarder";
 
-const features = [
-  [
-    "devices",
-    "Cross-platform",
-    "Phone to laptop, Android to Mac. Everything plays nicely together.",
-  ],
-  [
-    "link",
-    "Share by link",
-    "Send a link to friends and teams. No phone numbers needed.",
-  ],
-  [
-    "clock",
-    "Gone in 24h",
-    "Files delete themselves after a day unless you pin them, so nothing piles up.",
-  ],
-  [
-    "clip",
-    "Clips",
-    "Send text and links between devices. Your laptop remembers recent clips too.",
-  ],
-  [
-    "share",
-    "Share from anywhere",
-    "Send from your phone's share sheet without breaking your flow.",
-  ],
-  [
-    "lock",
-    "Private by design",
-    "Encrypted, temporary by default, no ads and no tracking. Your stuff stays yours.",
-  ],
-];
 // Simple line icons (were text glyphs, which render differently per system).
 const ICON_PATHS: Record<string, string> = {
   devices: "M3 5.5h11a1.5 1.5 0 0 1 1.5 1.5v7H1.5V7A1.5 1.5 0 0 1 3 5.5ZM.5 17h15M18 8.5h3.5a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H18a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1Z",
@@ -133,18 +101,72 @@ export default function Home() {
               <br />
               Big relief.
             </h2>
-            <p>Designed for the little moments that should be effortless.</p>
+            <p>Built for the five seconds between “I need that file” and “got it”.</p>
           </div>
-          <div className="feature-grid">
-            {features.map(([icon, title, text], i) => (
-              <article className={`feature-card card-${i}`} key={title}>
-                <span className="feature-icon" aria-hidden="true">
-                  <FeatureIcon name={icon} />
-                </span>
-                <h3>{title}</h3>
-                <p>{text}</p>
-              </article>
-            ))}
+          <div className="bento">
+            <article className="bento-card bento-wide bento-fuse">
+              <div className="bento-text">
+                <h3>Gone in 24 hours</h3>
+                <p>Files delete themselves after a day unless you pin them, so nothing piles up.</p>
+              </div>
+              <div className="fuse-demo" aria-hidden="true">
+                <div className="fuse-file"><span className="fuse-thumb" /><span><b>lake-sunset.jpg</b><small>Expires in 23 h</small></span></div>
+                <div className="fuse-track"><i /></div>
+                <div className="fuse-scale"><span>Sent</span><span>12 h</span><span>Gone</span></div>
+              </div>
+            </article>
+            <article className="bento-card">
+              <div className="bento-text">
+                <h3>Every device</h3>
+                <p>Phone to laptop, Android to Mac. Everything plays nicely together.</p>
+              </div>
+              <ul className="device-list" aria-label="Supported devices">
+                <li><i />iPhone</li>
+                <li><i />Android</li>
+                <li><i />Mac</li>
+                <li><i />Windows</li>
+              </ul>
+            </article>
+            <article className="bento-card">
+              <div className="bento-text">
+                <h3>Clips</h3>
+                <p>Send text and links between devices. Your laptop remembers recent clips too.</p>
+              </div>
+              <div className="clip-demo" aria-hidden="true">
+                <div><code>npm run dev</code><span>Copy</span></div>
+                <div className="copied"><b>Wi-Fi: Studio_5G</b><span>Copied</span></div>
+              </div>
+            </article>
+            <article className="bento-card">
+              <div className="bento-text">
+                <h3>Share by link</h3>
+                <p>Send a link to friends and teams. No phone numbers needed.</p>
+              </div>
+              <div className="link-demo" aria-hidden="true">
+                <span>eqlshare.com/d/k3x9q</span>
+                <b>Copy link</b>
+              </div>
+            </article>
+            <article className="bento-card">
+              <div className="bento-text">
+                <h3>Share from anywhere</h3>
+                <p>Send from your phone’s share sheet without breaking your flow.</p>
+              </div>
+              <div className="sheet-demo" aria-hidden="true">
+                <span>Messages</span>
+                <span>Mail</span>
+                <span className="on">eqlShare</span>
+                <span>Notes</span>
+              </div>
+            </article>
+            <article className="bento-card bento-full bento-private">
+              <h3>Private by design</h3>
+              <ul>
+                <li>Encrypted</li>
+                <li>Temporary by default</li>
+                <li>No ads, no tracking</li>
+              </ul>
+            </article>
           </div>
         </div>
       </section>
