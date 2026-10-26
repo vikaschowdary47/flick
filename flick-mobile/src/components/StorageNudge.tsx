@@ -45,7 +45,11 @@ export function StorageNudge({ usage, files, onRemove }: Props) {
         </Pressable>
       </View>
       <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
-        <Pressable style={styles.scrim} onPress={() => setOpen(false)} accessibilityLabel="Close" />
+        {/* Full-screen dim behind the sheet, so its rounded corners show the dim, not the bright app. */}
+        <Pressable style={StyleSheet.absoluteFill} onPress={() => setOpen(false)} accessibilityLabel="Close">
+          <View style={styles.scrim} />
+        </Pressable>
+        <View style={styles.spacer} pointerEvents="none" />
         <SafeAreaView edges={["bottom"]} style={styles.sheet}>
           <Text accessibilityRole="header" style={styles.heading}>
             Free up space
@@ -127,14 +131,19 @@ const makeStyles = (c: Palette) =>
       flex: 1,
       backgroundColor: c.scrim,
     },
+    spacer: { flex: 1 },
     sheet: {
       gap: tokens.spacing.md,
       padding: tokens.layout.screenPadding,
       borderTopLeftRadius: tokens.radii.window,
       borderTopRightRadius: tokens.radii.window,
       borderWidth: tokens.borderWidth.outline,
+      borderBottomWidth: 0,
       borderColor: c.outline,
       backgroundColor: c.background,
+      // Side outlines just off-screen: only the top edge and its rounded corners
+      // are outlined, nothing traces the phone's own screen corners.
+      marginHorizontal: -tokens.borderWidth.outline,
     },
     heading: {
       color: c.text,

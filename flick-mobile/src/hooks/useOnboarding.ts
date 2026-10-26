@@ -5,12 +5,17 @@ import { supabase } from "../lib/supabase";
 export type AccountType = "personal" | "business";
 type Profile = { user_id: string; display_name: string | null; account_type: AccountType | null; onboarded_at: string | null };
 
+// The first-run "display name + personal/business" step. Neither answer is used
+// anywhere yet, so it's off: ask later, when sharing with other people or teams
+// needs a name. Flip to true to bring the screen back (the code is unchanged).
+export const ASK_PROFILE_ON_SIGNUP = false;
+
 export function useOnboarding(session: Session | null) {
   const userId = session?.user.id;
   const [state, setState] = useState<{ userId?: string; profile: Profile | null; error: string }>({ profile: null, error: "" });
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
-    if (!userId || !supabase) { setState({ profile: null, error: "" }); return; }
+    if (!ASK_PROFILE_ON_SIGNUP || !userId || !supabase) { setState({ profile: null, error: "" }); return; }
     let active = true;
     const client = supabase;
     setState({ userId, profile: null, error: "" });
@@ -44,8 +49,8 @@ export function useOnboarding(session: Session | null) {
   const metadata = session?.user.user_metadata;
   const providerName = [metadata?.full_name, metadata?.name].find((value) => typeof value === "string" && value.trim());
   return {
-    ready: Boolean(profile?.onboarded_at),
-    loading: Boolean(userId && (!profile && !(state.userId === userId && state.error))),
+    ready: !ASK_PROFILE_ON_SIGNUP || Boolean(profile?.onboarded_at),
+    loading: ASK_PROFILE_ON_SIGNUP && Boolean(userId && (!profile && !(state.userId === userId && state.error))),
     error: state.userId === userId ? state.error : "",
     initialName: profile?.display_name ?? providerName ?? "",
     initialType: profile?.account_type ?? "personal" as AccountType,
