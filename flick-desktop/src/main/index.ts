@@ -708,7 +708,7 @@ if (!hasSingleInstanceLock) {
       mainWindow?.webContents.on("did-finish-load", flushAuthCallback);
       setupTray(() => mainWindow);
       setupWindowModeIpc();
-      setupClips(() => mainWindow, showPopover);
+      setupClips(() => mainWindow);
 
       const initialCallback = findAuthCallback(process.argv);
       if (initialCallback) handleAuthCallback(initialCallback);

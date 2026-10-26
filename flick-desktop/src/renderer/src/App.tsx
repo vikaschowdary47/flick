@@ -16,6 +16,7 @@ import { useUsage } from "./hooks/useUsage";
 import { useSession } from "./hooks/useSession";
 import { useShareLinks } from "./hooks/useShareLinks";
 import { supabase } from "./supabase";
+import { APP_NAME } from "../../shared/appName";
 
 export default function App() {
   const auth = useSession();
@@ -48,12 +49,24 @@ export default function App() {
       return;
     }
     // Option/Alt+Shift+C or the tray menu: main read the clipboard on request.
+    // Tray "Send clipboard" and Option/Alt+Shift+C happen with the window
+    // usually hidden, so confirm with a system notification too.
+    const notify = (body: string) => {
+      setSendStatus(body);
+      try {
+        if (typeof Notification !== "undefined" && Notification.permission !== "denied") {
+          new Notification(APP_NAME, { body, silent: true });
+        }
+      } catch {
+        // Notifications unavailable: the Clips tab still shows the status.
+      }
+    };
     return window.flick.onSendClipboardText((text) => {
       if (!text.trim()) {
-        setSendStatus("Your clipboard is empty.");
+        notify("Your clipboard is empty.");
         return;
       }
-      void sendClip(text).then((error) => setSendStatus(error ?? "Sent to your devices."));
+      void sendClip(text).then((error) => notify(error ?? "Clipboard sent to your devices."));
     });
   }, [clipboardSetting.clipsActive, sendClip]);
 

@@ -12,7 +12,6 @@ import { APP_NAME } from "../shared/appName";
 const SEND_SHORTCUT = "Alt+Shift+C"; // Option+Shift+C on a Mac
 
 let getWindow: () => BrowserWindow | null = () => null;
-let showWindow: () => void = () => {};
 let active = false;
 
 // Read the clipboard now and hand it to the renderer, which sends the clip.
@@ -34,9 +33,8 @@ function setActive(next: boolean): void {
   }
 }
 
-export function setupClips(windowGetter: () => BrowserWindow | null, show: () => void): void {
+export function setupClips(windowGetter: () => BrowserWindow | null): void {
   getWindow = windowGetter;
-  showWindow = show;
 
   ipcMain.handle("clips:set-active", (_event, next: unknown) => {
     setActive(next === true);
@@ -56,10 +54,9 @@ export function setupClips(windowGetter: () => BrowserWindow | null, show: () =>
           {
             label: "Send clipboard",
             accelerator: SEND_SHORTCUT,
-            click: () => {
-              showWindow();
-              sendClipboard();
-            },
+            // Send without popping the window open; the renderer confirms
+            // with a system notification.
+            click: () => sendClipboard(),
           },
         ]
       : [],
