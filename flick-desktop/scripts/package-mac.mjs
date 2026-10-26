@@ -20,6 +20,11 @@ await cp(join(root, 'out'), join(appRoot, 'out'), { recursive: true });
 const { version } = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'));
 await writeFile(join(appRoot, 'package.json'), JSON.stringify({ name: 'flick-desktop', productName: 'eqlShare', version, type: 'module', main: 'out/main/index.js' }));
 await cp(join(root, 'build/eqlshare.icns'), join(bundle, 'Contents/Resources/eqlshare.icns'));
+// Menu bar icon images: the app loads these from Contents/Resources when packaged
+// (without them the menu bar item is invisible).
+for (const name of ['tray-template.png', 'tray-template-dot.png']) {
+  await cp(join(root, 'build', name), join(bundle, 'Contents/Resources', name));
+}
 const plist = join(bundle, 'Contents/Info.plist');
 const set = (command) => execFileSync('/usr/libexec/PlistBuddy', ['-c', command, plist]);
 set('Set :CFBundleName eqlShare');
