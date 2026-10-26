@@ -1,0 +1,782 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>eqlShare v2</title>
+<meta name="description" content="eqlShare redesign, direction 2: the drop point.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ---------- Tokens ---------- */
+:root{
+  --canvas:#F3F2EF; --surface:#FFFFFF; --raised:#FBFAF8; --fill:rgba(26,23,18,.06); --fill-2:rgba(26,23,18,.1);
+  --ink:#1A1712; --ink-2:#5E5A52; --ink-3:#726D64; --hair:rgba(26,23,18,.12);
+  --amber:#F5B83D; --on-amber:#2B2210; --amber-deep:#8A5A00; --amber-wash:#FFF3D6;
+  --live:#1F7A4A; --live-dot:#34C46E; --danger:#C2384A;
+  --toggle-on:#1A1712; --toggle-knob:#FFFFFF;
+  --shadow-1:0 0 0 1px rgba(26,23,18,.08);
+  --shadow-2:0 0 0 1px rgba(26,23,18,.08),0 12px 32px -20px rgba(26,23,18,.25);
+  --pop-bg:rgba(246,245,242,.78); --pop-line:rgba(0,0,0,.18);
+  --board:#E9E7E2; --board-2:#DFDCD5;
+  --font:"Hanken Grotesk",ui-sans-serif,system-ui,-apple-system,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  --ease-out:cubic-bezier(.2,.8,.2,1);
+  color-scheme:light;
+}
+[data-theme="dark"]{
+  --canvas:#000000; --surface:#161513; --raised:#1F1E1B; --fill:rgba(244,241,234,.07); --fill-2:rgba(244,241,234,.12);
+  --ink:#F4F1EA; --ink-2:#A8A398; --ink-3:#8E897F; --hair:rgba(244,241,234,.12);
+  --amber-deep:#F5B83D; --amber-wash:#2E2615;
+  --live:#5CD08D; --danger:#FF6B7A;
+  --toggle-on:#F5B83D; --toggle-knob:#FFFFFF;
+  --shadow-1:0 0 0 1px rgba(255,255,255,.08);
+  --shadow-2:0 0 0 1px rgba(255,255,255,.1),0 12px 32px -20px rgba(0,0,0,.6);
+  --pop-bg:rgba(32,31,29,.74); --pop-line:rgba(255,255,255,.14);
+  --board:#0C0C0B; --board-2:#151513;
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-size-adjust:100%}
+body{margin:0;background:var(--board);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.4;font-weight:400}
+img{display:block}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.tnum{font-variant-numeric:tabular-nums}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.lk-d{display:none} [data-theme="dark"] .lk-l{display:none} [data-theme="dark"] .lk-d{display:block}
+
+/* ---------- Board ---------- */
+.wrap{max-width:1360px;margin:0 auto;padding:0 32px}
+.top{display:flex;align-items:center;justify-content:space-between;padding:28px 0 0;gap:16px}
+.top .brand{display:flex;align-items:center;gap:12px;font-weight:600;color:var(--ink-2);font-size:14px}
+.top .brand img{height:26px;width:auto}
+.theme{display:inline-flex;background:var(--fill);border-radius:10px;padding:3px}
+.theme button{border:0;background:none;padding:6px 12px;border-radius:8px;font-size:13px;font-weight:600;color:var(--ink-2);min-height:32px;transition:background-color .15s,color .15s}
+.theme button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow-1)}
+.intro{padding:56px 0 8px;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:48px;align-items:end}
+.intro h1{font-size:48px;line-height:1.05;letter-spacing:-.02em;font-weight:600;margin:0;text-wrap:balance}
+.intro p{margin:0;font-size:18px;color:var(--ink-2);max-width:46ch;text-wrap:pretty}
+.intro p + p{margin-top:12px}
+h2.sec{font-size:24px;letter-spacing:-.01em;font-weight:600;margin:0;text-wrap:balance}
+.sec-wrap{padding:96px 0 0}
+.sec-head{display:flex;justify-content:space-between;align-items:end;gap:24px;margin-bottom:28px;flex-wrap:wrap}
+.sec-head p{margin:6px 0 0;color:var(--ink-2);max-width:56ch;text-wrap:pretty}
+.frames{display:flex;gap:36px;flex-wrap:wrap;align-items:flex-start}
+.cap{margin-top:16px;max-width:360px}
+.cap b{display:block;font-weight:600;font-size:15px}
+.cap span{display:block;color:var(--ink-2);font-size:14px;text-wrap:pretty;margin-top:2px}
+
+/* ---------- Stage (live demo) ---------- */
+.stage{margin-top:40px;border-radius:28px;background:var(--board-2);position:relative;overflow:hidden;display:grid;grid-template-columns:auto 1fr;gap:0;min-height:900px}
+.stage .left{padding:40px 24px 40px 48px;display:flex;align-items:center}
+.stage .right{position:relative;overflow:hidden}
+.hint{margin-top:14px;font-size:13px;color:var(--ink-2);display:flex;gap:14px;align-items:center}
+.hint button{border:0;background:var(--surface);box-shadow:var(--shadow-1);border-radius:8px;padding:6px 10px;font-size:13px;font-weight:600;min-height:32px}
+.desk{position:absolute;inset:0;background:#2A3047}
+.desk svg.wall{position:absolute;inset:0;width:100%;height:100%}
+.menubar{position:absolute;left:0;right:0;top:0;height:30px;background:rgba(20,22,40,.45);backdrop-filter:blur(20px) saturate(1.6);-webkit-backdrop-filter:blur(20px) saturate(1.6);display:flex;align-items:center;justify-content:flex-end;gap:16px;padding:0 16px;color:#fff;font-size:13px;font-weight:600;z-index:2}
+.menubar .mi{display:grid;place-items:center;width:28px;height:22px;border-radius:5px}
+.menubar .mi.on{background:rgba(255,255,255,.22)}
+.menubar svg.i{width:16px;height:16px;stroke-width:2}
+.menubar .left-items{margin-right:auto;display:flex;gap:18px;align-items:center}
+.menubar .left-items b{font-weight:600}
+
+/* ---------- iPhone ---------- */
+.iphone{width:390px;height:844px;border-radius:58px;background:#0A0A0A;padding:11px;position:relative;box-shadow:0 0 0 1.5px #3A3936;flex:none}
+.screen{width:100%;height:100%;border-radius:47px;overflow:hidden;background:var(--canvas);position:relative;display:flex;flex-direction:column;isolation:isolate}
+.island{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:122px;height:36px;border-radius:20px;background:#000;z-index:20}
+.sb{height:54px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:6px 30px 0 40px;font-size:16.5px;font-weight:600;letter-spacing:-.01em;position:relative;z-index:6}
+.sb .r{display:flex;gap:6px;align-items:center}
+.sb svg{display:block}
+.home-ind{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);width:138px;height:5px;border-radius:3px;background:var(--ink);z-index:9}
+
+/* Android */
+.pixel{width:384px;height:832px;border-radius:40px;background:#0A0A0A;padding:9px;box-shadow:0 0 0 1.5px #3A3936;flex:none;position:relative}
+.pixel .screen{border-radius:32px}
+.pixel .cam{position:absolute;top:22px;left:50%;transform:translateX(-50%);width:14px;height:14px;border-radius:50%;background:#000;z-index:20;box-shadow:0 0 0 2px #151515}
+.sb.android{height:44px;padding:4px 26px 0;font-size:14px;font-weight:600}
+.gesture{position:absolute;left:50%;bottom:9px;transform:translateX(-50%);width:108px;height:4px;border-radius:2px;background:var(--ink);opacity:.9;z-index:9}
+
+/* ---------- App: phone ---------- */
+.bar{display:flex;align-items:center;gap:10px;padding:6px 18px 0 20px;height:48px;flex:none}
+.bar .mark{width:28px;height:28px;flex:none}
+.bar .name{font-size:17px;font-weight:600;letter-spacing:-.01em}
+.bar .name i{font-style:normal;color:var(--ink-3)}
+.grow{flex:1}
+.presence{display:inline-flex;align-items:center;gap:8px;height:32px;padding:0 10px 0 6px;border-radius:999px;background:var(--fill);border:0;font-size:13px;font-weight:600;color:var(--ink-2)}
+.devs{display:flex}
+.devs span{width:22px;height:22px;border-radius:50%;background:var(--surface);display:grid;place-items:center;box-shadow:0 0 0 2px var(--canvas);position:relative;color:var(--ink)}
+.devs span + span{margin-left:-6px}
+.devs span svg.i{width:13px;height:13px;stroke-width:2}
+.devs span.on::after{content:"";position:absolute;right:-1px;bottom:-1px;width:7px;height:7px;border-radius:50%;background:var(--live-dot);box-shadow:0 0 0 1.5px var(--canvas)}
+.ibtn{width:36px;height:36px;border-radius:50%;border:0;background:var(--fill);display:grid;place-items:center;color:var(--ink);position:relative;flex:none}
+.ibtn::after{content:"";position:absolute;inset:-4px}
+.ibtn svg.i{width:19px;height:19px}
+
+.title-row{display:flex;align-items:end;justify-content:space-between;padding:14px 20px 0}
+.ltitle{font-size:32px;font-weight:600;letter-spacing:-.02em;line-height:1.05;margin:0}
+.ltitle small{font-size:15px;font-weight:600;color:var(--ink-3);letter-spacing:0;margin-left:8px}
+.segctl{display:flex;background:var(--fill);border-radius:10px;padding:2px;margin:14px 20px 0;flex:none}
+.segctl button{flex:1;border:0;background:none;border-radius:8px;height:32px;font-size:14px;font-weight:600;color:var(--ink-2);display:flex;align-items:center;justify-content:center;gap:6px}
+.segctl button[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:0 0 0 1px rgba(0,0,0,.06)}
+[data-theme="dark"] .segctl button[aria-selected="true"]{background:#3A3936}
+.segctl .n{color:var(--ink-3);font-weight:600}
+
+.body{flex:1;overflow:hidden;padding:16px 16px 0;display:flex;flex-direction:column;gap:18px;position:relative}
+
+/* Landed hero */
+.landed{background:var(--surface);border-radius:24px;padding:6px;box-shadow:var(--shadow-1);position:relative;flex:none}
+.landed .pv{border-radius:18px;overflow:hidden;height:212px;position:relative;background:var(--fill)}
+.landed .pv img{width:100%;height:100%;object-fit:cover;object-position:center}
+.landed .pv::after{content:"";position:absolute;inset:0;border-radius:18px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+.landed .tag{position:absolute;top:10px;left:10px;background:rgba(20,18,14,.72);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#fff;font-size:12px;font-weight:600;border-radius:999px;padding:4px 10px 4px 8px;display:flex;align-items:center;gap:6px;z-index:2}
+.landed .tag i{width:7px;height:7px;border-radius:50%;background:var(--amber)}
+.landed .info{display:flex;align-items:center;gap:10px;padding:12px 8px 8px 10px}
+.landed .info .t{flex:1;min-width:0}
+.landed .nm{font-size:17px;font-weight:600;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.landed .mt{font-size:13.5px;color:var(--ink-2);margin-top:1px}
+.act{width:40px;height:40px;border-radius:12px;border:0;background:var(--fill);display:grid;place-items:center;color:var(--ink);flex:none}
+.act svg.i{width:19px;height:19px}
+.fuse{height:3px;border-radius:2px;background:var(--fill-2);margin:2px 10px 8px;overflow:hidden}
+.fuse i{display:block;height:100%;border-radius:2px;background:var(--amber)}
+
+/* Groups / rows */
+.glabel{font-size:14px;font-weight:600;color:var(--ink-2);margin:0 4px -10px;display:flex;justify-content:space-between}
+.glabel span{font-weight:500;color:var(--ink-3)}
+.group{background:var(--surface);border-radius:18px;box-shadow:var(--shadow-1);overflow:hidden;flex:none}
+.row{display:flex;align-items:center;gap:12px;padding:10px 14px 10px 10px;min-height:64px;position:relative}
+.row + .row::before{content:"";position:absolute;top:0;left:66px;right:0;height:.5px;background:var(--hair)}
+.th{width:44px;height:44px;border-radius:10px;overflow:hidden;flex:none;background:var(--fill);position:relative;display:grid;place-items:center}
+.th img{width:100%;height:100%;object-fit:cover;object-position:center}
+.th img.doc{object-position:top}
+.th::after{content:"";position:absolute;inset:0;border-radius:10px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+[data-theme="dark"] .th::after,[data-theme="dark"] .landed .pv::after{box-shadow:inset 0 0 0 1px rgba(255,255,255,.1)}
+.row .t{flex:1;min-width:0}
+.row .nm{font-size:15.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.005em}
+.row .mt{font-size:13px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .end{font-size:13px;color:var(--ink-3);text-align:right;flex:none}
+.row.err .mt{color:var(--danger);white-space:normal}
+.mini-bar{height:3px;border-radius:2px;background:var(--fill-2);margin-top:6px;overflow:hidden;width:100%}
+.mini-bar i{display:block;height:100%;background:var(--ink);border-radius:2px}
+
+/* Doc preview (rendered page) */
+.page{width:100%;height:100%;background:#FFFDF8;padding:6px 6px;display:flex;flex-direction:column;gap:2.5px}
+.page b{display:block;height:3px;border-radius:1px;background:#2B2210;width:60%}
+.page s{display:block;height:2px;border-radius:1px;background:#C9C3B6;text-decoration:none}
+.page s:nth-child(3n){width:80%}
+.badge-x{font-size:10px;font-weight:600;color:#2B2210;letter-spacing:.02em}
+.zipth{background:repeating-linear-gradient(180deg,#E9E4D8 0 4px,#D9D2C2 4px 8px);}
+.zipth em{background:#F5B83D;border-radius:3px;width:12px;height:18px;display:block;box-shadow:0 0 0 1.5px #2B2210}
+.movth{background:#1A1712;color:#fff}
+.ring{width:28px;height:28px;flex:none}
+.ring circle{fill:none;stroke-width:3}
+.ring .tr{stroke:var(--fill-2)} .ring .vl{stroke:var(--ink);stroke-linecap:round;transform:rotate(-90deg);transform-origin:center}
+
+/* Dock with shutter */
+.dock{position:relative;flex:none;height:132px;padding:0 34px 26px;display:flex;align-items:center;justify-content:space-between;z-index:5}
+.dock::before{content:"";position:absolute;inset:-28px 0 0;background:linear-gradient(to top,var(--canvas) 62%,transparent);z-index:-1;pointer-events:none}
+.side{width:64px;display:flex;flex-direction:column;align-items:center;gap:6px;border:0;background:none;font-size:12px;font-weight:600;color:var(--ink-2)}
+.side span.c{width:52px;height:52px;border-radius:50%;background:var(--surface);box-shadow:var(--shadow-1);display:grid;place-items:center;color:var(--ink)}
+.side svg.i{width:22px;height:22px}
+.shutter{width:84px;height:84px;border-radius:50%;border:0;padding:0;background:transparent;position:relative;display:grid;place-items:center}
+.shutter::before{content:"";position:absolute;inset:0;border-radius:50%;box-shadow:inset 0 0 0 3px var(--ink);opacity:.9}
+.shutter span{width:70px;height:70px;border-radius:50%;background:var(--amber);display:grid;place-items:center;color:var(--on-amber);transition:transform .16s var(--ease-out)}
+.shutter:active span{transform:scale(.94)}
+.shutter svg.i{width:28px;height:28px;stroke-width:2.4}
+.shutter-label{position:absolute;top:-22px;left:50%;transform:translateX(-50%);font-size:12px;font-weight:600;color:var(--ink-2);white-space:nowrap}
+
+/* Clips */
+.composer{background:var(--surface);border-radius:20px;box-shadow:var(--shadow-1);padding:14px 14px 10px;flex:none}
+.composer .txt{font-size:17px;font-weight:500;min-height:48px}
+.composer .txt .caret{display:inline-block;width:2px;height:20px;background:var(--amber);vertical-align:-4px;margin-left:1px}
+.composer .row2{display:flex;align-items:center;gap:8px;margin-top:6px}
+.tbtn{border:0;background:var(--fill);border-radius:10px;height:34px;padding:0 12px;font-size:13.5px;font-weight:600;display:inline-flex;align-items:center;gap:6px;color:var(--ink)}
+.tbtn svg.i{width:16px;height:16px}
+.pbtn{border:0;background:var(--amber);color:var(--on-amber);border-radius:10px;height:34px;padding:0 14px;font-size:14px;font-weight:600;display:inline-flex;align-items:center;gap:6px}
+.pbtn svg.i{width:16px;height:16px;stroke-width:2.2}
+.code{font-family:var(--mono);font-size:12.5px;font-weight:500;background:var(--fill);border-radius:6px;padding:1px 5px}
+.fav{width:44px;height:44px;border-radius:10px;display:grid;place-items:center;font-weight:600;font-size:16px;color:#fff;flex:none}
+
+/* Settings (iOS grouped) */
+.navbar{display:flex;justify-content:flex-end;padding:8px 20px 0;height:44px;align-items:center;flex:none}
+.navbar button{border:0;background:none;font-weight:600;font-size:17px;color:var(--amber-deep)}
+.set{flex:1;overflow:hidden;padding:4px 16px 0;display:flex;flex-direction:column;gap:22px}
+.set .group .row{min-height:48px;padding:8px 14px}
+.set .group .row + .row::before{left:14px}
+.set .group .row.ic + .row.ic::before{left:52px}
+.set .k{flex:1;font-size:16px;font-weight:500}
+.set .v{color:var(--ink-3);font-size:16px;display:flex;align-items:center;gap:4px}
+.set .v svg.i{width:16px;height:16px;color:var(--ink-3)}
+.set .foot{font-size:13px;color:var(--ink-3);margin:-14px 14px 0;text-wrap:pretty}
+.set .hdr{font-size:13px;color:var(--ink-3);margin:0 14px -16px;font-weight:600}
+.sq{width:28px;height:28px;border-radius:7px;display:grid;place-items:center;flex:none;color:#fff}
+.sq svg.i{width:16px;height:16px;stroke-width:2.1}
+.tog{width:51px;height:31px;border-radius:999px;background:var(--fill-2);position:relative;flex:none;border:0;padding:0}
+.tog::after{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:var(--toggle-knob);box-shadow:0 0 0 1px rgba(0,0,0,.06);transition:transform .2s var(--ease-out)}
+.tog[aria-checked="true"]{background:var(--toggle-on)}
+.tog[aria-checked="true"]::after{transform:translateX(20px)}
+.meter{height:6px;border-radius:3px;background:var(--fill-2);overflow:hidden;margin-top:8px}
+.meter i{display:block;height:100%;background:var(--ink);border-radius:3px}
+.acct{display:flex;gap:12px;align-items:center;padding:12px 14px}
+.avatar{width:44px;height:44px;border-radius:50%;background:var(--amber);color:var(--on-amber);display:grid;place-items:center;font-weight:600;font-size:18px;flex:none}
+.center-row{justify-content:center;font-weight:600;font-size:16px}
+
+/* Auth */
+.auth{flex:1;padding:24px 24px 0;display:flex;flex-direction:column}
+.auth .appicon{width:56px;height:56px;border-radius:13px;box-shadow:0 0 0 1px rgba(0,0,0,.08)}
+.auth h1{font-size:28px;line-height:1.15;letter-spacing:-.015em;font-weight:600;margin:28px 0 8px;text-wrap:balance}
+.auth p.lead{margin:0 0 28px;color:var(--ink-2);font-size:16px}
+.fields{background:var(--surface);border-radius:16px;box-shadow:var(--shadow-1);overflow:hidden}
+.fields label{display:flex;align-items:center;gap:12px;padding:0 14px;min-height:54px;position:relative}
+.fields label + label::before{content:"";position:absolute;top:0;left:14px;right:0;height:.5px;background:var(--hair)}
+.fields span{width:76px;font-size:15px;font-weight:600;color:var(--ink-2);flex:none}
+.fields input{border:0;background:none;outline:none;flex:1;font-size:16px;font-weight:500;min-width:0}
+.fields input::placeholder{color:var(--ink-3);font-weight:400}
+.big{height:54px;border-radius:14px;border:0;width:100%;font-size:17px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:10px}
+.big.prim{background:var(--amber);color:var(--on-amber);margin-top:14px}
+.big.sec{background:var(--surface);box-shadow:var(--shadow-1);color:var(--ink)}
+.or{display:flex;align-items:center;gap:12px;color:var(--ink-3);font-size:13px;font-weight:600;margin:18px 0}
+.or::before,.or::after{content:"";flex:1;height:.5px;background:var(--hair)}
+.links{display:flex;justify-content:space-between;margin-top:16px}
+.links button{border:0;background:none;font-weight:600;font-size:15px;color:var(--ink);padding:8px 0;min-height:44px}
+.trust{margin-top:auto;padding:0 8px 40px;text-align:center;color:var(--ink-3);font-size:13px;text-wrap:balance}
+
+/* Empty */
+.empty{flex:1;display:flex;flex-direction:column;padding:8px 20px 0}
+.dz{width:200px;height:132px;margin:28px auto 22px;border-radius:24px;border:1.5px dashed var(--ink-3);display:grid;place-items:center}
+.dz svg{width:44px;height:44px}
+.empty h2{font-size:22px;letter-spacing:-.01em;font-weight:600;margin:6px 0 6px;text-align:center}
+.empty p{margin:0 auto;color:var(--ink-2);text-align:center;max-width:30ch;text-wrap:balance}
+.ways{margin-top:26px}
+.ways .row{min-height:56px}
+.step{width:28px;height:28px;border-radius:50%;background:var(--fill);display:grid;place-items:center;font-size:13px;font-weight:600;color:var(--ink-2);flex:none}
+
+/* ---------- macOS popover ---------- */
+.pop{width:360px;border-radius:14px;background:var(--pop-bg);backdrop-filter:blur(40px) saturate(1.8);-webkit-backdrop-filter:blur(40px) saturate(1.8);box-shadow:0 0 0 .5px var(--pop-line),0 16px 40px -16px rgba(0,0,0,.4);position:relative;font-size:13px;color:var(--ink)}
+.pop::before{content:"";position:absolute;top:-7px;right:84px;width:16px;height:16px;transform:rotate(45deg);background:var(--pop-bg);backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);border-radius:3px 0 0 0;box-shadow:-.5px -.5px 0 var(--pop-line)}
+.pop .ph{display:flex;align-items:center;gap:8px;padding:12px 12px 8px 14px;position:relative}
+.pop .ph .mark{width:20px;height:20px}
+.pop .ph b{font-size:14px;font-weight:600}
+.pop .ph .st{font-size:12px;color:var(--ink-2);display:flex;align-items:center;gap:6px;margin-left:4px}
+.pop .ph .st i{width:6px;height:6px;border-radius:50%;background:var(--live-dot)}
+.pop .ib{width:28px;height:28px;border-radius:7px;border:0;background:none;display:grid;place-items:center;color:var(--ink-2)}
+.pop .ib:hover{background:var(--fill)}
+.pop .ib svg.i{width:16px;height:16px}
+.mseg{display:flex;margin:0 12px;background:var(--fill);border-radius:7px;padding:2px}
+.mseg button{flex:1;border:0;background:none;height:24px;border-radius:5px;font-size:12.5px;font-weight:600;color:var(--ink-2)}
+.mseg button[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:0 0 0 1px rgba(0,0,0,.06)}
+[data-theme="dark"] .mseg button[aria-selected="true"]{background:#4A4946}
+.pop .lbl{font-size:11.5px;font-weight:600;color:var(--ink-3);padding:12px 14px 6px;display:flex;justify-content:space-between}
+.pop .lbl span{font-weight:500}
+.shelf{display:flex;gap:8px;padding:0 12px;flex-wrap:nowrap}
+.shelf .it{width:104px;flex:none}
+.shelf .im{width:104px;height:74px;border-radius:8px;overflow:hidden;position:relative;background:var(--fill)}
+.shelf .im img{width:100%;height:100%;object-fit:cover;object-position:center}
+.shelf .im::after{content:"";position:absolute;inset:0;border-radius:8px;box-shadow:inset 0 0 0 .5px rgba(0,0,0,.15)}
+.shelf .nm{font-size:11.5px;font-weight:600;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.shelf .mt{font-size:11px;color:var(--ink-3)}
+.shelf .it.lift .im{transform:translateY(-2px);box-shadow:0 0 0 2px var(--amber)}
+.mrows{padding:0 6px}
+.mrow{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:8px;min-height:46px;position:relative}
+.mrow:hover,.mrow.hl{background:var(--fill)}
+.mrow .th{width:32px;height:32px;border-radius:6px}
+.mrow .th::after{border-radius:6px}
+.mrow .t{flex:1;min-width:0}
+.mrow .nm{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mrow .mt{font-size:11.5px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mrow .end{font-size:11.5px;color:var(--ink-3)}
+.mrow.err .mt{color:var(--danger)}
+.mrow .drag{font-size:11px;font-weight:600;color:var(--ink-2);display:flex;gap:4px;align-items:center}
+.mrow .drag svg.i{width:13px;height:13px}
+.pf{display:flex;align-items:center;gap:8px;padding:10px 14px 12px;margin-top:8px;border-top:.5px solid var(--hair);font-size:12px;color:var(--ink-3)}
+.pf .k{font-family:var(--font);font-size:11px;font-weight:600;color:var(--ink-2);background:var(--fill);border-radius:4px;padding:1px 5px;margin-left:2px}
+.pf svg.i{width:14px;height:14px}
+.dropover{position:absolute;inset:0;border-radius:14px;background:color-mix(in srgb,var(--amber) 8%,transparent);box-shadow:inset 0 0 0 2px var(--amber);display:grid;place-items:center;font-weight:600;font-size:14px;color:var(--ink);z-index:4}
+.dropover div{background:var(--surface);padding:10px 14px;border-radius:10px;box-shadow:var(--shadow-2);display:flex;align-items:center;gap:8px}
+.mclip{display:flex;gap:10px;padding:8px;border-radius:8px;align-items:flex-start}
+.mclip:hover,.mclip.hl{background:var(--fill)}
+.mclip .tx{flex:1;min-width:0;font-size:13px;font-weight:600;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.mclip .mt{font-size:11.5px;color:var(--ink-3);margin-top:2px}
+.msend{display:flex;gap:8px;margin:10px 12px 4px}
+.msend .fld{flex:1;height:30px;border-radius:7px;background:var(--fill);display:flex;align-items:center;padding:0 10px;color:var(--ink-3);font-size:12.5px}
+.msend button{height:30px;border-radius:7px;border:0;background:var(--amber);color:var(--on-amber);font-weight:600;font-size:12.5px;padding:0 10px;display:flex;align-items:center;gap:6px}
+.mform{padding:4px 12px 12px;display:flex;flex-direction:column;gap:10px}
+.mbox{background:var(--fill);border-radius:10px;padding:2px 12px}
+.mbox .r{display:flex;align-items:center;gap:10px;min-height:38px;font-size:13px}
+.mbox .r + .r{border-top:.5px solid var(--hair)}
+.mbox .r .k{flex:1;font-weight:500}
+.mbox .r .v{color:var(--ink-3)}
+.mtog{width:32px;height:19px;border-radius:999px;background:var(--fill-2);position:relative;border:0;padding:0;flex:none}
+.mtog::after{content:"";position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.08)}
+.mtog[aria-checked="true"]{background:var(--toggle-on)}
+.mtog[aria-checked="true"]::after{left:15px}
+.mmeter{height:4px;border-radius:2px;background:var(--fill-2);overflow:hidden;width:90px}
+.mmeter i{display:block;height:100%;background:var(--ink)}
+.mbtns{display:flex;gap:8px}
+.mbtns button{flex:1;height:28px;border-radius:7px;border:0;background:var(--fill);font-weight:600;font-size:12.5px}
+.mbtns button.d{color:var(--danger)}
+.mac-scene{position:relative;border-radius:22px;overflow:hidden;width:520px;height:600px;flex:none}
+.mac-scene .pop{position:absolute;right:28px;top:44px}
+.mac-scene .menubar .mi.on{background:rgba(255,255,255,.28)}
+
+/* Widgets */
+.home-scene{position:relative;border-radius:28px;overflow:hidden;width:520px;height:420px;flex:none;background:#2A3047}
+.home-scene svg.wall{position:absolute;inset:0;width:100%;height:100%}
+.wsmall,.wmed{position:absolute;border-radius:22px;background:var(--surface);overflow:hidden}
+.wsmall{width:170px;height:170px;left:28px;top:28px}
+.wsmall img{width:100%;height:100%;object-fit:cover;object-position:center}
+.wsmall .ov{position:absolute;inset:auto 0 0 0;padding:28px 12px 10px;background:linear-gradient(to top,rgba(0,0,0,.72),transparent);color:#fff}
+.wsmall .ov b{display:block;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wsmall .ov span{font-size:11.5px;opacity:.85}
+.wsmall .mk{position:absolute;top:10px;right:10px;width:22px;height:22px}
+.wmed{width:364px;height:170px;left:28px;top:220px;padding:14px 14px 12px;display:flex;flex-direction:column}
+.wmed .h{display:flex;align-items:center;gap:8px;font-weight:600;font-size:14px}
+.wmed .h .mark{width:18px;height:18px}
+.wmed .h .pbtn{margin-left:auto;height:28px;font-size:12.5px;padding:0 10px;border-radius:8px}
+.wmed .rr{display:flex;align-items:center;gap:10px;margin-top:9px}
+.wmed .rr .th{width:30px;height:30px;border-radius:7px}
+.wmed .rr .nm{font-size:13px;font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wmed .rr .mt{font-size:12px;color:var(--ink-3)}
+.lock-scene{position:relative;border-radius:28px;overflow:hidden;width:390px;height:420px;flex:none;background:linear-gradient(180deg,#2A3047,#6A6B80);color:#fff}
+.lock-scene .time{font-size:80px;font-weight:500;text-align:center;letter-spacing:-.04em;margin-top:28px;line-height:1;opacity:.95}
+.lock-scene .date{text-align:center;font-weight:600;font-size:17px;opacity:.85;margin-top:24px}
+.lw{display:flex;gap:10px;justify-content:center;margin-top:14px}
+.lw .rect{width:170px;height:72px;border-radius:18px;background:rgba(255,255,255,.18);backdrop-filter:blur(20px);padding:10px 12px;font-size:13px;line-height:1.3}
+.lw .rect b{display:flex;align-items:center;gap:6px;font-weight:600}
+.lw .circ{width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,.18);display:grid;place-items:center;text-align:center;font-size:11px;font-weight:600;line-height:1.1}
+.lw .circ big{display:block;font-size:22px;font-weight:600}
+.island-x{position:absolute;left:50%;top:252px;transform:translateX(-50%);width:356px;border-radius:40px;background:#000;padding:16px 20px 18px;color:#fff}
+.island-x .r1{display:flex;align-items:center;gap:12px}
+.island-x .r1 .th{width:40px;height:40px;border-radius:10px}
+.island-x .r1 b{display:block;font-size:15px;font-weight:600}
+.island-x .r1 span{font-size:13px;color:#A8A398}
+.island-x .pct{margin-left:auto;font-weight:600;font-size:15px;color:var(--amber)}
+.island-x .bar2{height:5px;border-radius:3px;background:rgba(255,255,255,.18);margin-top:12px;overflow:hidden}
+.island-x .bar2 i{display:block;height:100%;width:72%;background:var(--amber);border-radius:3px}
+
+/* System strip */
+.sys{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.card{background:var(--surface);border-radius:20px;box-shadow:var(--shadow-1);padding:20px}
+.card h3{margin:0 0 14px;font-size:15px;font-weight:600}
+.sw{display:flex;align-items:center;gap:10px;font-size:13px;margin-top:8px}
+.sw i{width:28px;height:28px;border-radius:8px;box-shadow:inset 0 0 0 .5px rgba(0,0,0,.15);flex:none}
+.sw span{color:var(--ink-3);margin-left:auto;font-variant-numeric:tabular-nums}
+.ts div{display:flex;align-items:baseline;justify-content:space-between;gap:8px;border-bottom:.5px solid var(--hair);padding:6px 0}
+.ts div span{font-size:12px;color:var(--ink-3)}
+.mo{font-size:13px;color:var(--ink-2)}
+.mo dt{font-weight:600;color:var(--ink);margin-top:8px}
+.mo dd{margin:0}
+.rules{margin:0;padding-left:18px;font-size:13.5px;color:var(--ink-2)}
+.rules li{margin:5px 0}
+footer{padding:96px 0 64px;color:var(--ink-3);font-size:13px}
+
+/* Flight ghost */
+.flyer{position:fixed;z-index:1000;border-radius:10px;overflow:hidden;box-shadow:0 0 0 1px rgba(0,0,0,.1);pointer-events:none;background:#fff}
+.flyer img{width:100%;height:100%;object-fit:cover;object-position:top}
+@keyframes rowIn{from{opacity:0;transform:translateY(-8px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes wiggle{0%,100%{transform:rotate(0)}25%{transform:rotate(-12deg)}60%{transform:rotate(9deg)}}
+.wig{animation:wiggle .42s var(--ease-out)}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:1100px){.intro{grid-template-columns:1fr}.stage{grid-template-columns:1fr}.stage .right{min-height:640px}.sys{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){.wrap{padding:0 16px}.intro h1{font-size:44px}.stage .left{padding:24px 0;justify-content:center}.iphone,.pixel{transform:scale(.86);transform-origin:top center;margin-bottom:-110px}.mac-scene,.home-scene,.lock-scene{width:100%}.sys{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<defs>
+  <symbol id="mark" viewBox="0 0 32 32"><rect width="32" height="32" rx="7.5" fill="#F5B83D"/><rect x="8" y="6.5" width="16" height="4.5" rx="2.25" fill="#2B2210"/><polygon points="9.5,15 22.5,15 16,24" fill="#2B2210" stroke="#2B2210" stroke-width="3" stroke-linejoin="round"/></symbol>
+  <symbol id="up" viewBox="0 0 24 24"><path d="M12 19V5M5.5 11.5 12 5l6.5 6.5"/></symbol>
+  <symbol id="photo" viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="15" rx="3.5"/><circle cx="9" cy="10" r="1.6"/><path d="m3.5 17 5-4.5 4 3.5 3-2.5 5 4"/></symbol>
+  <symbol id="clip" viewBox="0 0 24 24"><rect x="5.5" y="4.5" width="13" height="16" rx="2.5"/><path d="M9 4.5V3.8c0-.7.5-1.3 1.2-1.3h3.6c.7 0 1.2.6 1.2 1.3v.7M9 10h6M9 14h4"/></symbol>
+  <symbol id="gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+  <symbol id="copy" viewBox="0 0 24 24"><rect x="8.5" y="8.5" width="11.5" height="11.5" rx="2.5"/><path d="M15.5 8.5V6.5A2.5 2.5 0 0 0 13 4H6.5A2.5 2.5 0 0 0 4 6.5V13a2.5 2.5 0 0 0 2.5 2.5h2"/></symbol>
+  <symbol id="share" viewBox="0 0 24 24"><path d="M12 15V3.5M7.5 8 12 3.5 16.5 8"/><path d="M8 11H6.5A2.5 2.5 0 0 0 4 13.5v5A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5v-5a2.5 2.5 0 0 0-2.5-2.5H16"/></symbol>
+  <symbol id="chev" viewBox="0 0 24 24"><path d="m9 5.5 6.5 6.5L9 18.5"/></symbol>
+  <symbol id="laptop" viewBox="0 0 24 24"><rect x="4.5" y="5" width="15" height="10.5" rx="1.8"/><path d="M2.5 19h19"/></symbol>
+  <symbol id="phone" viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.6"/><path d="M11 18.5h2"/></symbol>
+  <symbol id="grip" viewBox="0 0 24 24"><path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01" stroke-width="3"/></symbol>
+  <symbol id="tray" viewBox="0 0 24 24"><path d="M12 3.5v10M7.5 9.5 12 14l4.5-4.5"/><path d="M3.5 14.5v3A2.5 2.5 0 0 0 6 20h12a2.5 2.5 0 0 0 2.5-2.5v-3"/></symbol>
+  <symbol id="link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></symbol>
+  <symbol id="moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></symbol>
+  <symbol id="bell" viewBox="0 0 24 24"><path d="M6 9a6 6 0 1 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9zM10 20a2 2 0 0 0 4 0"/></symbol>
+  <symbol id="lockic" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8 10.5V8a4 4 0 1 1 8 0v2.5"/></symbol>
+  <symbol id="widget" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="16" height="7" rx="2"/></symbol>
+  <symbol id="type" viewBox="0 0 24 24"><path d="M5 6.5V5h14v1.5M12 5v14M9.5 19h5"/></symbol>
+  <symbol id="check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7"/></symbol>
+  <symbol id="search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></symbol>
+  <symbol id="wifi" viewBox="0 0 24 24"><path d="M2.5 9a14 14 0 0 1 19 0M5.5 12.5a9.5 9.5 0 0 1 13 0M8.8 16a5 5 0 0 1 6.4 0"/><path d="M12 19.5h.01" stroke-width="3"/></symbol>
+  <symbol id="g" viewBox="0 0 24 24"><path d="M21.6 12.2c0-.7-.1-1.4-.2-2H12v3.8h5.4a4.6 4.6 0 0 1-2 3v2.5h3.2c1.9-1.7 3-4.3 3-7.3z" fill="#4285F4" stroke="none"/><path d="M12 22c2.7 0 5-.9 6.6-2.5l-3.2-2.5c-.9.6-2 1-3.4 1-2.6 0-4.8-1.8-5.6-4.1H3.1v2.6A10 10 0 0 0 12 22z" fill="#34A853" stroke="none"/><path d="M6.4 13.9a6 6 0 0 1 0-3.8V7.5H3.1a10 10 0 0 0 0 9z" fill="#FBBC05" stroke="none"/><path d="M12 6c1.5 0 2.8.5 3.8 1.5l2.9-2.9A10 10 0 0 0 3.1 7.5l3.3 2.6C7.2 7.8 9.4 6 12 6z" fill="#EA4335" stroke="none"/></symbol>
+  <!-- Haikei-style layered peaks wallpaper -->
+  <symbol id="wall" viewBox="0 0 1600 1100" preserveAspectRatio="xMidYMid slice"><image href="img/wall.jpg" width="1600" height="1100" preserveAspectRatio="xMidYMid slice"/></symbol>
+</defs>
+</svg>
+
+<div class="wrap">
+  <div class="top">
+    <div class="brand"><img class="lk-l" src="img/lockup-light.png" alt="eqlShare" width="121" height="26"><img class="lk-d" src="img/lockup-dark.png" alt="eqlShare" width="121" height="26"><span>Design direction 2</span></div>
+    <div class="theme" role="group" aria-label="Theme">
+      <button type="button" data-t="system" aria-pressed="true">System</button>
+      <button type="button" data-t="light" aria-pressed="false">Light</button>
+      <button type="button" data-t="dark" aria-pressed="false">Dark</button>
+    </div>
+  </div>
+
+  <div class="intro">
+    <h1>A drop point for everything you move between devices.</h1>
+    <div>
+      <p>Your logo is a mark falling into a slot, so the app behaves like one. The newest file lands large at the top, everything older stays quiet, and sending is one round button where your thumb already is.</p>
+      <p>Tap the amber button on the phone below to send a file to the Mac.</p>
+    </div>
+  </div>
+
+  <!-- ============ LIVE DEMO ============ -->
+  <div class="stage" id="stage">
+    <div class="left">
+      <div class="iphone"><div class="screen" id="demoPhone">
+        <div class="island"></div>
+        <div class="sb"><span class="tnum">9:41</span><span class="r" aria-hidden="true">
+          <svg width="18" height="12" viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1" fill="currentColor"/><rect x="5" y="5.5" width="3" height="6.5" rx="1" fill="currentColor"/><rect x="10" y="3" width="3" height="9" rx="1" fill="currentColor"/><rect x="15" y="0" width="3" height="12" rx="1" fill="currentColor"/></svg>
+          <svg width="16" height="12" viewBox="0 0 16 12"><path d="M8 11.5 5.6 8.9a3.4 3.4 0 0 1 4.8 0zM3.4 6.8a6.5 6.5 0 0 1 9.2 0l-1.4 1.4a4.5 4.5 0 0 0-6.4 0zM1.2 4.6a9.6 9.6 0 0 1 13.6 0l-1.4 1.4a7.6 7.6 0 0 0-10.8 0z" fill="currentColor"/></svg>
+          <svg width="27" height="13" viewBox="0 0 27 13"><rect x=".5" y=".5" width="23" height="12" rx="3.8" fill="none" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="17" height="9" rx="2.4" fill="currentColor"/><path d="M25 4.5v4c.8-.3 1.3-1.1 1.3-2s-.5-1.7-1.3-2z" fill="currentColor" opacity=".45"/></svg>
+        </span></div>
+        <div class="bar">
+          <svg class="mark" aria-hidden="true"><use href="#mark"/></svg>
+          <span class="name" translate="no"><i>eql</i>Share</span>
+          <span class="grow"></span>
+          <button class="presence" aria-label="2 other devices online: MacBook Pro and Redmi"><span class="devs"><span class="on"><svg class="i"><use href="#laptop"/></svg></span><span class="on"><svg class="i"><use href="#phone"/></svg></span></span>2 online</button>
+          <button class="ibtn" aria-label="Settings"><svg class="i"><use href="#gear"/></svg></button>
+        </div>
+        <div class="segctl" role="tablist" aria-label="Show"><button role="tab" aria-selected="true">Files <span class="n tnum">5</span></button><button role="tab" aria-selected="false">Clips <span class="n tnum">3</span></button></div>
+        <div class="body" id="demoBody">
+          <div class="landed" id="demoLanded">
+            <div class="pv"><span class="tag"><i></i><span id="demoTag">Just landed from MacBook Pro</span></span><img id="demoImg" src="img/photo.jpg" alt="Preview of lake-sunset.jpg" width="350" height="212"></div>
+            <div class="info"><div class="t"><div class="nm" id="demoName">lake-sunset.jpg</div><div class="mt tnum" id="demoMeta">2.1 MB, expires in 24 h</div></div>
+              <button class="act" aria-label="Copy"><svg class="i"><use href="#copy"/></svg></button>
+              <button class="act" aria-label="Share"><svg class="i"><use href="#share"/></svg></button></div>
+            <div class="fuse" aria-hidden="true"><i id="demoFuse" style="width:100%"></i></div>
+          </div>
+          <div class="glabel">Earlier today<span class="tnum">4 files</span></div>
+          <div class="group" id="demoList">
+            <div class="row"><span class="th"><img class="doc" src="img/invoice.jpg" alt="" width="44" height="44"></span><div class="t"><div class="nm">Invoice-2026-1043.pdf</div><div class="mt tnum">1.4 MB, from iPhone</div></div><span class="end tnum">21 h</span></div>
+            <div class="row"><span class="th"><img src="img/plan.jpg" alt="" width="44" height="44"></span><div class="t"><div class="nm">floor-plan.png</div><div class="mt tnum">380 KB, from Redmi</div></div><span class="end tnum">16 h</span></div>
+            <div class="row"><span class="th zipth"><em></em></span><div class="t"><div class="nm">design-assets.zip</div><div class="mini-bar"><i style="width:64%"></i></div></div><span class="end tnum">64%</span></div>
+          </div>
+        </div>
+        <div class="dock">
+          <button class="side" aria-label="Send a photo"><span class="c"><svg class="i"><use href="#photo"/></svg></span>Photos</button>
+          <button class="shutter" id="shutter" aria-label="Send a file to your other devices"><span><svg class="i"><use href="#up"/></svg></span></button>
+          <button class="side" aria-label="Send what's on the clipboard"><span class="c"><svg class="i"><use href="#clip"/></svg></span>Paste</button>
+        </div>
+        <div class="home-ind"></div>
+      </div></div>
+    </div>
+    <div class="right">
+      <div class="desk">
+        <svg class="wall" aria-hidden="true"><use href="#wall"/></svg>
+        <div class="menubar"><span class="left-items"><b>Finder</b><span>File</span><span>Edit</span><span>View</span></span><span class="mi on" id="demoMenuIcon"><svg width="16" height="16" viewBox="0 0 32 32" aria-hidden="true"><rect x="8" y="5" width="16" height="4.5" rx="2.25" fill="#fff"/><polygon points="9.5,14 22.5,14 16,23" fill="#fff" stroke="#fff" stroke-width="3" stroke-linejoin="round"/></svg></span><svg class="i" aria-hidden="true"><use href="#wifi"/></svg><svg class="i" aria-hidden="true"><use href="#search"/></svg><span class="tnum">Sun 9:41 PM</span></div>
+        <div class="pop" id="demoPop" style="position:absolute;right:64px;top:44px">
+          <div class="ph"><svg class="mark" aria-hidden="true"><use href="#mark"/></svg><b translate="no">eqlShare</b><span class="st"><i></i>iPhone, Redmi</span><span class="grow"></span><button class="ib" aria-label="Settings"><svg class="i"><use href="#gear"/></svg></button></div>
+          <div class="mseg" role="tablist" aria-label="Show"><button role="tab" aria-selected="true">Files</button><button role="tab" aria-selected="false">Clips</button></div>
+          <div class="lbl">Images<span class="tnum" id="demoImgCount">2</span></div>
+          <div class="shelf" id="demoShelf">
+            <div class="it"><div class="im"><img src="img/plan.jpg" alt="" width="104" height="74"></div><div class="nm">floor-plan.png</div><div class="mt tnum">16 h left</div></div>
+            <div class="it"><div class="im"><img src="img/palette.jpg" alt="" width="104" height="74"></div><div class="nm">brand-palette.png</div><div class="mt tnum">9 h left</div></div>
+          </div>
+          <div class="lbl">Files<span class="tnum">2</span></div>
+          <div class="mrows" id="demoRows">
+            <div class="mrow hl"><span class="th"><img class="doc" src="img/invoice.jpg" alt="" width="32" height="32"></span><div class="t"><div class="nm">Invoice-2026-1043.pdf</div><div class="mt tnum">1.4 MB, from iPhone</div></div><span class="drag"><svg class="i"><use href="#grip"/></svg>Drag</span></div>
+            <div class="mrow"><span class="th zipth"><em style="width:8px;height:12px"></em></span><div class="t"><div class="nm">design-assets.zip</div><div class="mini-bar"><i style="width:64%"></i></div></div><span class="end tnum">64%</span></div>
+          </div>
+          <div class="pf"><svg class="i" aria-hidden="true"><use href="#tray"/></svg>Drop files here to send<span class="grow"></span>Clipboard <span class="k">⌘⇧V</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="hint"><button type="button" id="replay">Reset demo</button><span>Tap the amber button. The file flies to the Mac and is ready to drag.</span></div>
+
+  <!-- ============ PHONE ============ -->
+  <section class="sec-wrap" aria-labelledby="h-phone">
+    <div class="sec-head"><div><h2 class="sec" id="h-phone">iPhone</h2><p>Native structure, real previews, and one loud element per screen. Everything else steps back.</p></div></div>
+    <div class="frames" id="phoneFrames"></div>
+  </section>
+
+  <section class="sec-wrap" aria-labelledby="h-and">
+    <div class="sec-head"><div><h2 class="sec" id="h-and">Android</h2><p>The same layout on the Redmi, with Android's status bar, punch-hole camera and gesture bar. The dock, previews and fuse stay identical so both phones feel like one app.</p></div></div>
+    <div class="frames" id="androidFrames"></div>
+  </section>
+
+  <!-- ============ MAC ============ -->
+  <section class="sec-wrap" aria-labelledby="h-mac">
+    <div class="sec-head"><div><h2 class="sec" id="h-mac">Mac menu bar</h2><p>A real macOS popover: translucent, compact, with images on a shelf you can drag from and the whole window as a drop target.</p></div></div>
+    <div class="frames" id="macFrames"></div>
+  </section>
+
+  <!-- ============ WIDGETS ============ -->
+  <section class="sec-wrap" aria-labelledby="h-w">
+    <div class="sec-head"><div><h2 class="sec" id="h-w">Widgets and Live Activity</h2><p>The latest file is one glance away. Lock Screen shows counts only unless you opt in.</p></div></div>
+    <div class="frames">
+      <div>
+        <div class="home-scene">
+          <svg class="wall" aria-hidden="true"><use href="#wall"/></svg>
+          <div class="wsmall"><img src="img/photo.jpg" alt="" width="170" height="170"><svg class="mk" aria-hidden="true"><use href="#mark"/></svg><div class="ov"><b>lake-sunset.jpg</b><span>from MacBook Pro</span></div></div>
+          <div class="wmed">
+            <div class="h"><svg class="mark" aria-hidden="true"><use href="#mark"/></svg><span translate="no">eqlShare</span><button class="pbtn"><svg class="i"><use href="#clip"/></svg>Paste latest clip</button></div>
+            <div class="rr"><span class="th"><img src="img/photo.jpg" alt="" width="30" height="30"></span><span class="nm">lake-sunset.jpg</span><span class="mt tnum">23 h</span></div>
+            <div class="rr"><span class="th"><img class="doc" src="img/invoice.jpg" alt="" width="30" height="30"></span><span class="nm">Invoice-2026-1043.pdf</span><span class="mt tnum">21 h</span></div>
+            <div class="rr"><span class="th" style="background:#2B2210;display:grid;place-items:center;color:#F5B83D"><svg class="i" style="width:15px;height:15px"><use href="#link"/></svg></span><span class="nm">github.com/anthropics/skills</span><span class="mt tnum">19 h</span></div>
+          </div>
+        </div>
+        <div class="cap"><b>Home Screen, small and medium</b><span>Small shows the latest file as a full-bleed preview. Medium lists three items and a one-tap paste.</span></div>
+      </div>
+      <div>
+        <div class="lock-scene">
+          <div class="date">Sunday, October 25</div>
+          <div class="time tnum">9:41</div>
+          <div class="lw">
+            <div class="rect"><b><svg width="14" height="14" viewBox="0 0 32 32" aria-hidden="true"><rect x="8" y="5" width="16" height="4.5" rx="2.25" fill="#fff"/><polygon points="9.5,14 22.5,14 16,23" fill="#fff" stroke="#fff" stroke-width="3" stroke-linejoin="round"/></svg>3 new files</b><span style="opacity:.85">Latest from MacBook Pro</span></div>
+            <div class="circ"><div><big class="tnum">3</big>files</div></div>
+          </div>
+          <div class="island-x" role="img" aria-label="Live Activity: sending design-assets.zip, 72 percent">
+            <div class="r1"><span class="th zipth"><em></em></span><div><b>Sending design-assets.zip</b><span>to MacBook Pro and Redmi</span></div><span class="pct tnum">72%</span></div>
+            <div class="bar2"><i></i></div>
+          </div>
+        </div>
+        <div class="cap"><b>Lock Screen and Dynamic Island</b><span>Counts, not names, by default. Sending a large file shows live progress in the island.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SYSTEM ============ -->
+  <section class="sec-wrap" aria-labelledby="h-sys">
+    <div class="sec-head"><div><h2 class="sec" id="h-sys">The system behind it</h2><p>Small enough to hold in your head. Everything above is built from these.</p></div></div>
+    <div class="sys">
+      <div class="card"><h3>Color</h3>
+        <div class="sw"><i style="background:#F5B83D"></i>Amber, actions only<span>#F5B83D</span></div>
+        <div class="sw"><i style="background:#1A1712"></i>Ink<span>#1A1712</span></div>
+        <div class="sw"><i style="background:#5E5A52"></i>Ink 2, 6.1:1<span>#5E5A52</span></div>
+        <div class="sw"><i style="background:#F3F2EF"></i>Canvas<span>#F3F2EF</span></div>
+        <div class="sw"><i style="background:#C2384A"></i>Danger, 5.3:1<span>#C2384A</span></div>
+      </div>
+      <div class="card ts"><h3>Type: Hanken Grotesk</h3>
+        <div><b style="font-size:32px;font-weight:600;letter-spacing:-.02em;line-height:1">Today</b><span>32 / 600</span></div>
+        <div><b style="font-size:17px;font-weight:600">lake-sunset.jpg</b><span>17 / 600</span></div>
+        <div><span style="font-size:15.5px;font-weight:500;color:var(--ink)">Row title</span><span>15.5 / 500</span></div>
+        <div><span style="font-size:13px;color:var(--ink-3)">1.4 MB, from iPhone</span><span>13 / 400</span></div>
+      </div>
+      <div class="card mo"><h3>Motion</h3><dl style="margin:0">
+        <dt>Arrive</dt><dd>Spring, stiffness 380, damping 30. One arc, no bounce on the list.</dd>
+        <dt>Press</dt><dd>Scale to 0.94 in 160 ms, release on the same curve.</dd>
+        <dt>Fuse</dt><dd>Burns down over 24 h. Never animated on screen.</dd>
+        <dt>Reduced motion</dt><dd>No flight. Items appear in place.</dd></dl></div>
+      <div class="card"><h3>Rules</h3><ul class="rules">
+        <li>Amber means "this sends something". Nothing else is amber.</li>
+        <li>One loud element per screen.</li>
+        <li>Previews are always the real file.</li>
+        <li>Edges are 1px hairlines. Only things that float (popover, dragged file) get a soft shadow.</li><li>One typeface, three weights: 400, 500, 600.</li>
+        <li>Touch targets 44 pt on phone, hit areas extended on Mac.</li>
+      </ul></div>
+    </div>
+  </section>
+
+  <footer>Mockup only. Built from the eqlShare brand assets and your own screenshots as sample files. No app code changed.</footer>
+</div>
+
+<template id="t-sb"><div class="sb"><span class="tnum">9:41</span><span class="r" aria-hidden="true"><svg width="18" height="12" viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1" fill="currentColor"/><rect x="5" y="5.5" width="3" height="6.5" rx="1" fill="currentColor"/><rect x="10" y="3" width="3" height="9" rx="1" fill="currentColor"/><rect x="15" y="0" width="3" height="12" rx="1" fill="currentColor"/></svg><svg width="16" height="12" viewBox="0 0 16 12"><path d="M8 11.5 5.6 8.9a3.4 3.4 0 0 1 4.8 0zM3.4 6.8a6.5 6.5 0 0 1 9.2 0l-1.4 1.4a4.5 4.5 0 0 0-6.4 0zM1.2 4.6a9.6 9.6 0 0 1 13.6 0l-1.4 1.4a7.6 7.6 0 0 0-10.8 0z" fill="currentColor"/></svg><svg width="27" height="13" viewBox="0 0 27 13"><rect x=".5" y=".5" width="23" height="12" rx="3.8" fill="none" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="17" height="9" rx="2.4" fill="currentColor"/><path d="M25 4.5v4c.8-.3 1.3-1.1 1.3-2s-.5-1.7-1.3-2z" fill="currentColor" opacity=".45"/></svg></span></div></template>
+
+<script>
+/* ---------- theme ---------- */
+(function(){
+  var root=document.documentElement, mq=window.matchMedia('(prefers-color-scheme: dark)'), pref='system';
+  function apply(){root.setAttribute('data-theme', pref==='system' ? (mq.matches?'dark':'light') : pref);}
+  try{pref=localStorage.getItem('eql-v2-theme')||'system';}catch(e){}
+  document.querySelectorAll('.theme button').forEach(function(b){
+    b.setAttribute('aria-pressed', String(b.dataset.t===pref));
+    b.addEventListener('click',function(){pref=b.dataset.t;try{localStorage.setItem('eql-v2-theme',pref);}catch(e){}
+      document.querySelectorAll('.theme button').forEach(function(x){x.setAttribute('aria-pressed',String(x===b));});apply();});
+  });
+  mq.addEventListener&&mq.addEventListener('change',apply); apply();
+})();
+
+/* ---------- shared bits ---------- */
+var SB=document.getElementById('t-sb').innerHTML;
+var SB_ANDROID='<div class="sb android"><span class="tnum">9:41</span><span class="r" aria-hidden="true"><svg width="16" height="12" viewBox="0 0 16 12"><path d="M8 12 0 4a11.5 11.5 0 0 1 16 0z" fill="currentColor"/></svg><svg width="14" height="12" viewBox="0 0 14 12"><path d="M14 0v12H0z" fill="currentColor"/></svg><svg width="9" height="14" viewBox="0 0 9 14"><rect x="0" y="2" width="9" height="12" rx="1.5" fill="currentColor"/><rect x="2.5" y="0" width="4" height="2.5" rx=".8" fill="currentColor"/></svg><span class="tnum" style="font-size:13px">78%</span></span></div>';
+function bar(){return '<div class="bar"><svg class="mark" aria-hidden="true"><use href="#mark"/></svg><span class="name" translate="no"><i>eql</i>Share</span><span class="grow"></span><button class="presence" aria-label="2 other devices online"><span class="devs"><span class="on"><svg class="i"><use href="#laptop"/></svg></span><span class="on"><svg class="i"><use href="#phone"/></svg></span></span>2 online</button><button class="ibtn" aria-label="Settings"><svg class="i"><use href="#gear"/></svg></button></div>';}
+function seg(a,b,sel){return '<div class="segctl" role="tablist" aria-label="Show"><button role="tab" aria-selected="'+(sel===0)+'">Files <span class="n tnum">'+a+'</span></button><button role="tab" aria-selected="'+(sel===1)+'">Clips <span class="n tnum">'+b+'</span></button></div>';}
+function dock(){return '<div class="dock"><button class="side" aria-label="Send a photo"><span class="c"><svg class="i"><use href="#photo"/></svg></span>Photos</button><button class="shutter" aria-label="Send a file to your other devices"><span><svg class="i"><use href="#up"/></svg></span></button><button class="side" aria-label="Send what\'s on the clipboard"><span class="c"><svg class="i"><use href="#clip"/></svg></span>Paste</button></div>';}
+var PAGE='<span class="page"><b></b><s></s><s></s><s></s><s></s><s></s></span>';
+function iphone(inner){return '<div class="iphone"><div class="screen"><div class="island"></div>'+SB+inner+'<div class="home-ind"></div></div></div>';}
+function pixel(inner){return '<div class="pixel"><div class="screen"><span class="cam"></span>'+SB_ANDROID+inner+'<div class="gesture"></div></div></div>';}
+function fig(device,title,text){return '<div>'+device+'<div class="cap"><b>'+title+'</b><span>'+text+'</span></div></div>';}
+
+var filesBody='<div class="body">'+
+ '<div class="landed"><div class="pv"><span class="tag"><i></i>Just landed from MacBook Pro</span><img src="img/photo.jpg" alt="Preview of lake-sunset.jpg" width="350" height="212"></div>'+
+ '<div class="info"><div class="t"><div class="nm">lake-sunset.jpg</div><div class="mt tnum">2.1 MB, expires in 24 h</div></div><button class="act" aria-label="Copy"><svg class="i"><use href="#copy"/></svg></button><button class="act" aria-label="Share"><svg class="i"><use href="#share"/></svg></button></div>'+
+ '<div class="fuse" aria-hidden="true"><i style="width:98%"></i></div></div>'+
+ '<div class="glabel">Earlier today<span class="tnum">4 files</span></div>'+
+ '<div class="group">'+
+  '<div class="row"><span class="th"><img class="doc" src="img/invoice.jpg" alt="" width="44" height="44"></span><div class="t"><div class="nm">Invoice-2026-1043.pdf</div><div class="mt tnum">1.4 MB, from iPhone</div></div><span class="end tnum">21 h</span></div>'+
+  '<div class="row"><span class="th"><img src="img/plan.jpg" alt="" width="44" height="44"></span><div class="t"><div class="nm">floor-plan.png</div><div class="mt tnum">380 KB, from Redmi</div></div><span class="end tnum">16 h</span></div>'+
+  '<div class="row"><span class="th zipth"><em></em></span><div class="t"><div class="nm">design-assets.zip</div><div class="mini-bar"><i style="width:64%"></i></div></div><span class="end tnum">64%</span></div>'+
+  '<div class="row err"><span class="th movth"><span class="badge-x" style="color:#fff">MOV</span></span><div class="t"><div class="nm">demo-recording.mov</div><div class="mt tnum">68 MB is over the 50 MB limit</div></div><span class="end"><svg class="i" style="width:16px;height:16px"><use href="#chev"/></svg></span></div>'+
+ '</div></div>';
+
+var clipsBody='<div class="body">'+
+ '<div class="composer"><label class="sr" for="cc">New clip</label><div class="txt" id="cc">Gate code is 4471#<span class="caret"></span></div>'+
+ '<div class="row2"><button class="tbtn"><svg class="i"><use href="#clip"/></svg>Paste</button><span class="grow"></span><button class="pbtn"><svg class="i"><use href="#up"/></svg>Send</button></div></div>'+
+ '<div class="glabel">Recent<span>Tap to copy</span></div>'+
+ '<div class="group">'+
+  '<div class="row" style="align-items:flex-start;padding-top:12px;padding-bottom:12px"><span class="fav" style="background:var(--fill-2);color:var(--ink);font-family:var(--mono);font-size:14px">$_</span><div class="t"><div class="nm" style="white-space:normal;line-height:1.5"><span class="code">rm -rf dist/mac-* &amp;&amp; npm run package:mac</span></div><div class="mt">from MacBook Pro, 2 h ago</div></div><button class="act" aria-label="Copy"><svg class="i"><use href="#copy"/></svg></button></div>'+
+  '<div class="row"><span class="fav" style="background:#24292F">GH</span><div class="t"><div class="nm">anthropics/skills</div><div class="mt">github.com, from iPhone, 5 h ago</div></div><button class="act" aria-label="Copy link"><svg class="i"><use href="#copy"/></svg></button></div>'+
+  '<div class="row" style="align-items:flex-start;padding-top:12px;padding-bottom:12px"><span class="fav" style="background:#E9E4D8;color:#2B2210">Aa</span><div class="t"><div class="nm" style="white-space:normal">Wi-Fi for the studio is Flicker_5G, password is on the fridge</div><div class="mt">from Redmi, yesterday</div></div><button class="act" aria-label="Copy"><svg class="i"><use href="#copy"/></svg></button></div>'+
+ '</div></div>';
+
+function setRow(icon,bg,k,v,chev,ic){return '<div class="row'+(ic?' ic':'')+'">'+(icon?'<span class="sq" style="background:'+bg+'"><svg class="i"><use href="#'+icon+'"/></svg></span>':'')+'<span class="k">'+k+'</span>'+(v!==null?'<span class="v">'+v+(chev?'<svg class="i"><use href="#chev"/></svg>':'')+'</span>':'')+'</div>';}
+function togRow(icon,bg,k,on){return '<div class="row ic"><span class="sq" style="background:'+bg+'"><svg class="i"><use href="#'+icon+'"/></svg></span><span class="k">'+k+'</span><button class="tog" role="switch" aria-checked="'+on+'" aria-label="'+k+'"></button></div>';}
+var settingsBody='<div class="navbar"><button>Done</button></div><div class="title-row" style="padding-top:0"><h1 class="ltitle">Settings</h1></div><div class="set" style="padding-top:14px">'+
+ '<div class="group"><div class="acct"><span class="avatar">V</span><div style="flex:1;min-width:0"><div style="font-weight:600">Vikas</div><div style="font-size:13.5px;color:var(--ink-3)">Free plan</div></div><svg class="i" style="color:var(--ink-3);width:16px"><use href="#chev"/></svg></div>'+
+ '<div class="row" style="display:block"><div style="display:flex;justify-content:space-between;font-size:15px"><span style="font-weight:500">Storage</span><span class="tnum" style="color:var(--ink-3)">120 of 500 MB</span></div><div class="meter"><i style="width:24%"></i></div></div>'+
+ setRow(null,null,'Devices','<span class="tnum">3 of 4</span>',true)+'</div>'+
+ '<div class="hdr">This iPhone</div><div class="group">'+setRow('type','#5E5A52','Name','Vikas’s iPhone',true,true)+setRow('moon','#3D4A8A','Appearance','System',true,true)+setRow('widget','#B57A10','Style','Playful',true,true)+'</div>'+
+ '<div class="group">'+togRow('lockic','#2F7D57','Show names on Lock Screen',false)+togRow('bell','#C2384A','Live Activity',true)+togRow('clip','#2B2210','Clipboard sharing',true)+'</div>'+
+ '<p class="foot">eqlShare only reads your clipboard when you tap Paste. Lock Screen shows counts until you turn on names.</p>'+
+'</div>';
+
+var authBody='<div class="auth"><img class="appicon" src="img/app-icon.jpg" alt="" width="64" height="64">'+
+ '<h1>Catch files from your other devices.</h1><p class="lead">Sign in with the same account on every device.</p>'+
+ '<button class="big sec"><svg class="i" style="width:20px;height:20px"><use href="#g"/></svg>Continue with Google</button>'+
+ '<div class="or">or</div>'+
+ '<div class="fields"><label><span>Email</span><input type="email" autocomplete="email" spellcheck="false" placeholder="you@example.com"></label><label><span>Password</span><input type="password" autocomplete="current-password" placeholder="Required"></label></div>'+
+ '<button class="big prim">Sign in</button>'+
+ '<div class="links"><button>Forgot password?</button><button>Create account</button></div>'+
+ '<p class="trust">Files are deleted from our servers 24 hours after you send them.</p></div>';
+
+var emptyBody='<div class="title-row"><h1 class="ltitle">Today</h1></div><div class="empty">'+
+ '<div class="dz" aria-hidden="true"><svg><use href="#mark"/></svg></div>'+
+ '<h2>Nothing has landed yet</h2><p>Send something from any of your devices and it shows up here for 24 hours.</p>'+
+ '<div class="glabel" style="margin:26px 4px 8px">Three ways to send</div>'+
+ '<div class="group ways">'+
+ '<div class="row"><span class="step">1</span><div class="t"><div class="nm">Tap the amber button</div><div class="mt">Pick a file or photo</div></div></div>'+
+ '<div class="row"><span class="step">2</span><div class="t"><div class="nm">Share from any app</div><div class="mt">Share, then eqlShare</div></div></div>'+
+ '<div class="row"><span class="step">3</span><div class="t"><div class="nm">Paste text or a link</div><div class="mt">It becomes a clip</div></div></div>'+
+ '</div></div>';
+
+document.getElementById('phoneFrames').innerHTML=
+ fig(iphone(bar()+'<div class="title-row" style="display:none"></div>'+seg(5,3,0)+filesBody+dock()),'Files','The newest file lands as a real preview with copy and share. Older files sit in a quiet list. The amber line under the preview is the 24-hour fuse.')+
+ fig(iphone(bar()+seg(5,3,1)+clipsBody+dock()),'Clips','Write or paste, then Send. Code keeps its monospace, links show the site, plain text wraps. One tap copies.')+
+ fig(iphone(settingsBody),'Settings','Standard iOS grouped list. Usage is one meter. Lock Screen privacy is a plain toggle with the trade-off spelled out.')+
+ fig(iphone(authBody),'Sign in','Your app icon, one sentence, Google first. The privacy promise sits at the bottom where people look before they commit.')+
+ fig(iphone(emptyBody),'First run','A quiet drop zone and the three ways to send. No blank screen.');
+
+document.getElementById('androidFrames').innerHTML=
+ fig(pixel(bar()+seg(5,3,0)+filesBody+dock()),'Files on Redmi','Same hierarchy and dock. Android chrome only: status icons, punch-hole camera, gesture bar.')+
+ fig(pixel(bar()+seg(5,3,1)+clipsBody+dock()),'Clips on Redmi','Clipboard is only read on Paste, which also avoids Android 12+ clipboard toasts on every launch.');
+
+/* Mac frames */
+function scene(pop){return '<div class="mac-scene"><svg class="wall" aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%"><use href="#wall"/></svg><div class="menubar"><span class="left-items"><b>Finder</b><span>File</span><span>Edit</span></span><span class="mi on"><svg width="16" height="16" viewBox="0 0 32 32" aria-hidden="true"><rect x="8" y="5" width="16" height="4.5" rx="2.25" fill="#fff"/><polygon points="9.5,14 22.5,14 16,23" fill="#fff" stroke="#fff" stroke-width="3" stroke-linejoin="round"/></svg></span><svg class="i" aria-hidden="true"><use href="#wifi"/></svg><span class="tnum">Sun 9:41 PM</span></div>'+pop+'</div>';}
+function phead(){return '<div class="ph"><svg class="mark" aria-hidden="true"><use href="#mark"/></svg><b translate="no">eqlShare</b><span class="st"><i></i>iPhone, Redmi</span><span class="grow"></span><button class="ib" aria-label="Settings"><svg class="i"><use href="#gear"/></svg></button></div>';}
+function mseg(s){return '<div class="mseg" role="tablist" aria-label="Show"><button role="tab" aria-selected="'+(s===0)+'">Files</button><button role="tab" aria-selected="'+(s===1)+'">Clips</button></div>';}
+var foot='<div class="pf"><svg class="i" aria-hidden="true"><use href="#tray"/></svg>Drop files here to send<span class="grow"></span>Clipboard <span class="k">⌘⇧V</span></div>';
+var macFiles='<div class="pop">'+phead()+mseg(0)+
+ '<div class="lbl">Images<span class="tnum">3</span></div><div class="shelf">'+
+ '<div class="it lift"><div class="im"><img src="img/photo.jpg" alt="" width="104" height="74"></div><div class="nm">lake-sunset.jpg</div><div class="mt tnum">24 h left</div></div>'+
+ '<div class="it"><div class="im"><img src="img/plan.jpg" alt="" width="104" height="74"></div><div class="nm">floor-plan.png</div><div class="mt tnum">16 h left</div></div>'+
+ '<div class="it"><div class="im"><img src="img/palette.jpg" alt="" width="104" height="74"></div><div class="nm">brand-palette.png</div><div class="mt tnum">9 h left</div></div></div>'+
+ '<div class="lbl">Files<span class="tnum">3</span></div><div class="mrows">'+
+ '<div class="mrow"><span class="th"><img class="doc" src="img/invoice.jpg" alt="" width="44" height="44"></span><div class="t"><div class="nm">Invoice-2026-1043.pdf</div><div class="mt tnum">1.4 MB, from iPhone</div></div><span class="end tnum">21 h</span></div>'+
+ '<div class="mrow"><span class="th zipth"><em style="width:8px;height:12px"></em></span><div class="t"><div class="nm">design-assets.zip</div><div class="mini-bar"><i style="width:64%"></i></div></div><span class="end tnum">64%</span></div>'+
+ '<div class="mrow err"><span class="th movth"><span class="badge-x" style="color:#fff;font-size:8px">MOV</span></span><div class="t"><div class="nm">demo-recording.mov</div><div class="mt">Download failed. Check your connection.</div></div><button class="ib" aria-label="Retry download" style="font-weight:600;font-size:12px;width:auto;padding:0 8px;color:var(--ink)">Retry</button></div>'+
+ '</div>'+foot+'</div>';
+var macClips='<div class="pop">'+phead()+mseg(1)+
+ '<div class="msend"><span class="fld">Type a clip…</span><button><svg class="i" style="width:13px;height:13px;stroke-width:2.2"><use href="#clip"/></svg>Send clipboard</button></div>'+
+ '<div class="mrows" style="margin-top:6px">'+
+ '<div class="mclip hl"><span class="fav" style="width:32px;height:32px;border-radius:7px;background:var(--fill-2);color:var(--ink);font-family:var(--mono);font-size:11px">$_</span><div style="flex:1;min-width:0"><div class="tx"><span class="code">rm -rf dist/mac-* &amp;&amp; npm run package:mac</span></div><div class="mt">from this Mac, 2 h ago</div></div><button class="ib" aria-label="Copy"><svg class="i"><use href="#copy"/></svg></button></div>'+
+ '<div class="mclip"><span class="fav" style="width:32px;height:32px;border-radius:7px;background:#24292F;font-size:11px">GH</span><div style="flex:1;min-width:0"><div class="tx">anthropics/skills</div><div class="mt">github.com, from iPhone, 5 h ago</div></div><button class="ib" aria-label="Copy"><svg class="i"><use href="#copy"/></svg></button></div>'+
+ '<div class="mclip"><span class="fav" style="width:32px;height:32px;border-radius:7px;background:#E9E4D8;color:#2B2210;font-size:11px">Aa</span><div style="flex:1;min-width:0"><div class="tx">Wi-Fi for the studio is Flicker_5G, password is on the fridge</div><div class="mt">from Redmi, yesterday</div></div><button class="ib" aria-label="Copy"><svg class="i"><use href="#copy"/></svg></button></div>'+
+ '</div>'+foot.replace('Drop files here to send','Drop text or files to send')+
+ '<div class="dropover" aria-hidden="true"><div><svg class="i" style="width:16px;height:16px"><use href="#tray"/></svg>Release to send to 2 devices</div></div></div>';
+function mr(k,v){return '<div class="r"><span class="k">'+k+'</span>'+v+'</div>';}
+function mt(on,l){return '<button class="mtog" role="switch" aria-checked="'+on+'" aria-label="'+l+'"></button>';}
+var macSet='<div class="pop"><div class="ph"><button class="ib" aria-label="Back"><svg class="i" style="transform:scaleX(-1)"><use href="#chev"/></svg></button><b>Settings</b><span class="grow"></span></div><div class="mform">'+
+ '<div class="mbox">'+mr('vikas…@gmail.com','<span class="v">Free plan</span>')+mr('Storage','<span class="mmeter"><i style="width:24%"></i></span><span class="v tnum">120 of 500 MB</span>')+mr('Devices','<span class="v tnum">3 of 4</span>')+'</div>'+
+ '<div class="mbox">'+mr('This Mac','<span class="v">Vikas’s MacBook Pro</span>')+mr('Open as','<span class="v">Popover</span>')+'</div>'+
+ '<div class="mbox">'+mr('Clipboard sharing',mt(true,'Clipboard sharing'))+mr('Launch at login',mt(true,'Launch at login'))+mr('Clipboard shortcut','<span class="v"><span class="k" style="font-size:11px;font-weight:600;background:var(--fill-2);border-radius:4px;padding:1px 6px;color:var(--ink-2)">⌘⇧V</span></span>')+'</div>'+
+ '<div class="mbtns"><button>Sign out</button><button class="d">Delete account…</button></div></div></div>';
+var macEmpty='<div class="pop">'+phead()+mseg(0)+
+ '<div style="padding:26px 22px 8px;text-align:center"><div class="dz" style="width:120px;height:80px;margin:0 auto 14px;border-radius:16px" aria-hidden="true"><svg style="width:30px;height:30px"><use href="#mark"/></svg></div>'+
+ '<div style="font-size:15px;font-weight:600">Nothing has landed yet</div><div style="font-size:12.5px;color:var(--ink-2);margin-top:4px;text-wrap:balance">Send from your phone, or drop a file here to send it there.</div></div>'+
+ '<div class="mrows" style="padding:8px 12px 0"><div class="mrow hl"><span class="th" style="display:grid;place-items:center;background:var(--amber)"><svg class="i" style="width:16px;height:16px;color:#2B2210"><use href="#phone"/></svg></span><div class="t"><div class="nm">Get eqlShare on your phone</div><div class="mt">Scan a code to install</div></div><svg class="i" style="width:14px;height:14px;color:var(--ink-3)"><use href="#chev"/></svg></div></div>'+foot+'</div>';
+document.getElementById('macFrames').innerHTML=
+ fig(scene(macFiles),'Files','Images get a shelf because you drag them most. The first one is lifted mid-drag. Downloads show progress inline; failures say why and offer Retry.')+
+ fig(scene(macClips),'Clips, with a file dragged over','The whole popover becomes the drop target and says who will receive it.')+
+ fig(scene(macSet),'Settings','Native grouped boxes, small switches, and the destructive action ends with an ellipsis because it asks for confirmation.')+
+ fig(scene(macEmpty),'Empty','The same drop zone as the phone, plus a path to the phone app.');
+
+/* ---------- live demo ---------- */
+(function(){
+  var reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var queue=[
+    {name:'harbor-dusk.jpg',img:'img/dusk.jpg',size:'1.8 MB'},
+    {name:'floor-plan-v2.png',img:'img/plan.jpg',size:'380 KB'},
+    {name:'lake-sunset-2.jpg',img:'img/photo.jpg',size:'2.1 MB'}
+  ], qi=0, busy=false;
+  var shutter=document.getElementById('shutter'), shelf=document.getElementById('demoShelf'),
+      img=document.getElementById('demoImg'), nm=document.getElementById('demoName'), meta=document.getElementById('demoMeta'),
+      tag=document.getElementById('demoTag'), fuse=document.getElementById('demoFuse'), icon=document.getElementById('demoMenuIcon'),
+      count=document.getElementById('demoImgCount');
+  var initialShelf=shelf.innerHTML;
+  function send(){
+    if(busy) return; busy=true;
+    var f=queue[qi++%queue.length];
+    // phone: new file becomes the landed card, in "sending" state
+    var pv=img.parentNode, from=pv.getBoundingClientRect();
+    img.src=f.img; img.alt='Preview of '+f.name; nm.textContent=f.name;
+    meta.textContent='Sending to 2 devices…'; tag.textContent='Sending'; fuse.style.width='0%';
+    var anim=pv.animate([{transform:'scale(.96)',opacity:.6},{transform:'scale(1)',opacity:1}],{duration:260,easing:'cubic-bezier(.2,.8,.2,1)'});
+    // mac target slot
+    var it=document.createElement('div'); it.className='it'; it.style.opacity='0';
+    it.innerHTML='<div class="im"><img src="'+f.img+'" alt="" width="104" height="74"></div><div class="nm">'+f.name+'</div><div class="mt tnum">Arriving…</div>';
+    shelf.insertBefore(it,shelf.firstChild);
+    if(shelf.children.length>3) shelf.removeChild(shelf.lastChild);
+    count.textContent=String(Math.min(3,shelf.children.length));
+    var to=it.querySelector('.im').getBoundingClientRect();
+    function land(){
+      it.style.opacity='1';
+      if(!reduce){it.animate([{transform:'translateY(-6px) scale(1.04)'},{transform:'none'}],{duration:340,easing:'cubic-bezier(.34,1.4,.64,1)'});icon.classList.remove('wig');void icon.offsetWidth;icon.classList.add('wig');}
+      var mt=it.querySelector('.mt'); var p=0;
+      var t=setInterval(function(){p+=20; mt.textContent=p<100?('Downloading… '+p+'%'):'24 h left'; if(p>=100){clearInterval(t);}},reduce?0:90);
+      meta.textContent=f.size+', on 2 devices'; tag.textContent='Sent to MacBook Pro and Redmi'; fuse.style.transition='width .6s cubic-bezier(.2,.8,.2,1)'; fuse.style.width='100%';
+      setTimeout(function(){busy=false;},reduce?0:500);
+    }
+    if(reduce){land();return;}
+    var fly=document.createElement('div'); fly.className='flyer';
+    fly.innerHTML='<img src="'+f.img+'" alt="">';
+    var s=shutter.getBoundingClientRect();
+    var w=to.width, h=to.height;
+    fly.style.width=w+'px'; fly.style.height=h+'px'; fly.style.left=to.left+'px'; fly.style.top=to.top+'px';
+    document.body.appendChild(fly);
+    var sx=(s.left+s.width/2)-(to.left+w/2), sy=(s.top+s.height/2)-(to.top+h/2);
+    var mx=sx*0.45, my=Math.min(sy,0)-160;
+    fly.animate([
+      {transform:'translate('+sx+'px,'+sy+'px) scale(.25) rotate(-8deg)',opacity:0},
+      {transform:'translate('+sx+'px,'+(sy-90)+'px) scale(.9) rotate(-6deg)',opacity:1,offset:.22},
+      {transform:'translate('+mx+'px,'+my+'px) scale(1.15) rotate(4deg)',offset:.62},
+      {transform:'translate(0,0) scale(1) rotate(0)',opacity:1}
+    ],{duration:980,easing:'cubic-bezier(.45,0,.2,1)'}).onfinish=function(){fly.remove();land();};
+  }
+  shutter.addEventListener('click',send);
+  document.getElementById('replay').addEventListener('click',function(){
+    shelf.innerHTML=initialShelf; count.textContent='2'; qi=0;
+    img.src='img/photo.jpg'; nm.textContent='lake-sunset.jpg'; meta.textContent='2.1 MB, expires in 24 h'; tag.textContent='Just landed from MacBook Pro'; fuse.style.width='100%';
+  });
+})();
+</script>
+</body>
+</html>
