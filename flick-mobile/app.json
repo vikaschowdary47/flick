@@ -71,17 +71,9 @@
           "disableIOS": true,
           "androidIntentFilters": [
             "text/*",
-            "image/*",
-            "video/*",
-            "audio/*",
-            "application/*",
             "*/*"
           ],
           "androidMultiIntentFilters": [
-            "image/*",
-            "video/*",
-            "audio/*",
-            "application/*",
             "*/*"
           ],
           "androidMainActivityAttributes": {
