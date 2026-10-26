@@ -4,12 +4,12 @@ Generated from the current desktop, mobile, website, Supabase functions, migrati
 
 ## Products and entry points
 
-| Area | Entry point | Primary runtime |
-|---|---|---|
-| Desktop | `flick-desktop/src/main/index.ts`, renderer `App.tsx` | Electron 44 / React 19 |
-| Mobile | `flick-mobile/App.tsx` | Expo 57 / React Native 0.86 |
-| Marketing and share web | `site/app/page.tsx`, `site/app/d/[id]/page.tsx` | Next.js 15 |
-| Backend | `supabase/migrations`, `supabase/functions` | Supabase Auth, Postgres, Storage, Realtime, Edge Functions |
+| Area                    | Entry point                                           | Primary runtime                                            |
+| ----------------------- | ----------------------------------------------------- | ---------------------------------------------------------- |
+| Desktop                 | `flick-desktop/src/main/index.ts`, renderer `App.tsx` | Electron 44 / React 19                                     |
+| Mobile                  | `flick-mobile/App.tsx`                                | Expo 57 / React Native 0.86                                |
+| Marketing and share web | `site/app/page.tsx`, `site/app/d/[id]/page.tsx`       | Next.js 15                                                 |
+| Backend                 | `supabase/migrations`, `supabase/functions`           | Supabase Auth, Postgres, Storage, Realtime, Edge Functions |
 
 ## Screens and states
 
@@ -82,8 +82,8 @@ Generated from the current desktop, mobile, website, Supabase functions, migrati
 ## Links and deep links
 
 - `https://eqlshare.com` and `https://www.eqlshare.com` website origins.
-- `https://eqlshare.com/d/<id>` share-download links.
-- `https://eqlshare.com/privacy`, `https://eqlshare.com/terms`, sitemap and robots endpoints.
+- `https://www.eqlshare.com/d/<id>` share-download links.
+- `https://www.eqlshare.com/privacy`, `https://www.eqlshare.com/terms`, sitemap and robots endpoints.
 - `mailto:support@eqlshare.com` contact links.
 - `flick://auth-callback` desktop/mobile OAuth and email confirmation callback.
 - `flick://file/<id>` and `flick://clip/<id>` widget/deep-link targets.

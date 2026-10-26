@@ -6,7 +6,8 @@ import { expiresAt } from "../lib/format";
 import type { FileRow } from "../lib/types";
 import type { LimitKind } from "../lib/limits";
 
-const SHARE_BASE_URL = process.env.EXPO_PUBLIC_FLICK_SHARE_BASE_URL || "https://eqlshare.com/d";
+const SHARE_BASE_URL =
+  process.env.EXPO_PUBLIC_FLICK_SHARE_BASE_URL || "https://www.eqlshare.com/d";
 const LINK_LIFETIME_MS = 24 * 60 * 60 * 1000;
 const MAX_FILE_BYTES = 50 * 1024 * 1024;
 
@@ -18,7 +19,9 @@ type ShareLinkRow = {
 };
 
 function hexId(bytes: Uint8Array): string {
-  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join(
+    "",
+  );
 }
 
 async function randomLinkId(): Promise<string> {
@@ -32,7 +35,9 @@ async function hashLinkId(rawId: string): Promise<string> {
 }
 
 function linkExpiresAt(file: FileRow): string {
-  return new Date(Math.min(Date.now() + LINK_LIFETIME_MS, expiresAt(file))).toISOString();
+  return new Date(
+    Math.min(Date.now() + LINK_LIFETIME_MS, expiresAt(file)),
+  ).toISOString();
 }
 
 export function useShareLinks(userId: string) {
@@ -57,48 +62,71 @@ export function useShareLinks(userId: string) {
     void refresh();
   }, [refresh]);
 
-  const create = useCallback(async (file: FileRow) => {
-    setLimitHit(null);
-    if (file.size > MAX_FILE_BYTES) {
-      setLimitHit("sharing");
-      return;
-    }
-    if (activeByFile[file.id]) {
-      setStatus("This file already has an active share link. Revoke it first.");
-      return;
-    }
-    try {
-      const rawId = await randomLinkId();
-      const idHash = await hashLinkId(rawId);
-      const { data, error } = await supabase
-        .from("share_links")
-        .insert({ owner_id: userId, file_id: file.id, id_hash: idHash, expires_at: linkExpiresAt(file) })
-        .select("id")
-        .single<{ id: string }>();
-      if (error || !data) throw error ?? new Error("Couldn’t create the share link.");
-      await Clipboard.setStringAsync(`${SHARE_BASE_URL.replace(/\/$/, "")}/${rawId}`);
-      setActiveByFile((current) => ({ ...current, [file.id]: data.id }));
-      setStatus("Share link copied to the clipboard.");
-    } catch (error: unknown) {
-      setStatus(error instanceof Error && error.message ? error.message : "Couldn’t create the share link.");
-    }
-  }, [activeByFile, userId]);
+  const create = useCallback(
+    async (file: FileRow) => {
+      setLimitHit(null);
+      if (file.size > MAX_FILE_BYTES) {
+        setLimitHit("sharing");
+        return;
+      }
+      if (activeByFile[file.id]) {
+        setStatus(
+          "This file already has an active share link. Revoke it first.",
+        );
+        return;
+      }
+      try {
+        const rawId = await randomLinkId();
+        const idHash = await hashLinkId(rawId);
+        const { data, error } = await supabase
+          .from("share_links")
+          .insert({
+            owner_id: userId,
+            file_id: file.id,
+            id_hash: idHash,
+            expires_at: linkExpiresAt(file),
+          })
+          .select("id")
+          .single<{ id: string }>();
+        if (error || !data)
+          throw error ?? new Error("Couldn’t create the share link.");
+        await Clipboard.setStringAsync(
+          `${SHARE_BASE_URL.replace(/\/$/, "")}/${rawId}`,
+        );
+        setActiveByFile((current) => ({ ...current, [file.id]: data.id }));
+        setStatus("Share link copied to the clipboard.");
+      } catch (error: unknown) {
+        setStatus(
+          error instanceof Error && error.message
+            ? error.message
+            : "Couldn’t create the share link.",
+        );
+      }
+    },
+    [activeByFile, userId],
+  );
 
-  const revoke = useCallback(async (file: FileRow) => {
-    const linkId = activeByFile[file.id];
-    if (!linkId) return;
-    const { error } = await supabase.from("share_links").update({ revoked_at: new Date().toISOString() }).eq("id", linkId);
-    if (error) {
-      setStatus(error.message || "Couldn’t revoke the share link.");
-      return;
-    }
-    setActiveByFile((current) => {
-      const next = { ...current };
-      delete next[file.id];
-      return next;
-    });
-    setStatus("Share link revoked.");
-  }, [activeByFile]);
+  const revoke = useCallback(
+    async (file: FileRow) => {
+      const linkId = activeByFile[file.id];
+      if (!linkId) return;
+      const { error } = await supabase
+        .from("share_links")
+        .update({ revoked_at: new Date().toISOString() })
+        .eq("id", linkId);
+      if (error) {
+        setStatus(error.message || "Couldn’t revoke the share link.");
+        return;
+      }
+      setActiveByFile((current) => {
+        const next = { ...current };
+        delete next[file.id];
+        return next;
+      });
+      setStatus("Share link revoked.");
+    },
+    [activeByFile],
+  );
 
   return {
     create,
