@@ -1,16 +1,13 @@
 import { useState, type ReactNode } from "react";
-import { FlatList, RefreshControl, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from "react-native";
 import * as Clipboard from "expo-clipboard";
-import { useTheme, useThemedStyles } from "../design/ThemeProvider";
-import type { Palette } from "../design/theme";
 import { tokens } from "../design/tokens";
 import { CLIP_MAX_CHARS, type ClipRow } from "../lib/clips";
 import { formatSender } from "../lib/format";
 import type { Density } from "../hooks/useProfileSettings";
-import { ClipCard } from "./ClipCard";
-import { ClipChip } from "./ClipChip";
-import { PasteIcon } from "./Icons";
-import { PillButton } from "./PillButton";
+import { useV2, type V2 } from "../design/v2";
+import { ClipRowV2 } from "./ClipRowV2";
+import { ClipIcon, UpIcon } from "./Icons";
 
 type Props = {
   header?: ReactNode; // shared top (wordmark, heading, tabs); none in compact
@@ -25,10 +22,9 @@ type Props = {
   density: Density;
 };
 
-export function ClipsList({ header, clips, error, now, deviceId, deviceNames, onSend, onDelete, onRefresh, density }: Props) {
-  const compact = density === "compact";
-  const { palette } = useTheme();
-  const styles = useThemedStyles(makeStyles);
+export function ClipsList({ header, clips, error, now, deviceId, deviceNames, onSend, onDelete, onRefresh }: Props) {
+  const v = useV2();
+  const styles = makeStyles(v);
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -42,14 +38,15 @@ export function ClipsList({ header, clips, error, now, deviceId, deviceNames, on
     if (!result && clearDraft) setDraft("");
   };
 
-  // The clipboard is read only here, when the button is tapped.
-  const sendClipboard = async () => {
+  // Paste puts the clipboard into the box (read only when tapped); Send sends it.
+  const pasteIntoDraft = async () => {
     const text = await Clipboard.getStringAsync();
     if (!text.trim()) {
       setMessage("Your clipboard is empty.");
       return;
     }
-    await send(text, false);
+    setDraft(text.slice(0, CLIP_MAX_CHARS));
+    setMessage(null);
   };
 
   return (
@@ -57,42 +54,23 @@ export function ClipsList({ header, clips, error, now, deviceId, deviceNames, on
       data={clips}
       keyExtractor={(clip) => clip.id}
       extraData={[now, deviceNames]}
-      renderItem={({ item }) =>
-        compact ? (
-          <ClipChip
-            clip={item}
-            now={now}
-            sender={formatSender(item.device_id, deviceId, deviceNames)}
-            onDelete={onDelete}
-          />
-        ) : (
-        <ClipCard
+      renderItem={({ item, index }) => (
+        <ClipRowV2
           clip={item}
           now={now}
           sender={formatSender(item.device_id, deviceId, deviceNames)}
-          onDelete={() => onDelete(item.id)}
+          onDelete={onDelete}
+          position={clips.length === 1 ? "single" : index === 0 ? "first" : index === clips.length - 1 ? "last" : "middle"}
         />
-        )
-      }
-      // Fixed chip height lets the list skip measuring rows.
-      getItemLayout={
-        compact
-          ? (_data, index) => ({
-              length: tokens.compact.chipHeight + tokens.compact.gap,
-              offset: (tokens.compact.chipHeight + tokens.compact.gap) * index,
-              index,
-            })
-          : undefined
-      }
+      )}
       initialNumToRender={12}
       windowSize={7}
       contentContainerStyle={styles.content}
-      ItemSeparatorComponent={compact ? CompactSeparator : Separator}
       keyboardShouldPersistTaps="handled"
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
-          tintColor={palette.text}
+          tintColor={v.ink}
           onRefresh={async () => {
             setRefreshing(true);
             await onRefresh();
@@ -103,39 +81,48 @@ export function ClipsList({ header, clips, error, now, deviceId, deviceNames, on
       ListHeaderComponent={
         <View style={styles.top}>
           {header}
-          <PillButton
-            label="Send clipboard"
-            variant="secondary"
-            icon={<PasteIcon size={18} color={palette.text} />}
-            onPress={() => void sendClipboard()}
-            busy={busy}
-            accessibilityHint="Reads your clipboard now and sends it to your devices"
-          />
-          <View style={styles.composeRow}>
+          <View style={styles.composer}>
             <TextInput
               style={styles.input}
               value={draft}
               onChangeText={setDraft}
-              placeholder="Type a clip"
-              placeholderTextColor={palette.textMuted}
+              placeholder="Write or paste a clip"
+              placeholderTextColor={v.ink3}
+              selectionColor={v.amber}
+              cursorColor={v.amber}
               maxLength={CLIP_MAX_CHARS}
               multiline
-              accessibilityLabel="Type a clip"
+              accessibilityLabel="New clip"
             />
-            <PillButton
-              label="Send"
-              onPress={() => void send(draft, true)}
-              disabled={busy || !draft.trim()}
-            />
+            <View style={styles.composeRow}>
+              <Pressable accessibilityRole="button" accessibilityHint="Puts what's on your clipboard in the box" onPress={() => void pasteIntoDraft()} style={({ pressed }) => [styles.tbtn, pressed && styles.pressed]}>
+                <ClipIcon size={16} color={v.ink} />
+                <Text style={styles.tbtnLabel}>Paste</Text>
+              </Pressable>
+              <View style={{ flex: 1 }} />
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{ disabled: busy || !draft.trim(), busy }}
+                disabled={busy || !draft.trim()}
+                onPress={() => void send(draft, true)}
+                style={({ pressed }) => [styles.pbtn, (busy || !draft.trim()) && styles.disabled, pressed && styles.pressed]}
+              >
+                {busy ? <ActivityIndicator color={v.onAmber} /> : <UpIcon size={16} color={v.onAmber} />}
+                <Text style={styles.pbtnLabel}>Send</Text>
+              </Pressable>
+            </View>
           </View>
           {(message ?? error) && (
             <Text accessibilityLiveRegion="polite" style={styles.note}>
               {message ?? error}
             </Text>
           )}
-          <Text accessibilityRole="header" style={styles.eyebrow}>
-            Recent clips
-          </Text>
+          {clips.length > 0 && (
+            <View style={styles.glabel}>
+              <Text accessibilityRole="header" style={styles.glabelText}>Recent</Text>
+              <Text style={styles.glabelHint}>Tap to copy</Text>
+            </View>
+          )}
         </View>
       }
       ListEmptyComponent={<Text style={styles.note}>No clips yet. Send one from any device.</Text>}
@@ -143,58 +130,21 @@ export function ClipsList({ header, clips, error, now, deviceId, deviceNames, on
   );
 }
 
-function Separator() {
-  return <View style={{ height: tokens.layout.cardGap }} />;
-}
-
-function CompactSeparator() {
-  return <View style={{ height: tokens.compact.gap }} />;
-}
-
-const makeStyles = (c: Palette) =>
+const makeStyles = (v: V2) =>
   StyleSheet.create({
-    content: {
-      paddingHorizontal: tokens.layout.screenPadding,
-      paddingTop: tokens.spacing.sm,
-      paddingBottom: tokens.spacing.lg,
-    },
-    top: {
-      gap: tokens.spacing.lg,
-      marginBottom: tokens.spacing.md,
-    },
-    composeRow: {
-      flexDirection: "row",
-      alignItems: "flex-end",
-      gap: tokens.spacing.sm,
-    },
-    input: {
-      flex: 1,
-      minHeight: tokens.layout.inputHeight,
-      maxHeight: tokens.layout.inputHeight * 3,
-      paddingHorizontal: tokens.spacing.lg,
-      paddingTop: tokens.spacing.md,
-      paddingBottom: tokens.spacing.md,
-      borderRadius: tokens.radii.card,
-      borderWidth: tokens.borderWidth.outline,
-      borderColor: c.hairline,
-      backgroundColor: c.card,
-      color: c.text,
-      fontFamily: tokens.fonts.semibold,
-      fontSize: tokens.fontSizes.body,
-    },
-    note: {
-      color: c.textMuted,
-      fontFamily: tokens.fonts.semibold,
-      fontSize: tokens.fontSizes.meta,
-    },
-    eyebrow: {
-      marginTop: tokens.spacing.sm,
-      color: c.textMuted,
-      fontFamily: tokens.fonts.extrabold,
-      fontSize: tokens.fontSizes.eyebrow,
-      letterSpacing: tokens.letterSpacing.eyebrow,
-    },
-    separator: {
-      height: tokens.layout.cardGap,
-    },
+    content: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: tokens.spacing.lg },
+    top: { gap: 18, marginBottom: 8 },
+    composer: { paddingTop: 14, paddingHorizontal: 14, paddingBottom: 10, borderRadius: 20, backgroundColor: v.surface, borderWidth: 1, borderColor: v.edge },
+    input: { minHeight: 48, maxHeight: 160, padding: 0, color: v.ink, fontFamily: tokens.fonts.semibold, fontSize: 17, textAlignVertical: "top" },
+    composeRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 6 },
+    tbtn: { height: 34, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, borderRadius: 10, backgroundColor: v.fill },
+    tbtnLabel: { color: v.ink, fontFamily: tokens.fonts.extrabold, fontSize: 13.5 },
+    pbtn: { height: 34, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 14, borderRadius: 10, backgroundColor: v.amber },
+    pbtnLabel: { color: v.onAmber, fontFamily: tokens.fonts.extrabold, fontSize: 14 },
+    disabled: { opacity: 0.5 },
+    pressed: { opacity: 0.75 },
+    note: { color: v.ink3, fontFamily: tokens.fonts.semibold, fontSize: 13.5, paddingHorizontal: 4 },
+    glabel: { flexDirection: "row", justifyContent: "space-between", paddingHorizontal: 4, marginBottom: -10 },
+    glabelText: { color: v.ink2, fontFamily: tokens.fonts.extrabold, fontSize: 14 },
+    glabelHint: { color: v.ink3, fontFamily: tokens.fonts.semibold, fontSize: 14 },
   });

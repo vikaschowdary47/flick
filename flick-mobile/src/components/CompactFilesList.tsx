@@ -10,9 +10,10 @@ import {
   View,
   useWindowDimensions,
 } from "react-native";
-import { useTheme, useThemedStyles } from "../design/ThemeProvider";
+import { useTheme } from "../design/ThemeProvider";
 import type { Palette } from "../design/theme";
 import { tokens } from "../design/tokens";
+import { useV2, type V2 } from "../design/v2";
 import { groupFiles, loadCollapsed, saveCollapsed, SECTION_TITLES, type SectionKey } from "../lib/sections";
 import type { FileRow } from "../lib/types";
 import { CompactFileRow, type GroupPosition } from "./CompactFileRow";
@@ -53,7 +54,8 @@ export const CompactFilesList = forwardRef<CompactFilesListHandle, Props>(functi
   ref,
 ) {
   const { palette } = useTheme();
-  const styles = useThemedStyles(makeStyles);
+  const v2 = useV2();
+  const styles = useMemo(() => makeStyles(palette, v2), [palette, v2]);
   const { width } = useWindowDimensions();
   const [collapsed, setCollapsed] = useState<SectionKey[]>([]);
   const [expanded, setExpanded] = useState<SectionKey[]>([]);
@@ -82,17 +84,13 @@ export const CompactFilesList = forwardRef<CompactFilesListHandle, Props>(functi
       groupFiles(files, now).map(({ key, files: sectionFiles }) => {
         const isCollapsed = collapsed.includes(key);
         const shown = expanded.includes(key) ? sectionFiles : sectionFiles.slice(0, SECTION_PREVIEW);
-        const images = shown.filter(isImage);
         const data: Item[] = [];
         if (!isCollapsed) {
-          for (let i = 0; i < images.length; i += columns) {
-            const chunk = images.slice(i, i + columns);
-            data.push({ type: "grid", key: `${key}-grid-${chunk[0].id}`, files: chunk });
-          }
-          const rows = shown.filter((file) => !isImage(file));
-          rows.forEach((file, index) => {
+          // Redesign v2: one grouped list per section; images are rows with
+          // their real thumbnail (no separate grid).
+          shown.forEach((file, index) => {
             const position: GroupPosition =
-              rows.length === 1 ? "single" : index === 0 ? "first" : index === rows.length - 1 ? "last" : "middle";
+              shown.length === 1 ? "single" : index === 0 ? "first" : index === shown.length - 1 ? "last" : "middle";
             data.push({ type: "row", key: file.id, file, position });
           });
           if (shown.length < sectionFiles.length) {
@@ -174,7 +172,7 @@ export const CompactFilesList = forwardRef<CompactFilesListHandle, Props>(functi
         >
           <Text style={styles.sectionTitle}>{SECTION_TITLES[section.key]}</Text>
           <Text style={styles.sectionCount}>
-            {section.collapsed ? `${section.total} hidden` : section.total}
+            {section.collapsed ? `${section.total} hidden` : `${section.total} ${section.total === 1 ? "file" : "files"}`}
           </Text>
         </Pressable>
       )}
@@ -182,7 +180,6 @@ export const CompactFilesList = forwardRef<CompactFilesListHandle, Props>(functi
       ListHeaderComponent={header}
       ListEmptyComponent={empty}
       ItemSeparatorComponent={ItemGap}
-      SectionSeparatorComponent={Gap}
       contentContainerStyle={styles.content}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.text} />}
       onScroll={onScroll}
@@ -206,11 +203,11 @@ function ItemGap({ leadingItem, trailingItem }: { leadingItem?: Item; trailingIt
   return <Gap />;
 }
 
-const makeStyles = (c: Palette) =>
+const makeStyles = (c: Palette, v: V2) =>
   StyleSheet.create({
     content: {
-      paddingHorizontal: tokens.layout.screenPadding,
-      paddingTop: tokens.spacing.sm,
+      paddingHorizontal: 16,
+      paddingTop: 16,
       paddingBottom: tokens.spacing.lg,
     },
     gridRow: {
@@ -218,35 +215,36 @@ const makeStyles = (c: Palette) =>
       gap: tokens.compact.gap,
     },
     sectionHeader: {
-      minHeight: tokens.layout.minTouchTarget - 8,
       flexDirection: "row",
       alignItems: "flex-end",
       justifyContent: "space-between",
-      paddingHorizontal: tokens.spacing.xs,
-      paddingBottom: tokens.spacing.xs,
+      paddingHorizontal: 4,
+      paddingTop: 18,
+      paddingBottom: 8,
     },
     sectionTitle: {
-      color: c.textMuted,
+      color: v.ink2,
       fontFamily: tokens.fonts.extrabold,
-      fontSize: tokens.fontSizes.eyebrow,
+      fontSize: 14,
     },
     sectionCount: {
-      color: c.textMuted,
+      color: v.ink3,
       fontFamily: tokens.fonts.semibold,
-      fontSize: tokens.compact.meta,
+      fontSize: 14,
       fontVariant: ["tabular-nums"],
     },
     moreChip: {
       alignSelf: "flex-start",
-      height: tokens.compact.moreChipHeight + 4,
+      height: 34,
       justifyContent: "center",
-      paddingHorizontal: tokens.spacing.md,
+      marginTop: 8,
+      paddingHorizontal: 12,
       borderRadius: 10,
-      backgroundColor: c.fill,
+      backgroundColor: v.fill,
     },
     moreLabel: {
-      color: c.text,
-      fontFamily: tokens.fonts.semibold,
-      fontSize: tokens.compact.meta,
+      color: v.ink,
+      fontFamily: tokens.fonts.extrabold,
+      fontSize: 13.5,
     },
   });

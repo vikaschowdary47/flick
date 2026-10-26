@@ -1,23 +1,23 @@
+import type React from "react";
 import * as AppleAuthentication from "expo-apple-authentication";
 import { useEffect, useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useTheme, useThemedStyles } from "../design/ThemeProvider";
-import type { Palette } from "../design/theme";
+import { useTheme } from "../design/ThemeProvider";
+import { useV2, type V2 } from "../design/v2";
+import { AppMark } from "./Icons";
 import { tokens } from "../design/tokens";
 import type { AuthCallbackNotice } from "../hooks/useSession";
-import { LogoMark } from "./LogoMark";
-import { PillButton } from "./PillButton";
 import { GoogleIcon } from "./GoogleIcon";
-import { APP_NAME } from "../lib/appName";
 
 type Props = {
   onSignIn: (email: string, password: string) => Promise<string | null>;
@@ -44,8 +44,7 @@ export function SignInScreen({
   passwordRecovery,
   authCallbackNotice,
 }: Props) {
-  const { palette, scheme } = useTheme();
-  const styles = useThemedStyles(makeStyles);
+  const { scheme } = useTheme();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -161,210 +160,175 @@ export function SignInScreen({
     if (message) setError(message);
   }
 
-  return (
-    <SafeAreaView style={styles.safe}>
-      <KeyboardAvoidingView
-        style={styles.center}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
-        <LogoMark size={tokens.layout.signInMark} />
-        <Text accessibilityRole="header" style={styles.heading}>
-          {mode === "signUp" ? `Join ${APP_NAME}` : mode === "resetPassword" ? "Choose a new password" : `Sign in to ${APP_NAME}`}
-        </Text>
-        <Text style={styles.sub}>
-          {mode === "checkEmail" ? `Check ${email} for a link from ${APP_NAME}.` : "Sign in to send files to all your devices."}
-        </Text>
-        {authCallbackNotice && (
-          <Text accessibilityRole="alert" style={styles.notice}>
-            {authCallbackNotice.kind === "confirmed"
-              ? "Email confirmed! Go back to the device where you signed up, or log in here."
-              : "This reset link was opened on another device. Open it on the device where you requested it, or resend the link here."}
-          </Text>
-        )}
+  const v = useV2();
+  const st = makeV2Styles(v);
+  const heading =
+    mode === "signUp" ? "Create your account." :
+    mode === "resetRequest" ? "Reset your password." :
+    mode === "resetPassword" ? "Choose a new password." :
+    mode === "checkEmail" ? "Check your email." :
+    "Catch files from your other devices.";
+  const lead =
+    mode === "checkEmail" ? `We sent a link to ${email}. Open it on this phone.` :
+    mode === "resetRequest" ? "We’ll email you a link to set a new one." :
+    mode === "resetPassword" ? "Use at least 8 characters." :
+    "Sign in with the same account on every device.";
 
-        <View style={styles.form}>
+  return (
+    <SafeAreaView style={st.safe}>
+      <KeyboardAvoidingView style={st.flex} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+        <ScrollView contentContainerStyle={st.auth} keyboardShouldPersistTaps="handled">
+          <View style={st.icon}><AppMark size={56} /></View>
+          <Text accessibilityRole="header" style={st.h1}>{heading}</Text>
+          <Text style={st.lead}>{lead}</Text>
+          {authCallbackNotice && (
+            <Text accessibilityRole="alert" style={st.notice}>
+              {authCallbackNotice.kind === "confirmed"
+                ? "Email confirmed! Go back to the device where you signed up, or sign in here."
+                : "This reset link was opened on another device. Open it on the device where you asked for it, or send a new link here."}
+            </Text>
+          )}
           {error && (
-            <View style={styles.errorBanner}>
-              <Text accessibilityRole="alert" style={styles.error}>{error}</Text>
-              <Pressable accessibilityRole="button" accessibilityLabel="Dismiss error" onPress={() => setError(null)} style={styles.errorDismiss}>
-                <Text style={styles.errorDismissText}>×</Text>
-              </Pressable>
+            <Pressable accessibilityRole="alert" accessibilityHint="Tap to dismiss" onPress={() => setError(null)} style={st.error}>
+              <Text style={st.errorText}>{error}</Text>
+            </Pressable>
+          )}
+
+          {mode === "signIn" && (
+            <>
+              <Big st={st} v={v} busy={busy} label="Continue with Google" onPress={google} disabled={busy} icon={<GoogleIcon />} />
+              {appleAvailable && (
+                <View style={{ marginTop: 10 }} pointerEvents={busy ? "none" : "auto"} accessibilityState={{ disabled: busy }}>
+                  <AppleAuthentication.AppleAuthenticationButton
+                    buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
+                    buttonStyle={scheme === "dark" ? AppleAuthentication.AppleAuthenticationButtonStyle.WHITE : AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+                    cornerRadius={14}
+                    style={{ width: "100%", height: 54 }}
+                    onPress={() => { if (!busy) void apple(); }}
+                  />
+                </View>
+              )}
+              <View style={st.or}><View style={st.orLine} /><Text style={st.orText}>or</Text><View style={st.orLine} /></View>
+            </>
+          )}
+
+          {mode !== "checkEmail" && (
+            <View style={st.fields}>
+              {mode !== "resetPassword" && (
+                <Field st={st} v={v} busy={busy} label="Email" placeholder="you@example.com" autoCapitalize="none" autoComplete="email" keyboardType="email-address" textContentType="username" value={email} onChangeText={setEmail} />
+              )}
+              {(mode === "signIn" || mode === "signUp") && (
+                <>
+                  <View style={st.fieldLine} />
+                  <Field st={st} v={v} busy={busy} label="Password" placeholder="Required" secureTextEntry autoComplete="password" textContentType="password" value={password} onChangeText={setPassword} onSubmitEditing={mode === "signIn" ? submit : submitSignUp} returnKeyType="go" />
+                </>
+              )}
+              {mode === "resetPassword" && (
+                <Field st={st} v={v} busy={busy} label="Password" placeholder="New password" secureTextEntry value={password} onChangeText={setPassword} />
+              )}
+              {(mode === "signUp" || mode === "resetPassword") && (
+                <>
+                  <View style={st.fieldLine} />
+                  <Field st={st} v={v} busy={busy} label="Confirm" placeholder="Same again" secureTextEntry value={confirmPassword} onChangeText={setConfirmPassword} />
+                </>
+              )}
             </View>
           )}
-          {mode !== "checkEmail" && mode !== "resetPassword" && (
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
-              placeholderTextColor={palette.textMuted}
-              autoCapitalize="none"
-              autoComplete="email"
-              keyboardType="email-address"
-              textContentType="username"
-              value={email}
-              onChangeText={setEmail}
-              editable={!busy}
-              accessibilityLabel="Email"
-            />
+
+          {mode === "signIn" && (
+            <>
+              <Big st={st} v={v} busy={busy} primary label={busy ? "Signing in…" : "Sign in"} onPress={submit} disabled={!canSubmit || busy} />
+              <View style={st.links}>
+                <Text accessibilityRole="button" style={st.linkText} onPress={() => { setMode("resetRequest"); setError(null); }}>Forgot password?</Text>
+                <Text accessibilityRole="button" style={st.linkText} onPress={() => { setMode("signUp"); setError(null); }}>Create account</Text>
+              </View>
+            </>
           )}
-          {(mode === "signIn" || mode === "signUp") && (
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              placeholderTextColor={palette.textMuted}
-              secureTextEntry
-              autoComplete="password"
-              textContentType="password"
-              value={password}
-              onChangeText={setPassword}
-              onSubmitEditing={mode === "signIn" ? submit : submitSignUp}
-              returnKeyType="go"
-              editable={!busy}
-              accessibilityLabel="Password"
-            />
+          {mode === "signUp" && (
+            <>
+              <Big st={st} v={v} busy={busy} primary label={busy ? "Creating account…" : "Create account"} onPress={submitSignUp} disabled={busy} />
+              <View style={st.links}><Text accessibilityRole="button" style={st.linkText} onPress={() => { setMode("signIn"); setError(null); }}>I already have an account</Text></View>
+            </>
           )}
-          {(mode === "signUp" || mode === "resetPassword") && (
-            <TextInput
-              style={styles.input}
-              placeholder="Confirm password"
-              placeholderTextColor={palette.textMuted}
-              secureTextEntry
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              editable={!busy}
-              accessibilityLabel="Confirm password"
-            />
+          {mode === "resetRequest" && (
+            <>
+              <Big st={st} v={v} busy={busy} primary label={busy ? "Sending…" : "Send reset link"} onPress={requestReset} disabled={busy} />
+              <View style={st.links}><Text accessibilityRole="button" style={st.linkText} onPress={() => { setMode("signIn"); setError(null); }}>Back to sign in</Text></View>
+            </>
           )}
-          {mode === "signIn" && <>
-            <PillButton label={busy ? "Signing in…" : "Sign in"} onPress={submit} busy={busy} disabled={!canSubmit} />
-            <Text style={styles.link} onPress={() => { setMode("resetRequest"); setError(null); }}>Forgot password?</Text>
-            <Text style={styles.or}>or</Text>
-            <PillButton
-              label="Continue with Google"
-              variant="secondary"
-              onPress={google}
-              disabled={busy}
-              icon={<GoogleIcon />}
-            />
-            {appleAvailable && <View pointerEvents={busy ? "none" : "auto"} accessibilityState={{ disabled: busy }}>
-              <AppleAuthentication.AppleAuthenticationButton
-                buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
-                buttonStyle={scheme === "dark" ? AppleAuthentication.AppleAuthenticationButtonStyle.WHITE : AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
-                cornerRadius={14}
-                style={{ width: "100%", height: tokens.layout.inputHeight }}
-                onPress={() => { if (!busy) void apple(); }}
-              />
-            </View>}
-            <Text style={styles.link} onPress={() => { setMode("signUp"); setError(null); }}>Don’t have an account? Sign up</Text>
-          </>}
-          {mode === "signUp" && <>
-            <PillButton label={busy ? "Creating account…" : "Create account"} onPress={submitSignUp} busy={busy} disabled={busy} />
-            <Text style={styles.link} onPress={() => { setMode("signIn"); setError(null); }}>Already have an account? Log in</Text>
-          </>}
-          {mode === "resetRequest" && <>
-            <PillButton label={busy ? "Sending…" : "Send reset link"} onPress={requestReset} busy={busy} disabled={busy} />
-            <Text style={styles.link} onPress={() => { setMode("signIn"); setError(null); }}>Back to sign in</Text>
-          </>}
-          {mode === "resetPassword" && <>
-            <PillButton label={busy ? "Saving…" : "Save password"} onPress={saveNewPassword} busy={busy} disabled={busy} />
-          </>}
-          {mode === "checkEmail" && <>
-            <PillButton label="I’ve confirmed — log in" onPress={() => { setMode("signIn"); setPassword(""); setConfirmPassword(""); setError(null); }} disabled={busy} />
-            <PillButton label={cooldown ? `Resend in ${cooldown}s` : "Resend email"} onPress={resend} disabled={busy || cooldown > 0} />
-            <Text style={styles.link} onPress={() => { setMode("signIn"); setError(null); }}>Back to sign in</Text>
-          </>}
-        </View>
+          {mode === "resetPassword" && <Big st={st} v={v} busy={busy} primary label={busy ? "Saving…" : "Save password"} onPress={saveNewPassword} disabled={busy} />}
+          {mode === "checkEmail" && (
+            <>
+              <Big st={st} v={v} busy={busy} primary label="I’ve confirmed, sign in" onPress={() => { setMode("signIn"); setPassword(""); setConfirmPassword(""); setError(null); }} disabled={busy} />
+              <View style={{ height: 10 }} />
+              <Big st={st} v={v} busy={busy} label={cooldown ? `Resend in ${cooldown} s` : "Resend email"} onPress={resend} disabled={busy || cooldown > 0} />
+              <View style={st.links}><Text accessibilityRole="button" style={st.linkText} onPress={() => { setMode("signIn"); setError(null); }}>Back to sign in</Text></View>
+            </>
+          )}
+
+          <View style={st.grow} />
+          <Text style={st.trust}>Files are deleted from our servers 24 hours after you send them.</Text>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
-const makeStyles = (c: Palette) =>
+type St = ReturnType<typeof makeV2Styles>;
+
+// Module-level so inputs keep focus while typing (a component defined inside
+// render would remount on every keystroke).
+function Big({ st, v, busy, label, onPress, primary, disabled, icon }: { st: St; v: V2; busy: boolean; label: string; onPress: () => void; primary?: boolean; disabled?: boolean; icon?: React.ReactNode }) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ disabled: Boolean(disabled), busy }}
+      disabled={disabled}
+      onPress={onPress}
+      style={({ pressed }) => [st.big, primary ? st.prim : st.sec, disabled && st.disabled, pressed && st.pressed]}
+    >
+      {icon}
+      <Text style={[st.bigLabel, primary && { color: v.onAmber }]}>{label}</Text>
+    </Pressable>
+  );
+}
+
+function Field({ st, v, busy, label, ...input }: { st: St; v: V2; busy: boolean; label: string } & React.ComponentProps<typeof TextInput>) {
+  return (
+    <View style={st.field}>
+      <Text style={st.fieldLabel}>{label}</Text>
+      <TextInput style={st.fieldInput} placeholderTextColor={v.ink3} editable={!busy} accessibilityLabel={label} {...input} />
+    </View>
+  );
+}
+
+const makeV2Styles = (v: V2) =>
   StyleSheet.create({
-    safe: {
-      flex: 1,
-      backgroundColor: c.background,
-    },
-    center: {
-      flex: 1,
-      justifyContent: "center",
-      alignItems: "center",
-      padding: tokens.layout.screenPadding,
-      gap: tokens.spacing.md,
-    },
-    heading: {
-      marginTop: tokens.spacing.sm,
-      color: c.text,
-      fontFamily: tokens.fonts.extrabold,
-      fontSize: tokens.fontSizes.heading,
-      letterSpacing: tokens.letterSpacing.heading,
-      textAlign: "center",
-    },
-    sub: {
-      color: c.textMuted,
-      fontFamily: tokens.fonts.semibold,
-      fontSize: tokens.fontSizes.body,
-      textAlign: "center",
-    },
-    form: {
-      alignSelf: "stretch",
-      marginTop: tokens.spacing.lg,
-      gap: tokens.spacing.md,
-    },
-    input: {
-      minHeight: tokens.layout.inputHeight,
-      paddingHorizontal: tokens.spacing.lg,
-      borderRadius: 12,
-      borderWidth: tokens.borderWidth.outline,
-      borderColor: c.hairline,
-      backgroundColor: c.card,
-      color: c.text,
-      fontFamily: tokens.fonts.semibold,
-      fontSize: tokens.fontSizes.body,
-    },
-    or: {
-      color: c.textMuted,
-      fontFamily: tokens.fonts.semibold,
-      fontSize: tokens.fontSizes.meta,
-      textAlign: "center",
-    },
-    error: {
-      flex: 1,
-      color: c.text,
-      fontFamily: tokens.fonts.semibold,
-      fontSize: tokens.fontSizes.meta,
-      textAlign: "center",
-    },
-    errorBanner: {
-      flexDirection: "row",
-      alignItems: "center",
-      borderWidth: 1,
-      borderColor: c.error,
-      borderRadius: 12,
-      paddingLeft: 12,
-      backgroundColor: c.card,
-    },
-    errorDismiss: {
-      width: 44,
-      minHeight: 44,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    errorDismissText: {
-      color: c.text,
-      fontSize: 24,
-    },
-    notice: {
-      maxWidth: 330,
-      color: c.text,
-      fontFamily: tokens.fonts.semibold,
-      fontSize: tokens.fontSizes.meta,
-      textAlign: "center",
-    },
-    link: {
-      color: c.text,
-      fontFamily: tokens.fonts.semibold,
-      fontSize: tokens.fontSizes.meta,
-      textAlign: "center",
-      textDecorationLine: "underline",
-    },
+    safe: { flex: 1, backgroundColor: v.canvas },
+    flex: { flex: 1 },
+    auth: { flexGrow: 1, paddingHorizontal: 24, paddingTop: 24 },
+    icon: { width: 56, height: 56, borderRadius: 13, overflow: "hidden" },
+    h1: { marginTop: 28, marginBottom: 8, color: v.ink, fontFamily: tokens.fonts.extrabold, fontSize: 28, lineHeight: 32, letterSpacing: -0.4 },
+    lead: { marginBottom: 28, color: v.ink2, fontFamily: tokens.fonts.regular, fontSize: 16, lineHeight: 22 },
+    notice: { marginTop: -14, marginBottom: 20, color: v.ink, fontFamily: tokens.fonts.semibold, fontSize: 14, lineHeight: 20 },
+    error: { marginTop: -14, marginBottom: 18, padding: 12, borderRadius: 12, backgroundColor: v.fill, borderLeftWidth: 3, borderLeftColor: v.danger },
+    errorText: { color: v.ink, fontFamily: tokens.fonts.semibold, fontSize: 14, lineHeight: 20 },
+    big: { height: 54, borderRadius: 14, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10 },
+    prim: { backgroundColor: v.amber, marginTop: 14 },
+    sec: { backgroundColor: v.surface, borderWidth: 1, borderColor: v.edge },
+    bigLabel: { color: v.ink, fontFamily: tokens.fonts.extrabold, fontSize: 17 },
+    disabled: { opacity: 0.5 },
+    pressed: { opacity: 0.8 },
+    or: { flexDirection: "row", alignItems: "center", gap: 12, marginVertical: 18 },
+    orLine: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: v.hair },
+    orText: { color: v.ink3, fontFamily: tokens.fonts.extrabold, fontSize: 13 },
+    fields: { borderRadius: 16, backgroundColor: v.surface, borderWidth: 1, borderColor: v.edge, overflow: "hidden" },
+    field: { minHeight: 54, flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 14 },
+    fieldLabel: { width: 76, color: v.ink2, fontFamily: tokens.fonts.extrabold, fontSize: 15 },
+    fieldInput: { flex: 1, minHeight: 54, color: v.ink, fontFamily: tokens.fonts.semibold, fontSize: 16 },
+    fieldLine: { height: StyleSheet.hairlineWidth, marginLeft: 14, backgroundColor: v.hair },
+    links: { flexDirection: "row", justifyContent: "space-between", marginTop: 16 },
+    linkText: { minHeight: 44, paddingVertical: 12, color: v.ink, fontFamily: tokens.fonts.extrabold, fontSize: 15 },
+    grow: { flex: 1, minHeight: 24 },
+    trust: { paddingHorizontal: 8, paddingBottom: 24, color: v.ink3, fontFamily: tokens.fonts.regular, fontSize: 13, lineHeight: 18, textAlign: "center" },
   });

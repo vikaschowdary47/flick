@@ -34,7 +34,8 @@ import { FileMenu, type FileMenuItem } from "./FileMenu";
 import { FileViewer } from "./FileViewer";
 import { Header } from "./Header";
 import { LimitScreen } from "./LimitScreen";
-import { EyeIcon, GearIcon, PinIcon, ShareIcon, SignOutIcon, TrashIcon } from "./Icons";
+import { AppMark, EyeIcon, GearIcon, PinIcon, ShareIcon, SignOutIcon, TrashIcon } from "./Icons";
+import { useV2, type V2 } from "../design/v2";
 import { LandedCard } from "./LandedCard";
 import { SendDock } from "./SendDock";
 import { SettingsSheet } from "./SettingsSheet";
@@ -52,6 +53,8 @@ type Props = {
 
 // How recent the newest file must be to show as the large "landed" card.
 const LANDED_WINDOW_MS = 2 * 60 * 60 * 1000;
+// A device counts as online if it checked in within this window.
+const ONLINE_WINDOW_MS = 15 * 60 * 1000;
 
 function requestIdle(callback: () => void): void {
   const idle = (globalThis as typeof globalThis & {
@@ -105,7 +108,8 @@ export function HomeScreen({ userId, email, onSignOut, onDeleteAccount }: Props)
     setTab(next);
     if (next === "clips") clips.clearNew();
   };
-  const compact = profile.density === "compact";
+  // Redesign v2 has one layout (the old Comfy cards are retired).
+  const compact = true;
   // Home/Lock Screen widgets (development build only), switched per device
   // in Settings (devices.widget_mode).
   const widgetSenderOf = useCallback(
@@ -158,14 +162,20 @@ export function HomeScreen({ userId, email, onSignOut, onDeleteAccount }: Props)
     deepLink.consume();
   }, [deepLink.target, recent.files, clipsOn, clips.clips]);
 
-  const tabs = clipsOn ? <Tabs tab={activeTab} onChange={changeTab} clipsDot={clips.hasNew} slim={compact} /> : null;
+  const tabs = clipsOn ? (
+    <Tabs tab={activeTab} onChange={changeTab} clipsDot={clips.hasNew} slim={compact} fileCount={recent.files.filter((file) => !remover.isHidden(file.id)).length} clipCount={clips.clips.length} />
+  ) : null;
+  // Your other devices for the header: laptop or phone, and how many were seen lately.
+  const otherDevices = device.devices.filter((row) => row.id !== device.deviceId);
+  const deviceKinds = otherDevices.map((row) => (/^(ios|android)$/i.test(row.platform) ? "phone" : "laptop") as "phone" | "laptop");
+  const onlineCount = otherDevices.filter((row) => now - new Date(row.last_seen_at).getTime() < ONLINE_WINDOW_MS).length;
   // Compact: Settings / Sign out live in a ⋯ menu in the header.
   const [accountMenuY, setAccountMenuY] = useState<number | null>(null);
   // Scroll position of the compact list (kept for the list's native driver).
   const scrollY = useRef(new Animated.Value(0)).current;
   const compactTopBar = compact ? (
     <View style={styles.compactTop}>
-      <Header status={connection.status} onMenu={(pageY) => setAccountMenuY(pageY)} />
+      <Header status={connection.status} devices={deviceKinds} online={onlineCount} onMenu={() => setSettingsOpen(true)} />
       {tabs}
     </View>
   ) : null;
@@ -344,6 +354,7 @@ export function HomeScreen({ userId, email, onSignOut, onDeleteAccount }: Props)
           selected={menu?.file.id === landed.id}
           onMenu={openMenu}
           onShare={(file) => opener.share(file)}
+          onPreview={(file) => opener.open(file)}
         />
       )}
       <StorageNudge usage={usage.usage} files={recent.files} onRemove={remover.removeNow} />
@@ -380,13 +391,12 @@ export function HomeScreen({ userId, email, onSignOut, onDeleteAccount }: Props)
       )}
     </View>
   );
-  const filesEmpty = (
-    <Text style={styles.empty}>
-      {recent.loading
-        ? "Loading…"
-        : recent.error ?? (landed ? "Nothing else today." : "Nothing has landed yet. Send something from any of your devices and it shows up here for 24 hours.")}
-    </Text>
-  );
+  const filesEmpty =
+    recent.loading || recent.error || landed ? (
+      <Text style={styles.empty}>{recent.loading ? "Loading…" : recent.error ?? "Nothing else today."}</Text>
+    ) : (
+      <EmptyFiles />
+    );
 
   return (
     <SafeAreaView style={styles.safe} edges={["top", "left", "right", "bottom"]}>
@@ -553,10 +563,65 @@ export function HomeScreen({ userId, email, onSignOut, onDeleteAccount }: Props)
         onDensityChange={profile.setDensity}
         widgetMode={device.widgetMode}
         onWidgetModeChange={device.setWidgetMode}
+        onSignOut={() => {
+          setSettingsOpen(false);
+          onSignOut();
+        }}
       />
     </SafeAreaView>
   );
 }
+
+// First run / nothing today (v2): a quiet drop zone and the three ways to send.
+export function EmptyFiles() {
+  const v = useV2();
+  const s = emptyStyles(v);
+  const ways = [
+    ["Tap the amber button", "Pick a file or photo"],
+    ["Share from any app", "Share, then eqlShare"],
+    ["Paste text or a link", "It becomes a clip"],
+  ];
+  return (
+    <View style={s.wrap}>
+      <Text accessibilityRole="header" style={s.today}>Today</Text>
+      <View style={s.dz} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+        <AppMark size={44} />
+      </View>
+      <Text style={s.title}>Nothing has landed yet</Text>
+      <Text style={s.sub}>Send something from any of your devices and it shows up here for 24 hours.</Text>
+      <Text style={s.label}>Three ways to send</Text>
+      <View style={s.group}>
+        {ways.map(([title, sub], index) => (
+          <View key={title} style={s.row}>
+            {index > 0 && <View style={s.sep} />}
+            <View style={s.step}><Text style={s.stepText}>{index + 1}</Text></View>
+            <View style={{ flex: 1 }}>
+              <Text style={s.rowTitle}>{title}</Text>
+              <Text style={s.rowSub}>{sub}</Text>
+            </View>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+const emptyStyles = (v: V2) =>
+  StyleSheet.create({
+    wrap: { paddingHorizontal: 4 },
+    today: { color: v.ink, fontFamily: tokens.fonts.extrabold, fontSize: 32, letterSpacing: -0.6, marginTop: 2 },
+    dz: { width: 200, height: 132, alignSelf: "center", marginTop: 28, marginBottom: 22, borderRadius: 24, borderWidth: 1.5, borderStyle: "dashed", borderColor: v.ink3, alignItems: "center", justifyContent: "center" },
+    title: { color: v.ink, fontFamily: tokens.fonts.extrabold, fontSize: 22, letterSpacing: -0.2, textAlign: "center", marginBottom: 6 },
+    sub: { color: v.ink2, fontFamily: tokens.fonts.regular, fontSize: 16, lineHeight: 22, textAlign: "center", alignSelf: "center", maxWidth: 290 },
+    label: { color: v.ink2, fontFamily: tokens.fonts.extrabold, fontSize: 14, marginTop: 26, marginBottom: 8, marginHorizontal: 4 },
+    group: { borderRadius: 18, backgroundColor: v.surface, borderWidth: 1, borderColor: v.edge, overflow: "hidden" },
+    row: { minHeight: 56, flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 14, paddingVertical: 10 },
+    sep: { position: "absolute", top: 0, left: 54, right: 0, height: StyleSheet.hairlineWidth, backgroundColor: v.hair },
+    step: { width: 28, height: 28, borderRadius: 14, backgroundColor: v.fill, alignItems: "center", justifyContent: "center" },
+    stepText: { color: v.ink2, fontFamily: tokens.fonts.extrabold, fontSize: 13 },
+    rowTitle: { color: v.ink, fontFamily: tokens.fonts.semibold, fontSize: 15.5 },
+    rowSub: { color: v.ink3, fontFamily: tokens.fonts.regular, fontSize: 13 },
+  });
 
 function Separator() {
   const styles = useThemedStyles(makeStyles);

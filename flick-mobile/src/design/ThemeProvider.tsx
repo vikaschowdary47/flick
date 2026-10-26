@@ -45,14 +45,22 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         const saved: unknown = raw ? JSON.parse(raw) : null;
         if (isSaved(saved)) {
           setAppearanceState(saved.appearance);
-          setThemeNameState(saved.themeName);
+          // Redesign v2: everyone moves to the new look once. Older saves
+          // (no version) kept "playful" or "classy", which is why the app
+          // still looked blue after the update.
+          const version = (saved as { v?: number }).v;
+          const nextTheme: ThemeName = version === 2 ? saved.themeName : "drop";
+          setThemeNameState(nextTheme);
+          if (version !== 2) {
+            AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({ appearance: saved.appearance, themeName: nextTheme, v: 2 })).catch(() => {});
+          }
         }
       })
       .catch(() => {}); // fall back to defaults
   }, []);
 
   const save = useCallback((next: Saved) => {
-    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next)).catch(() => {});
+    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({ ...next, v: 2 })).catch(() => {});
   }, []);
 
   const setAppearance = useCallback(

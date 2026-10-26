@@ -1,8 +1,7 @@
 import type { ReactNode } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
-import { useTheme, useThemedStyles } from "../design/ThemeProvider";
-import type { Palette } from "../design/theme";
 import { tokens } from "../design/tokens";
+import { useV2, type V2 } from "../design/v2";
 import { PasteIcon, PhotoIcon, UpIcon } from "./Icons";
 
 type Props = {
@@ -15,12 +14,12 @@ type Props = {
 // Redesign v2: one round amber send button in the thumb zone, with Photos and
 // Paste beside it. Amber means "this sends something" and is used nowhere else.
 export function SendDock({ onSend, onPhotos, onPaste, busy }: Props) {
-  const { palette } = useTheme();
-  const styles = useThemedStyles(makeStyles);
+  const v = useV2();
+  const styles = makeStyles(v);
   return (
     <View style={styles.row}>
       <Side label="Photos" hint="Pick photos and videos to send" onPress={onPhotos} disabled={busy}>
-        <PhotoIcon size={22} color={palette.text} />
+        <PhotoIcon size={22} color={v.ink} />
       </Side>
       <Pressable
         accessibilityRole="button"
@@ -33,13 +32,13 @@ export function SendDock({ onSend, onPhotos, onPaste, busy }: Props) {
       >
         {({ pressed }) => (
           <View style={[styles.send, pressed && styles.sendPressed]}>
-            {busy ? <ActivityIndicator color={palette.onAccent} /> : <UpIcon size={28} color={palette.onAccent} />}
+            {busy ? <ActivityIndicator color={v.onAmber} /> : <UpIcon size={28} color={v.onAmber} />}
           </View>
         )}
       </Pressable>
       {onPaste ? (
         <Side label="Paste" hint="Sends what's on your clipboard as a clip" onPress={onPaste}>
-          <PasteIcon size={22} color={palette.text} />
+          <PasteIcon size={22} color={v.ink} />
         </Side>
       ) : (
         <View style={styles.sideSpacer} />
@@ -61,7 +60,7 @@ function Side({
   disabled?: boolean;
   children: ReactNode;
 }) {
-  const styles = useThemedStyles(makeStyles);
+  const styles = makeStyles(useV2());
   return (
     <Pressable
       accessibilityRole="button"
@@ -78,60 +77,17 @@ function Side({
   );
 }
 
-const SEND = tokens.layout.sendButton;
+const SEND = 70;
 
-const makeStyles = (c: Palette) =>
+const makeStyles = (v: V2) =>
   StyleSheet.create({
-    row: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      paddingHorizontal: tokens.spacing.md,
-    },
-    ring: {
-      width: SEND + 12,
-      height: SEND + 12,
-      borderRadius: tokens.radii.pill,
-      borderWidth: 2.5,
-      borderColor: c.text,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    send: {
-      width: SEND,
-      height: SEND,
-      borderRadius: tokens.radii.pill,
-      backgroundColor: c.accent,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    sendPressed: {
-      transform: [{ scale: 0.94 }],
-    },
-    side: {
-      width: 64,
-      alignItems: "center",
-      gap: 6,
-    },
-    sidePressed: {
-      opacity: 0.6,
-    },
-    sideCircle: {
-      width: 52,
-      height: 52,
-      borderRadius: tokens.radii.pill,
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: c.card,
-      borderWidth: tokens.borderWidth.outline,
-      borderColor: c.hairline,
-    },
-    sideLabel: {
-      color: c.textMuted,
-      fontFamily: tokens.fonts.semibold,
-      fontSize: 12,
-    },
-    sideSpacer: {
-      width: 64,
-    },
+    row: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 18 },
+    ring: { width: 84, height: 84, borderRadius: 42, borderWidth: 3, borderColor: v.ink, alignItems: "center", justifyContent: "center" },
+    send: { width: SEND, height: SEND, borderRadius: SEND / 2, backgroundColor: v.amber, alignItems: "center", justifyContent: "center" },
+    sendPressed: { transform: [{ scale: 0.94 }] },
+    side: { width: 64, alignItems: "center", gap: 6 },
+    sidePressed: { opacity: 0.6 },
+    sideCircle: { width: 52, height: 52, borderRadius: 26, alignItems: "center", justifyContent: "center", backgroundColor: v.surface, borderWidth: 1, borderColor: v.edge },
+    sideLabel: { color: v.ink2, fontFamily: tokens.fonts.extrabold, fontSize: 12 },
+    sideSpacer: { width: 64 },
   });
