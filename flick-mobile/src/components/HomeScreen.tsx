@@ -421,6 +421,11 @@ export function HomeScreen({ userId, email, onSignOut, onDeleteAccount }: Props)
           busy={upload.kind === "uploading"}
           accessibilityHint="Choose photos, a file, or take a photo to send to all your devices"
         />
+        {!compact && email && (
+          <Text style={styles.signedInAs} numberOfLines={1} ellipsizeMode="middle">
+            Signed in as {email}
+          </Text>
+        )}
         {!compact && (
         <View style={styles.footerLinks}>
           <Pressable
@@ -468,7 +473,7 @@ export function HomeScreen({ userId, email, onSignOut, onDeleteAccount }: Props)
         }}
       />
       <FileMenu
-        title={accountMenuY === null ? null : "Account"}
+        title={accountMenuY === null ? null : email ? `Signed in as ${email}` : "Account"}
         anchorY={accountMenuY ?? 0}
         items={[
           { key: "settings", label: "Settings", icon: <GearIcon />, fill: "preview", // iOS can't present a modal while the menu's modal is closing.
@@ -489,6 +494,7 @@ export function HomeScreen({ userId, email, onSignOut, onDeleteAccount }: Props)
         onClose={() => setSourceOpen(false)}
       />
       <SettingsSheet
+        email={email}
         onDeleteAccount={onDeleteAccount}
         visible={settingsOpen}
         onClose={() => setSettingsOpen(false)}
@@ -617,5 +623,11 @@ const makeStyles = (c: Palette) =>
       color: c.textMuted,
       fontFamily: tokens.fonts.semibold,
       fontSize: tokens.fontSizes.meta,
+    },
+    signedInAs: {
+      color: c.textMuted,
+      fontFamily: tokens.fonts.semibold,
+      fontSize: tokens.fontSizes.meta,
+      textAlign: "center",
     },
   });

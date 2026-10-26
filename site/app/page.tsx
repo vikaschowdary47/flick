@@ -3,6 +3,7 @@ import { DeviceDemo } from "../components/device-demo";
 import { FAQ } from "../components/faq";
 import { SiteFooter } from "../components/site-footer";
 import { WaitlistForm } from "../components/waitlist-form";
+import { AuthCodeForwarder } from "../components/auth-code-forwarder";
 
 const features = [
   [
@@ -39,6 +40,7 @@ const features = [
 export default function Home() {
   return (
     <main>
+      <AuthCodeForwarder />
       <nav className="nav wrap">
         <a className="brand" href="#top">
           <BrandLockup />

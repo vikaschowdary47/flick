@@ -15,6 +15,7 @@ import { PillButton } from "./PillButton";
 import { APP_NAME } from "../lib/appName";
 
 type Props = {
+  email?: string | null;
   visible: boolean;
   onDeleteAccount: () => Promise<string | null>;
   onClose: () => void;
@@ -47,7 +48,7 @@ const THEMES: { value: ThemeName; label: string }[] = [
   { value: "classy", label: "Classy" },
 ];
 
-export function SettingsSheet({ onDeleteAccount, visible, onClose, deviceName, onRenameDevice, usage, protectUris = [], showClipboardSetting, clipboardSharing, onClipboardSharingChange, density, onDensityChange, widgetMode, onWidgetModeChange }: Props) {
+export function SettingsSheet({ email, onDeleteAccount, visible, onClose, deviceName, onRenameDevice, usage, protectUris = [], showClipboardSetting, clipboardSharing, onClipboardSharingChange, density, onDensityChange, widgetMode, onWidgetModeChange }: Props) {
   const { appearance, setAppearance, themeName, setThemeName } = useTheme();
   const styles = useThemedStyles(makeStyles);
 
@@ -95,6 +96,14 @@ export function SettingsSheet({ onDeleteAccount, visible, onClose, deviceName, o
         <Text accessibilityRole="header" style={styles.heading}>
           Settings
         </Text>
+        {email && (
+          <View style={styles.group}>
+            <Text style={styles.eyebrow}>SIGNED IN AS</Text>
+            <Text style={styles.accountEmail} numberOfLines={1} ellipsizeMode="middle" selectable>
+              {email}
+            </Text>
+          </View>
+        )}
         <Segmented label="Appearance" options={APPEARANCES} value={appearance} onChange={setAppearance} />
         <Segmented label="Theme" options={THEMES} value={themeName} onChange={setThemeName} />
         <Segmented label="Density" options={DENSITIES} value={density} onChange={onDensityChange} />
@@ -258,6 +267,11 @@ const makeStyles = (c: Palette) =>
       color: c.text,
       fontFamily: tokens.fonts.extrabold,
       fontSize: tokens.fontSizes.heading,
+    },
+    accountEmail: {
+      color: c.text,
+      fontFamily: tokens.fonts.semibold,
+      fontSize: tokens.fontSizes.body,
     },
     group: {
       gap: tokens.spacing.sm,

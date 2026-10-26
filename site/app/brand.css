@@ -39,3 +39,11 @@
 .auth-handoff .legal-card { text-align: left; }
 .auth-handoff .legal-card h1 { margin-top: 32px; }
 .auth-handoff .primary-button { margin: 8px 0 18px; }
+
+/* Auth hand-off: keep the button label readable (.legal-card a was recoloring it) and keep the heading on screen */
+.legal-card a.primary-button { color: var(--cream); text-decoration: none; }
+.legal-card a.primary-button span { color: var(--yellow); }
+.auth-handoff .legal-card h1 { font-size: clamp(40px, 6vw, 60px); overflow-wrap: anywhere; }
+@media (prefers-color-scheme: dark) {
+  .legal-card a.primary-button, .legal-card a.primary-button span { color: var(--on-primary); }
+}
