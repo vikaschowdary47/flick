@@ -345,6 +345,10 @@ function showIn(next: WindowMode): void {
   }
   applyMode(window, next);
   if (process.platform === "darwin") {
+    // Dock icon only while the full window is open; the menu bar popover/panel
+    // stays Dock-less like other menu bar apps.
+    if (next === "main") void app.dock?.show();
+    else app.dock?.hide();
     // Open on the desktop (Space) the user is on now, not the one the window was
     // first shown on. Popover/panel stay on every Space; the main window is
     // pulled to the current Space and then pinned there.
@@ -578,6 +582,7 @@ export function attachWindow(window: BrowserWindow, isQuitting: () => boolean): 
   });
   // The next tray click opens the compact popover again.
   window.on("hide", () => {
+    if (process.platform === "darwin") app.dock?.hide();
     cancelResize();
     if (popoverExpanded) {
       popoverExpanded = false;
