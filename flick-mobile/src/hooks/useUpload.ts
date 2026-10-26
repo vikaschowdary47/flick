@@ -24,6 +24,9 @@ type Candidate = {
 
 export type UploadSource = "photos" | "files" | "camera";
 
+// A file handed to eqlShare by another app (Android share sheet).
+export type SharedFile = { uri: string; name: string | null; mimeType: string | null; size: number | null };
+
 export function useUpload(onUploaded?: () => void, deviceId?: string | null) {
   const [state, setState] = useState<UploadState>({ kind: "idle" });
   const [limitHit, setLimitHit] = useState<LimitKind | null>(null);
@@ -111,23 +114,9 @@ export function useUpload(onUploaded?: () => void, deviceId?: string | null) {
     }
   }, []);
 
-  const pickAndUpload = useCallback(
-    async (source: UploadSource = "files") => {
-      if (busy.current) return;
-      busy.current = true;
-      try {
-        let candidates: Candidate[] | null;
-        try {
-          candidates =
-            source === "photos" ? await pickPhotos() : source === "camera" ? await takePhoto() : await pickFiles();
-        } catch (error) {
-          if (error instanceof PermissionError) {
-            setState({ kind: "error", file: null, message: error.message });
-            return;
-          }
-          throw error;
-        }
-        if (!candidates || candidates.length === 0) return;
+  // Uploads a list of candidates one at a time. Callers hold `busy`.
+  const uploadCandidates = useCallback(
+    async (candidates: Candidate[]) => {
 
         const { data: sessionData } = await supabase.auth.getSession();
         const userId = sessionData.session?.user.id;
@@ -168,6 +157,28 @@ export function useUpload(onUploaded?: () => void, deviceId?: string | null) {
               candidates.length > 1 ? `${failures.length} of ${candidates.length} couldn't send. ${message}` : message,
           });
         }
+    },
+    [onUploaded, uploadOne],
+  );
+
+  const pickAndUpload = useCallback(
+    async (source: UploadSource = "files") => {
+      if (busy.current) return;
+      busy.current = true;
+      try {
+        let candidates: Candidate[] | null;
+        try {
+          candidates =
+            source === "photos" ? await pickPhotos() : source === "camera" ? await takePhoto() : await pickFiles();
+        } catch (error) {
+          if (error instanceof PermissionError) {
+            setState({ kind: "error", file: null, message: error.message });
+            return;
+          }
+          throw error;
+        }
+        if (!candidates || candidates.length === 0) return;
+        await uploadCandidates(candidates);
       } catch (error) {
         console.warn("Flick upload failed", describeError(error));
         setState({ kind: "error", file: null, message: friendlyUploadError(error) });
@@ -175,14 +186,37 @@ export function useUpload(onUploaded?: () => void, deviceId?: string | null) {
         busy.current = false;
       }
     },
-    [onUploaded, uploadOne],
+    [uploadCandidates],
+  );
+
+  // Files shared into eqlShare from another app's share sheet.
+  const uploadShared = useCallback(
+    async (files: SharedFile[]) => {
+      if (busy.current || files.length === 0) return;
+      busy.current = true;
+      try {
+        const candidates: Candidate[] = files.map((file, index) => {
+          const fallback = `shared-${Date.now()}-${index + 1}`;
+          const baseName = normalizeName(file.name || file.uri.split("/").pop() || fallback);
+          const mimeType = resolveMimeType(file.mimeType ?? undefined, baseName);
+          return { uri: file.uri, name: withExtension(baseName, mimeType), mimeType, size: file.size ?? 0 };
+        });
+        await uploadCandidates(candidates);
+      } catch (error) {
+        console.warn("Shared upload failed", describeError(error));
+        setState({ kind: "error", file: null, message: friendlyUploadError(error) });
+      } finally {
+        busy.current = false;
+      }
+    },
+    [uploadCandidates],
   );
 
   const reset = useCallback(() => setState({ kind: "idle" }), []);
 
   const clearLimit = useCallback(() => setLimitHit(null), []);
 
-  return { state, pickAndUpload, reset, limitHit, clearLimit };
+  return { state, pickAndUpload, uploadShared, reset, limitHit, clearLimit };
 }
 
 class TooLargeError extends Error {

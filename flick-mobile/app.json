@@ -44,13 +44,14 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#FFF8EE",
+          "backgroundColor": "#F5B83D",
           "image": "./assets/splash-icon.png",
+          "imageWidth": 120,
+          "resizeMode": "contain",
           "dark": {
             "backgroundColor": "#1F2937",
             "image": "./assets/splash-icon-dark.png"
-          },
-          "resizeMode": "contain"
+          }
         }
       ],
       "expo-web-browser",
@@ -58,13 +59,40 @@
       [
         "expo-image-picker",
         {
-        "photosPermission": "eqlShare opens your photos so you can send the ones you pick to your other devices.",
-        "cameraPermission": "eqlShare uses the camera when you tap Take photo, so you can send the picture to your other devices.",
+          "photosPermission": "eqlShare opens your photos so you can send the ones you pick to your other devices.",
+          "cameraPermission": "eqlShare uses the camera when you tap Take photo, so you can send the picture to your other devices.",
           "microphonePermission": false
         }
       ],
-      "@bacons/apple-targets"
+      "@bacons/apple-targets",
+      [
+        "expo-share-intent",
+        {
+          "disableIOS": true,
+          "androidIntentFilters": [
+            "text/*",
+            "image/*",
+            "video/*",
+            "audio/*",
+            "application/*",
+            "*/*"
+          ],
+          "androidMultiIntentFilters": [
+            "image/*",
+            "video/*",
+            "audio/*",
+            "application/*",
+            "*/*"
+          ],
+          "androidMainActivityAttributes": {
+            "android:launchMode": "singleTask"
+          }
+        }
+      ]
     ],
-    "scheme": ["eqlshare", "flick"]
+    "scheme": [
+      "eqlshare",
+      "flick"
+    ]
   }
 }

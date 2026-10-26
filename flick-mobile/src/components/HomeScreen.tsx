@@ -14,6 +14,9 @@ import { useLiveActivity } from "../hooks/useLiveActivity";
 import { useShareSession } from "../hooks/useShareSession";
 import { useShareLinks } from "../hooks/useShareLinks";
 import { useDeepLinkTarget } from "../hooks/useDeepLinkTarget";
+import { useIncomingShare } from "../hooks/useIncomingShare";
+import { supabase } from "../lib/supabase";
+import { CLIP_MAX_CHARS, clipKind } from "../lib/clips";
 import * as Clipboard from "expo-clipboard";
 import { useNow } from "../hooks/useNow";
 import { useOpenFile } from "../hooks/useOpenFile";
@@ -67,7 +70,16 @@ export function HomeScreen({ userId, email, onSignOut, onDeleteAccount }: Props)
     realtimeStatus: recent.realtimeStatus,
     onReconnect: recent.reconnect,
   });
-  const { state: upload, pickAndUpload, reset, limitHit: uploadLimit, clearLimit } = useUpload(recent.refresh, device.deviceId);
+  const { state: upload, pickAndUpload, uploadShared, reset, limitHit: uploadLimit, clearLimit } = useUpload(recent.refresh, device.deviceId);
+  // Android "Share → eqlShare": files upload like picked files; text/links become a clip.
+  useIncomingShare(Boolean(device.deviceId), (files) => void uploadShared(files), (text) => {
+    void supabase.from("clips").insert({
+      user_id: userId,
+      device_id: device.deviceId,
+      kind: clipKind(text),
+      content: text.slice(0, CLIP_MAX_CHARS),
+    });
+  });
   const listRef = useRef<FlatList<FileRow>>(null);
   const opener = useOpenFile();
   const now = useNow();

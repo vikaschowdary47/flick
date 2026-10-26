@@ -35,7 +35,7 @@ jobs:
         shell: pwsh
         run: |
           if (-not $env:VITE_SUPABASE_URL -or -not $env:VITE_SUPABASE_PUBLISHABLE_KEY) {
-            throw 'Set repository variables VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY before building eqlDrop.'
+            throw 'Set repository variables VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY before building eqlShare.'
           }
       - run: npm ci
       - run: npm run lint
@@ -45,7 +45,7 @@ jobs:
       - name: Upload NSIS installer
         uses: actions/upload-artifact@v4
         with:
-          name: eqlDrop-Windows-x64
-          path: flick-desktop/dist/windows/eqlDrop-Setup.exe
+          name: eqlShare-Windows-x64
+          path: flick-desktop/dist/windows/eqlShare-Setup.exe
           if-no-files-found: error
           retention-days: 14

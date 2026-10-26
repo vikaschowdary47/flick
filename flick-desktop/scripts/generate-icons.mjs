@@ -117,8 +117,9 @@ await save(join(mobile, "assets/icon-dark.png"), fullDark);
 await save(join(mobile, "assets/icon-mono.png"), mono);
 await save(join(mobile, "assets/lockup-light.png"), await renderLockup(lockupLightSvg));
 await save(join(mobile, "assets/lockup-dark.png"), await renderLockup(lockupDarkSvg));
-await save(join(mobile, "assets/splash-icon.png"), full);
-await save(join(mobile, "assets/splash-icon-dark.png"), fullDark);
+// Splash: just the mark on transparent; app.json sets the mustard/dark background.
+await save(join(mobile, "assets/splash-icon.png"), await png(markSvg, 1024));
+await save(join(mobile, "assets/splash-icon-dark.png"), await png(markSvg, 1024, { color: YELLOW }));
 await save(join(mobile, "assets/favicon.svg"), Buffer.from(faviconSvg));
 await save(join(mobile, "assets/favicon.png"), await renderSvg(faviconSvg, 512));
 await save(join(mobile, "assets/android-icon-background.png"), background);
@@ -137,8 +138,7 @@ for (const [density, size] of Object.entries(densitySizes)) {
   await save(join(dir, "ic_launcher_background.webp"), await sharp(background).resize(layer, layer).webp({ lossless: true }).toBuffer());
   await save(join(dir, "ic_launcher_foreground.webp"), await sharp(foreground).resize(layer, layer).webp({ lossless: true }).toBuffer());
   await save(join(dir, "ic_launcher_monochrome.webp"), await sharp(monochrome).resize(layer, layer).webp({ lossless: true }).toBuffer());
-  await save(join(mobile, "android/app/src/main/res", `drawable-${density}`, "splashscreen_logo.png"), await sharp(full).resize(size, size).png().toBuffer());
-  await save(join(mobile, "android/app/src/main/res", `drawable-${density}`, "splashscreen_logo_dark.png"), await sharp(fullDark).resize(size, size).png().toBuffer());
+  // Native splash drawables are produced by `expo prebuild` from app.json (imageWidth 120dp).
 }
 await save(join(mobile, "android/app/src/main/res/drawable/ic_notification.png"), notification);
 
