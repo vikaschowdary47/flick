@@ -9,6 +9,8 @@ import { FAQ } from "../components/faq";
 import { SiteFooter } from "../components/site-footer";
 import { WaitlistForm } from "../components/waitlist-form";
 import { AuthCodeForwarder } from "../components/auth-code-forwarder";
+import { Reveal } from "../components/reveal";
+import { CountUp } from "../components/count-up";
 
 // Simple line icons (were text glyphs, which render differently per system).
 const ICON_PATHS: Record<string, string> = {
@@ -48,6 +50,7 @@ export default function Home() {
     <main>
       <StructuredData />
       <AuthCodeForwarder />
+      <Reveal />
       <nav className="nav wrap">
         <a className="brand" href="#top">
           <BrandLockup />
@@ -64,19 +67,20 @@ export default function Home() {
             <span aria-hidden="true">→</span>
           </a>
           <h1>
-            It’s on your phone.
-            <br />
-            Now it’s{" "}
+            <span className="hero-line"><span>Send it from your phone.</span></span>
+            <span className="hero-line"><span>
+            Grab it on your{" "}
             <span className="hero-here">
-              here.
+              laptop.
               <svg viewBox="0 0 300 24" preserveAspectRatio="none" aria-hidden="true">
                 <path d="M4 17 C 70 6, 150 4, 296 12" />
               </svg>
-            </span>
+            </span></span></span>
           </h1>
           <p className="hero-sub">
-            Send a photo, file or clip from one device and pick it up on the
-            others. It stays for 24&nbsp;hours, then it’s gone.
+            Send a photo, file or link from your phone and it shows up on your
+            Mac or PC, ready to drag into anything. It deletes itself after
+            24&nbsp;hours.
           </p>
           <WaitlistForm />
           <div className="platforms">
@@ -104,7 +108,7 @@ export default function Home() {
       </section>
       <section className="intro-section wrap">
         <div className="section-label">How it works</div>
-        <div className="intro-heading">
+        <div className="intro-heading" data-reveal>
           <h2>
             Send it over.
             <br />
@@ -116,19 +120,19 @@ export default function Home() {
           </p>
         </div>
         <div className="steps">
-          <div>
+          <div data-reveal style={{ "--i": 0 } as React.CSSProperties}>
             <strong>01</strong>
             <span className="step-icon" aria-hidden="true"><FeatureIcon name="share" /></span>
             <h3>Upload anywhere</h3>
             <p>Drop a photo, file or clip from any device.</p>
           </div>
-          <div>
+          <div data-reveal style={{ "--i": 1 } as React.CSSProperties}>
             <strong>02</strong>
             <span className="step-icon" aria-hidden="true"><FeatureIcon name="devices" /></span>
             <h3>It appears everywhere</h3>
             <p>Your stuff pops up in your desktop widget.</p>
           </div>
-          <div>
+          <div data-reveal style={{ "--i": 2 } as React.CSSProperties}>
             <strong>03</strong>
             <span className="step-icon" aria-hidden="true"><FeatureIcon name="drag" /></span>
             <h3>Drag it into anything</h3>
@@ -136,10 +140,30 @@ export default function Home() {
           </div>
         </div>
       </section>
+      <section className="stats-band" aria-label="eqlShare in numbers">
+        <div className="wrap stats-grid">
+          <div data-reveal style={{ "--i": 0 } as React.CSSProperties}>
+            <b><CountUp to={4} /></b>
+            <span>platforms: iPhone, Android, Mac and Windows</span>
+          </div>
+          <div data-reveal style={{ "--i": 1 } as React.CSSProperties}>
+            <b><CountUp to={1} /></b>
+            <span>place for your photos, files and links</span>
+          </div>
+          <div data-reveal style={{ "--i": 2 } as React.CSSProperties}>
+            <b><CountUp to={24} /><small>h</small></b>
+            <span>then it deletes itself</span>
+          </div>
+          <div data-reveal style={{ "--i": 3 } as React.CSSProperties}>
+            <b>0</b>
+            <span>cables, or emails to yourself</span>
+          </div>
+        </div>
+      </section>
       <section className="features-section">
         <div className="wrap">
           <div className="section-label">Why eqlShare</div>
-          <div className="feature-heading">
+          <div className="feature-heading" data-reveal>
             <h2>
               Small tool.
               <br />
@@ -148,7 +172,7 @@ export default function Home() {
             <p>Built for the five seconds between “I need that file” and “got it”.</p>
           </div>
           <div className="bento">
-            <article className="bento-card bento-wide bento-fuse">
+            <article className="bento-card bento-wide bento-fuse" data-reveal style={{ "--i": 0 } as React.CSSProperties}>
               <div className="bento-text">
                 <h3>Gone in 24 hours</h3>
                 <p>Files delete themselves after a day unless you pin them, so nothing piles up.</p>
@@ -159,7 +183,7 @@ export default function Home() {
                 <div className="fuse-scale"><span>Sent</span><span>12 h</span><span>Gone</span></div>
               </div>
             </article>
-            <article className="bento-card">
+            <article className="bento-card" data-reveal style={{ "--i": 1 } as React.CSSProperties}>
               <div className="bento-text">
                 <h3>Every device</h3>
                 <p>Phone to laptop, Android to Mac. Everything plays nicely together.</p>
@@ -171,7 +195,7 @@ export default function Home() {
                 <li><i />Windows</li>
               </ul>
             </article>
-            <article className="bento-card">
+            <article className="bento-card" data-reveal style={{ "--i": 2 } as React.CSSProperties}>
               <div className="bento-text">
                 <h3>Clips</h3>
                 <p>Send text and links between devices. Your laptop remembers recent clips too.</p>
@@ -181,7 +205,7 @@ export default function Home() {
                 <div className="copied"><b>Wi-Fi: Studio_5G</b><span>Copied</span></div>
               </div>
             </article>
-            <article className="bento-card">
+            <article className="bento-card" data-reveal style={{ "--i": 0 } as React.CSSProperties}>
               <div className="bento-text">
                 <h3>Share by link</h3>
                 <p>Send a link to friends and teams. No phone numbers needed.</p>
@@ -191,7 +215,7 @@ export default function Home() {
                 <b>Copy link</b>
               </div>
             </article>
-            <article className="bento-card">
+            <article className="bento-card" data-reveal style={{ "--i": 1 } as React.CSSProperties}>
               <div className="bento-text">
                 <h3>Share from anywhere</h3>
                 <p>Send from your phone’s share sheet without breaking your flow.</p>
@@ -203,7 +227,7 @@ export default function Home() {
                 <span>Notes</span>
               </div>
             </article>
-            <article className="bento-card bento-full bento-private">
+            <article className="bento-card bento-full bento-private" data-reveal style={{ "--i": 2 } as React.CSSProperties}>
               <h3>Private by design</h3>
               <ul>
                 <li>Encrypted</li>
@@ -216,7 +240,7 @@ export default function Home() {
       </section>
       <section className="faq-section wrap">
         <div className="section-label">Questions</div>
-        <div className="faq-layout">
+        <div className="faq-layout" data-reveal>
           <h2>
             Good to
             <br />
@@ -225,7 +249,7 @@ export default function Home() {
           <FAQ />
         </div>
       </section>
-      <section className="cta-section wrap" id="waitlist">
+      <section className="cta-section wrap" id="waitlist" data-reveal>
         <h2>Be first in line.</h2>
         <p>
           Join the tiny list of people who like their files where they need

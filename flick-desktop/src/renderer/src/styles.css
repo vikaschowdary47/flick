@@ -2935,3 +2935,10 @@ input:focus-visible {
     --flick-progress-ring-stroke: #F4F1EA;
   }
 }
+
+/* Popover/panel "+": send files from this computer (opens the file picker). */
+.add-files-button { order: 0; background: var(--flick-yellow, #F5B83D); border-color: transparent; }
+.add-files-button svg { width: 14px; height: 14px; fill: none; stroke: #2B2210; stroke-width: 2.4; stroke-linecap: round; }
+.add-files-button:hover:not(:disabled) { filter: brightness(0.96); }
+.add-files-button:disabled { opacity: 0.55; cursor: default; }
+.widget-popover .add-files-button { width: 28px; height: 28px; }

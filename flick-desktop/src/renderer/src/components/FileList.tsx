@@ -127,16 +127,17 @@ export default function FileList({
               </button>
             </div>
           </div>
-          <input
-            ref={fileInputRef}
-            className="visually-hidden"
-            type="file"
-            multiple
-            onChange={onFileSelection}
-            aria-label="Choose files to upload"
-          />
         </>
       )}
+      {/* Always mounted: the main window's "+" and the popover header's "+" both open it. */}
+      <input
+        ref={fileInputRef}
+        className="visually-hidden"
+        type="file"
+        multiple
+        onChange={onFileSelection}
+        aria-label="Choose files to upload"
+      />
 
       {view === "list" && (
         <StorageNudge usage={usage} files={files.filter((file) => !pendingIds.has(file.id))} onRemove={onRemove} />

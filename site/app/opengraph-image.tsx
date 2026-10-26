@@ -5,7 +5,7 @@ import { ImageResponse } from "next/og";
 // Link-preview image (LinkedIn, X, iMessage, Reddit...), in the v2 look.
 // Built at build time from local files only: the bundled Hanken Grotesk and
 // inline shapes, so it can't fail to load.
-export const alt = "eqlShare: It's on your phone. Now it's here. Send files between your phone and laptop.";
+export const alt = "eqlShare: Send it from your phone, grab it on your laptop. Send files between your phone and laptop.";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -23,7 +23,7 @@ export default async function Image() {
   return new ImageResponse(
     (
       <div style={{ width: "100%", height: "100%", display: "flex", background: CANVAS, color: INK, fontFamily: "Hanken Grotesk", padding: "72px 80px" }}>
-        <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", width: 640 }}>
+        <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", width: 700 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
             <svg width="64" height="64" viewBox="0 0 1024 1024">
               <rect width="1024" height="1024" rx="230" fill={AMBER} />
@@ -35,12 +35,12 @@ export default async function Image() {
               <span>Share</span>
             </div>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", fontSize: 76, fontWeight: 600, lineHeight: 1.04, letterSpacing: -2.6 }}>
-            <span>It’s on your phone.</span>
-            <span>Now it’s here.</span>
+          <div style={{ display: "flex", flexDirection: "column", fontSize: 58, fontWeight: 600, lineHeight: 1.04, letterSpacing: -2.6 }}>
+            <span>Send it from your phone.</span>
+            <span>Grab it on your laptop.</span>
           </div>
           <div style={{ display: "flex", fontSize: 28, fontWeight: 500, color: MUTED }}>
-            Phone to laptop in seconds. Gone in 24 hours.
+            Photos, files and links. Gone in 24 hours.
           </div>
         </div>
         <div style={{ display: "flex", flex: 1, alignItems: "center", justifyContent: "flex-end" }}>

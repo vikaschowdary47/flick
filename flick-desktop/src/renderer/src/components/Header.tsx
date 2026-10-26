@@ -35,6 +35,9 @@ interface HeaderProps {
   onDensityChange?: (density: Density) => void;
   clipboardSharing?: boolean | null; // null/undefined hides it (flag off)
   onClipboardSharingChange?: (on: boolean) => void;
+  // Popover and panel: a "+" that opens the file picker to send files from this computer.
+  onAddFiles?: () => void;
+  isUploading?: boolean;
 }
 
 export default function Header({
@@ -59,6 +62,8 @@ export default function Header({
   onDensityChange,
   clipboardSharing = null,
   onClipboardSharingChange,
+  onAddFiles,
+  isUploading = false,
 }: HeaderProps) {
   const prefersReducedMotion = useReducedMotion();
   const [draftName, setDraftName] = useState(deviceName ?? "");
@@ -122,6 +127,20 @@ export default function Header({
         </div>
       )}
       <div className="header-actions">
+        {onAddFiles && !settingsOpen && (
+          <button
+            type="button"
+            className="window-close-button add-files-button"
+            aria-label={isUploading ? "Uploading…" : "Send files from this computer"}
+            title={isUploading ? "Uploading…" : "Send files"}
+            disabled={isUploading}
+            onClick={onAddFiles}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+          </button>
+        )}
         {onPopOut && (
           <button
             type="button"

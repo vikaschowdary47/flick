@@ -263,6 +263,8 @@ export default function Widget({
         onDensityChange={onDensityChange}
         clipboardSharing={clipboardSharing}
         onClipboardSharingChange={onClipboardSharingChange}
+        onAddFiles={(isPopover || isPanel) && session ? () => fileInputRef.current?.click() : undefined}
+        isUploading={isUploading}
         setIsAccountMenuOpen={setIsAccountMenuOpen}
         session={session}
         arrivalPulse={arrivalPulse}
