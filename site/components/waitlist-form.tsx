@@ -47,8 +47,8 @@ export function WaitlistForm({ compact = false }: { compact?: boolean }) {
   if (status === "success" || status === "duplicate") {
     return (
       <div className="form-success" role="status" aria-live="polite">
-        <span>✦</span>
-        <div>
+        <span className="form-success-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.5 10 17.5 19 7" /></svg></span>
+        <div className="form-success-text">
           <strong>{status === "success" ? "You're on the list!" : "You're already on the list."}</strong>
           <small>We&apos;ll email {joined || "you"} when eqlShare is ready.</small>
         </div>

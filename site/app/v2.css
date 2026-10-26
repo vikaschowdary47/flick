@@ -424,3 +424,25 @@ body {
 }
 
 .hero-v3 h1 { font-size: clamp(42px, 7.2vw, 108px); }
+
+/* Waitlist success: a quiet confirmation card, left-aligned, readable on
+   the light hero and inside the dark CTA. */
+.form-success {
+  display: flex; flex-wrap: nowrap; align-items: center; gap: 14px; width: 100%; max-width: 560px;
+  margin: 0 auto; padding: 16px 18px; border: 1px solid var(--line); border-radius: 14px;
+  background: var(--card); color: var(--ink); text-align: left;
+}
+.form-success-icon { display: grid; place-items: center; flex: none; width: 32px; height: 32px; border-radius: 50%; background: var(--live); color: #fff; font-size: 0; }
+.form-success-text { display: grid; gap: 2px; min-width: 0; }
+.form-success strong { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; color: inherit; }
+.form-success small { margin: 0; font-size: 14px; color: var(--muted); overflow-wrap: anywhere; }
+.form-success small, .cta-section .form-success small { color: var(--muted); }
+.form-success-again { flex: none; margin-left: auto; padding: 6px 0; border: 0; background: none; font: inherit; font-size: 13px; font-weight: 500; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.form-success-again:hover { color: var(--ink); }
+.cta-section .form-success { background: #24231F; border-color: rgba(244, 241, 234, 0.14); color: #F4F1EA; }
+.cta-section .form-success small, .cta-section .form-success-again { color: #A8A398; }
+.cta-section .form-success-again:hover { color: #F4F1EA; }
+@media (max-width: 520px) {
+  .form-success { display: grid; grid-template-columns: 32px 1fr; align-items: start; column-gap: 14px; row-gap: 6px; }
+  .form-success-again { grid-column: 2; justify-self: start; margin: 0; padding: 0; }
+}
