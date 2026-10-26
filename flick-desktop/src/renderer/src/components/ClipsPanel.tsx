@@ -136,6 +136,74 @@ function ClipCard({
   );
 }
 
+// Redesign v2 clip row (popover and panel): a small type badge, the text (two
+// lines), who sent it and when, and a copy button. Click anywhere to copy.
+function looksLikeCode(text: string): boolean {
+  return /^\s*(\$ |npm |npx |git |cd |rm |sudo |yarn |pnpm |brew |curl |docker )|[{};]\s*$|&&|=>/.test(text);
+}
+
+const SITE_BADGES: Record<string, string> = { github: "GH", gitlab: "GL", figma: "Fi", youtube: "YT", google: "G", notion: "N", linear: "Li", vercel: "▲" };
+
+function linkParts(url: string): { site: string; title: string; badge: string } {
+  const site = siteName(url);
+  const root = site.split(".").slice(-2, -1)[0] ?? site;
+  const path = url.replace(/^https?:\/\/[^/]+/i, "").replace(/[?#].*$/, "").replace(/^\/+|\/+$/g, "");
+  return {
+    site,
+    title: path ? decodeURIComponent(path) : site,
+    badge: SITE_BADGES[root.toLowerCase()] ?? root.charAt(0).toUpperCase(),
+  };
+}
+
+function agoLong(iso: string, now: number): string {
+  const minutes = Math.floor((now - new Date(iso).getTime()) / 60_000);
+  if (!Number.isFinite(minutes) || minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes} min ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} h ago`;
+  return hours < 48 ? "yesterday" : `${Math.floor(hours / 24)} days ago`;
+}
+
+function ClipRowV2({ clip, sender, now, onDelete }: { clip: ClipRow; sender: string; now: number; onDelete: () => void }) {
+  const [copied, setCopied] = useState(false);
+  useEffect(() => {
+    if (!copied) return;
+    const timer = window.setTimeout(() => setCopied(false), COPIED_MS);
+    return () => window.clearTimeout(timer);
+  }, [copied]);
+  async function copy(): Promise<void> {
+    await window.flick.writeClipboard(clip.content);
+    setCopied(true);
+  }
+  const isLink = clip.kind === "link";
+  const code = !isLink && looksLikeCode(clip.content);
+  const link = isLink ? linkParts(clip.content) : null;
+  const site = link?.site ?? "";
+  const badge = link ? link.badge : code ? "$_" : "Aa";
+  const meta = [site, sender, agoLong(clip.created_at, now)].filter(Boolean).join(", ");
+  return (
+    <article className="pv-clip" title={clip.content}>
+      <button type="button" className="pv-clip-main" aria-label={`Copy ${isLink ? `link to ${site}` : "clip"}`} onClick={() => void copy()}>
+        <span className={`pv-fav${isLink ? " is-link" : code ? " is-code" : ""}`} aria-hidden="true">{badge}</span>
+        <span className="pv-t">
+          <span className="pv-tx">{code ? <span className="pv-code">{clip.content}</span> : link ? link.title : clip.content}</span>
+          <span className="pv-mt">{copied ? "Copied" : meta}</span>
+        </span>
+      </button>
+      <button type="button" className="pv-ib" aria-label="Copy" title="Copy" onClick={() => void copy()}>
+        {copied ? (
+          <svg className="pv-i" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" /></svg>
+        ) : (
+          <svg className="pv-i" viewBox="0 0 24 24" aria-hidden="true"><rect x="8.5" y="8.5" width="11.5" height="11.5" rx="2.5" /><path d="M15.5 8.5V6.5A2.5 2.5 0 0 0 13 4H6.5A2.5 2.5 0 0 0 4 6.5V13a2.5 2.5 0 0 0 2.5 2.5h2" /></svg>
+        )}
+      </button>
+      <button type="button" className="pv-ib pv-clip-del" aria-label="Delete clip from all devices" title="Delete everywhere" onClick={onDelete}>
+        <svg className="pv-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11" /></svg>
+      </button>
+    </article>
+  );
+}
+
 // The Clips tab: Send clipboard (reads the clipboard only on click) and the list.
 export default function ClipsPanel({
   clips,
@@ -165,6 +233,58 @@ export default function ClipsPanel({
   }
 
   const status = message || sendStatus || error;
+  const [draft, setDraft] = useState("");
+
+  async function sendDraft(): Promise<void> {
+    if (!draft.trim()) {
+      await sendClipboard();
+      return;
+    }
+    setBusy(true);
+    const result = await onSend(draft);
+    setMessage(result ?? "Sent to your devices.");
+    if (!result) setDraft("");
+    setBusy(false);
+  }
+
+  if (popover) {
+    return (
+      <>
+        <form
+          className="pv-send"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void sendDraft();
+          }}
+        >
+          <input
+            className="pv-fld"
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            placeholder="Type a clip…"
+            aria-label="New clip"
+            disabled={busy}
+          />
+          <button type="submit" className="pv-send-btn clip-send" disabled={busy} title="Option/Alt+Shift+C">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              {draft.trim() ? <path d="M12 19V5M5.5 11.5 12 5l6.5 6.5" /> : <><rect x="5.5" y="4.5" width="13" height="16" rx="2.5" /><path d="M9 4.5V3.8c0-.7.5-1.3 1.2-1.3h3.6c.7 0 1.2.6 1.2 1.3v.7M9 10h6M9 14h4" /></>}
+            </svg>
+            {busy ? "Sending…" : draft.trim() ? "Send" : "Send clipboard"}
+          </button>
+        </form>
+        {status && <p className="pv-note" role="status">{status}</p>}
+        {clips.length === 0 ? (
+          <p className="pv-note">No clips yet. Send one from any device.</p>
+        ) : (
+          <div className="pv-rows pv-clips">
+            {clips.slice(0, limit).map((clip) => (
+              <ClipRowV2 key={clip.id} clip={clip} now={now} sender={formatSender(clip.device_id, deviceId, deviceNames)} onDelete={() => onDelete(clip.id)} />
+            ))}
+          </div>
+        )}
+      </>
+    );
+  }
 
   return (
     <>

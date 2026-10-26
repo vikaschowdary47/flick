@@ -4,8 +4,8 @@ export default function DeleteAccount({ onDelete }: { onDelete: () => Promise<st
   const [confirmation, setConfirmation] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  if (!confirming) return <button type="button" className="settings-sign-out" onClick={() => setConfirming(true)}>Delete account</button>;
-  return <section className="settings-group" aria-label="Delete account confirmation">
+  if (!confirming) return <button type="button" className="pv-btn pv-btn-danger settings-sign-out" onClick={() => setConfirming(true)}>Delete account…</button>;
+  return <section className="settings-group pv-delete" aria-label="Delete account confirmation">
     <p className="settings-label">Delete your account permanently?</p>
     <p className="settings-help">This removes your account, files, clips, devices and profile. This cannot be undone. Type DELETE to confirm.</p>
     {error && <p role="alert" className="auth-error">{error}</p>}

@@ -9,6 +9,7 @@ import type { PendingRemoval } from "../hooks/useFiles";
 import FileList, { popoverSelection } from "./FileList";
 import SettingsPanel from "./SettingsPanel";
 import Header from "./Header";
+import PopoverHeader from "./PopoverHeader";
 import { APP_NAME } from "../../../shared/appName";
 
 interface WidgetProps {
@@ -225,7 +226,7 @@ export default function Widget({
     <main
       inert={isDeletingAccount}
       ref={widgetRef}
-      className={`widget${isDraggingFiles ? " drag-active" : ""}${effectiveDensity === "compact" ? " widget-compact" : ""}${isPopover ? " widget-popover" : ""}${isPopover && expanded ? " widget-expanded" : ""}`}
+      className={`widget${isDraggingFiles ? " drag-active" : ""}${effectiveDensity === "compact" ? " widget-compact" : ""}${isPopover ? " widget-popover" : ""}${isPopover && expanded ? " widget-expanded" : ""}${isPopover || isPanel ? " widget-v2" : ""}${isPanel ? " widget-panel" : ""}`}
       onClickCapture={onOutsideClick}
       onDragEnter={handleDragEnter}
       onDragOver={handleDragOver}
@@ -234,7 +235,10 @@ export default function Widget({
     >
       {isDraggingFiles && (
         <div className="drop-overlay" aria-hidden="true">
-          Drop files to upload to {APP_NAME}
+          <span>
+            <svg viewBox="0 0 24 24"><path d="M12 3.5v10M7.5 9.5 12 14l4.5-4.5M3.5 14.5v3A2.5 2.5 0 0 0 6 20h12a2.5 2.5 0 0 0 2.5-2.5v-3" /></svg>
+            Release to send with {APP_NAME}
+          </span>
         </div>
       )}
       {showConfetti && !prefersReducedMotion && (
@@ -244,7 +248,24 @@ export default function Widget({
           ))}
         </div>
       )}
-      <Header
+      {isPopover || isPanel ? (
+        <PopoverHeader
+          isOnline={isOnline}
+          signedIn={Boolean(session)}
+          otherDevices={Object.entries(deviceNames)
+            .filter(([id]) => id !== deviceId)
+            .map(([, name]) => name)}
+          arrivalPulse={arrivalPulse}
+          settingsOpen={showSettings}
+          onBack={() => setSettingsOpen(false)}
+          onOpenSettings={() => setSettingsOpen(true)}
+          onAddFiles={() => fileInputRef.current?.click()}
+          isUploading={isUploading}
+          onPopOut={isPopover && expanded && !showSettings ? () => window.flick.openMainWindow() : undefined}
+          onClose={isPanel ? () => window.flick.hideWindow() : undefined}
+        />
+      ) : (
+        <Header
         accountMenuRef={accountMenuRef}
         authReady={authReady}
         isAccountMenuOpen={isAccountMenuOpen}
@@ -269,6 +290,7 @@ export default function Widget({
         session={session}
         arrivalPulse={arrivalPulse}
       />
+      )}
       <section className="content" aria-labelledby="incoming-heading">
         {showSettings ? (
           <SettingsPanel
@@ -313,7 +335,7 @@ export default function Widget({
           </div>
         )}
         {activeTab === "clips" && clipsPanel ? (
-          clipsPanel({ popover: isPopover, limit: isPopover && !expanded ? POPOVER_ITEMS : undefined })
+          clipsPanel({ popover: isPopover || isPanel, limit: isPopover && !expanded ? POPOVER_ITEMS : undefined })
         ) : (
         <FileList
           files={files}
@@ -330,7 +352,7 @@ export default function Widget({
           deviceNames={deviceNames}
           density={effectiveDensity}
           // Popover: the same compact list either way; taller shows every item.
-          recentOnly={isPopover ? (expanded ? Number.POSITIVE_INFINITY : POPOVER_ITEMS) : undefined}
+          recentOnly={isPopover ? (expanded ? Number.POSITIVE_INFINITY : POPOVER_ITEMS) : isPanel ? Number.POSITIVE_INFINITY : undefined}
           onShowMore={() => setExpanded(true)}
           onFileSelection={handleFileSelection}
           onPreview={onPreviewFile}
@@ -347,18 +369,28 @@ export default function Widget({
         </>
         )}
       </section>
-      {showSettings ? null : isPopover ? (
-        // Always visible: the list scrolls above it.
-        <footer className="popover-footer">
-          {expanded ? (
-            <button type="button" className="popover-open" onClick={() => setExpanded(false)}>
+      {showSettings ? null : isPopover || isPanel ? (
+        // Always visible: the list scrolls above it. The whole window is the
+        // drop target; the hint doubles as a button for the file picker.
+        <footer className="pv-foot">
+          <button type="button" className="pv-foot-drop" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5v10M7.5 9.5 12 14l4.5-4.5M3.5 14.5v3A2.5 2.5 0 0 0 6 20h12a2.5 2.5 0 0 0 2.5-2.5v-3" /></svg>
+            {isUploading ? "Sending…" : activeTab === "clips" ? "Drop text or files to send" : "Drop files here to send"}
+          </button>
+          <span className="pv-grow" />
+          {isPopover && expanded ? (
+            <button type="button" className="pv-foot-link" onClick={() => setExpanded(false)}>
               Show less
             </button>
-          ) : (
-            <button type="button" className="popover-open" onClick={() => setExpanded(true)}>
-              {popoverHidden > 0 ? `Open ${APP_NAME} · +${popoverHidden} more` : `Open ${APP_NAME}`}
+          ) : isPopover && popoverHidden > 0 ? (
+            <button type="button" className="pv-foot-link" onClick={() => setExpanded(true)}>
+              Show all <span className="pv-kbd">+{popoverHidden}</span>
             </button>
-          )}
+          ) : clipboardSharing ? (
+            <span className="pv-foot-hint">
+              Clipboard <span className="pv-kbd">{navigator.platform.startsWith("Mac") ? "⌥⇧C" : "Alt+Shift+C"}</span>
+            </span>
+          ) : null}
         </footer>
       ) : (
         <footer className="footer">

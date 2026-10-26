@@ -38,8 +38,8 @@ export function AppPreferences() {
 
   return <>
       {app && !app.isWindows && (
-        <section className="settings-group">
-          <p className="settings-label">Show from menu bar as</p>
+        <section className="settings-group pv-r">
+          <p className="settings-label pv-k">Open as</p>
           <div className="settings-segments" role="radiogroup" aria-label="Show from menu bar as">
             {(
               [
@@ -85,8 +85,8 @@ export function AppPreferences() {
       {appMessage && <p className="settings-help" role="status">{appMessage}</p>}
 
       {app?.canLaunchAtLogin && (
-        <section className="settings-group settings-row">
-          <p className="settings-label">{app.isWindows ? "Start with Windows" : "Launch at login"}</p>
+        <section className="settings-group settings-row pv-r">
+          <p className="settings-label pv-k">{app.isWindows ? "Start with Windows" : "Launch at login"}</p>
           <Toggle
             label={app.isWindows ? "Start with Windows" : "Launch at login"}
             checked={app.launchAtLogin}

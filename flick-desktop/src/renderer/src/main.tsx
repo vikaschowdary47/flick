@@ -6,6 +6,7 @@ import '@fontsource/hanken-grotesk/600.css'
 import { designTokenCssVariables } from '../../design/tokens'
 import App from './App'
 import './styles.css'
+import './popover-v2.css'
 
 // Tokens go in a zero-specificity rule at the top of <head>, so the
 // stylesheet's dark-mode block can override them (inline styles couldn't).

@@ -14,6 +14,7 @@ import Widget from "./components/Widget";
 import type { ClipRow } from "./clips";
 import type { CloudFile } from "./types";
 import "./styles.css";
+import "./popover-v2.css";
 
 // Tokens go in a zero-specificity rule at the top of <head>, so the
 // stylesheet's dark-mode block can override them (inline styles couldn't).
@@ -59,10 +60,36 @@ const many: CloudFile[] = Array.from({ length: 20 }, (_, i) =>
     : file(i, `document-${i + 1}.pdf`, "application/pdf", i * 1.1),
 );
 
+// state=v2: the files in the v2 mockup (thumbnails come from the preview server).
+const v2 = (n: number, name: string, mime: string, hoursLeft: number, extra: Partial<CloudFile> = {}): CloudFile => ({
+  ...file(n, name, mime, 24 - hoursLeft),
+  size: [2_100_000, 380_000, 96_000, 1_400_000, 48_000_000, 68_000_000][n % 6],
+  device_id: n % 2 ? "redmi" : "phone",
+  ...extra,
+});
+const v2Files: CloudFile[] = [
+  v2(0, "lake-sunset.jpg", "image/jpeg", 23.99, { thumb_path: "photo.jpg", created_at: new Date(now - 30_000).toISOString() }),
+  v2(1, "floor-plan.png", "image/png", 16.5, { thumb_path: "plan.jpg" }),
+  v2(2, "brand-palette.png", "image/png", 9.5, { thumb_path: "palette.jpg" }),
+  v2(3, "Invoice-2026-1043.pdf", "application/pdf", 21.5, { thumb_path: "invoice.jpg" }),
+  v2(4, "design-assets.zip", "application/zip", 22, { downloadState: "downloading", localFileId: undefined }),
+  v2(5, "demo-recording.mov", "video/quicktime", 20, { downloadState: "error", localFileId: undefined }),
+];
+const v2Extra: CloudFile[] = [
+  ...v2Files.slice(0, 3),
+  v2(6, "harbor-dusk.jpg", "image/jpeg", 12, { thumb_path: "dusk.jpg" }),
+  v2(7, "desk-wallpaper.jpg", "image/jpeg", 6, { thumb_path: "wall.jpg" }),
+  ...v2Files.slice(3),
+];
+
 const mixed: CloudFile[] = Array.from({ length: fileCount }, (_, i) =>
   file(i, `document-${i + 1}.pdf`, "application/pdf", i * 1.3),
 );
-const clipTexts = [
+const clipTexts = params.get("state")?.startsWith("v2") ? [
+  "rm -rf dist/mac-* && npm run package:mac",
+  "https://github.com/anthropics/skills",
+  "Wi-Fi for the studio is Flicker_5G, password is on the fridge",
+] : [
   "https://www.figma.com/design/abc123/Flick-mobile-compact-layout?node-id=42-1337&t=averyveryverylongquerystring",
   "Meeting moved to 3pm — bring the October numbers\nand the deck",
   "https://github.com/vikas/flick/pull/12",
@@ -75,6 +102,7 @@ const sampleClips: ClipRow[] = Array.from({ length: clipCount }, (_, i) => ({
   content: clipTexts[i % 3],
   created_at: new Date(now - (i * 3 + 10) * 3_600_000).toISOString(),
   expires_at: new Date(now + 3_600_000).toISOString(),
+  ...(params.get("state")?.startsWith("v2") ? { device_id: ["mac", "phone", "redmi"][i % 3], created_at: new Date(now - [2, 5, 26][i % 3] * 3_600_000).toISOString() } : {}),
 }));
 
 const noop = () => {};
@@ -139,7 +167,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     accountMenuRef={createRef<HTMLDivElement>()}
     authReady
     fileInputRef={createRef<HTMLInputElement>()}
-    files={state === "files" ? sample : state === "many" ? many : state === "mixed" ? mixed : []}
+    files={state === "v2" ? (params.has("more") ? v2Extra : v2Files) : state === "files" ? sample : state === "many" ? many : state === "mixed" ? mixed : []}
     handleDragEnter={noop}
     handleDragLeave={noop}
     handleDragOver={noop}
@@ -155,9 +183,9 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     pendingRemovals={
       params.has("pending") ? [many[0], many[1]].map((removed) => ({ id: removed.id, file: removed })) : []
     }
-    deviceId={null}
+    deviceId={state === "v2" || state === "v2clips" || state === "empty" ? "mac" : null}
     deviceName="Vikas's MacBook"
-    deviceNames={{}}
+    deviceNames={state === "v2" || state === "v2clips" || state === "empty" ? { mac: "Vikas's MacBook", phone: "iPhone", redmi: "Redmi" } : {}}
     onRenameDevice={async () => null}
     usage={{
       plan: "free",
@@ -192,13 +220,13 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     onRetryLoad={noop}
     clipsCount={sampleClips.length}
     clipsPanel={
-      state === "mixed"
+      state === "mixed" || state === "v2" || state === "v2clips"
         ? (view) => (
             <ClipsPanel
               clips={sampleClips}
               error=""
               deviceId="mac"
-              deviceNames={{ phone: "Vikas's iPhone" }}
+              deviceNames={state.startsWith("v2") ? { mac: "Vikas's MacBook", phone: "iPhone", redmi: "Redmi" } : { phone: "Vikas's iPhone" }}
               onSend={async () => null}
               onDelete={noop}
               sendStatus=""
@@ -213,7 +241,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     onOpenClips={noop}
     density="compact"
     onDensityChange={noop}
-    clipboardSharing={state === "mixed" ? true : null}
+    clipboardSharing={state === "mixed" || state.startsWith("v2") ? true : null}
     onClipboardSharingChange={noop}
   />
   </>,
