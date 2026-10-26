@@ -3,6 +3,7 @@
    amber only for the main action. Overrides only; markup stays the same. */
 
 :root {
+  color-scheme: light; /* the site is light-only */
   --font-body: "Hanken Grotesk";
   --font-display: "Hanken Grotesk";
   --ink: #1A1712;
@@ -16,19 +17,6 @@
   --on-primary: #2B2210;
   --on-color: #1A1712;
   --live: #34C46E;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --ink: #F4F1EA;
-    --cream: #0E0E0D;
-    --card: #1A1917;
-    --muted: #A8A398;
-    --line: rgba(244, 241, 234, 0.12);
-    --outline: rgba(244, 241, 234, 0.18);
-    --fill: rgba(244, 241, 234, 0.08);
-    --on-color: #F4F1EA;
-  }
 }
 
 body {
@@ -287,6 +275,73 @@ body {
 .cta-section p, .cta-note, .cta-section .form-note { color: #A8A398; }
 .cta-section .form-row input, .cta-section .form-row select { background: #24231F; border-color: rgba(244, 241, 234, 0.16); color: #F4F1EA; }
 .cta-section .form-row input::placeholder { color: #8E897F; }
-@media (prefers-color-scheme: dark) {
-  .cta-section { background: #1F1E1B; border-color: rgba(244, 241, 234, 0.12); }
+
+/* ------------------------------------------------------------------
+   Hero v3: a big, confident headline over a Haikei-style shape, then the
+   live demo on a layered-wave stage, then a strip of things people send.
+   ------------------------------------------------------------------ */
+.hero-v3 { position: relative; padding: 56px 0 0; overflow-x: clip; }
+.hero-v3::before {
+  content: ""; position: absolute; z-index: -1; top: -260px; left: 50%; width: 820px; height: 820px;
+  transform: translateX(-50%); background: url("/landing/hero-blob.svg") center / contain no-repeat;
+  opacity: 0.22; filter: blur(70px);
+}
+.hero-v3-copy { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 9px; padding: 7px 14px 7px 12px; border-radius: 999px;
+  background: var(--card); box-shadow: inset 0 0 0 1px var(--line); font-size: 14px; font-weight: 500; color: var(--ink);
+  transition: box-shadow 160ms ease;
+}
+.hero-badge:hover { box-shadow: inset 0 0 0 1px var(--outline); }
+.hero-badge i { width: 7px; height: 7px; border-radius: 50%; background: var(--live); box-shadow: 0 0 0 4px rgba(52, 196, 110, 0.16); }
+.hero-badge span { color: var(--muted); transition: transform 160ms ease; }
+.hero-badge:hover span { transform: translateX(2px); }
+
+.hero-v3 h1 {
+  margin: 26px 0 24px; font-weight: 600; font-size: clamp(46px, 8.6vw, 124px);
+  line-height: 0.95; letter-spacing: -0.05em; text-wrap: balance;
+}
+.hero-here { position: relative; display: inline-block; white-space: nowrap; }
+.hero-here svg { position: absolute; left: -2%; bottom: -0.1em; width: 104%; height: 0.24em; overflow: visible; }
+.hero-here path { fill: none; stroke: var(--primary); stroke-width: 9; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+@media (prefers-reduced-motion: no-preference) {
+  .hero-here path { stroke-dasharray: 320; stroke-dashoffset: 320; animation: hero-draw 900ms cubic-bezier(0.6, 0, 0.2, 1) 350ms forwards; }
+}
+@keyframes hero-draw { to { stroke-dashoffset: 0; } }
+.hero-v3 .hero-sub { margin: 0 auto 28px; max-width: 34em; font-size: clamp(17px, 1.6vw, 20px); }
+.hero-v3 .waitlist-form { width: 100%; max-width: 560px; text-align: left; }
+.hero-v3 .platforms { justify-content: center; }
+.hero-v3 .form-note { text-align: center; }
+.hero-v3 .form-row select { width: 170px; }
+@media (max-width: 520px) { .hero-v3 .form-row select { width: auto; } }
+
+.hero-stage {
+  position: relative; margin-top: 56px; padding: 56px 40px 64px; border-radius: 32px;
+  background: url("/landing/hero-waves.svg") center / 100% 100% no-repeat, #FCF4E4;
+  box-shadow: inset 0 0 0 1px rgba(26, 23, 18, 0.06);
+}
+.hero-stage .v2-demo { max-width: 760px; margin: 0 auto; }
+.hero-stage .v2-desk { box-shadow: 0 0 0 1px rgba(26, 23, 18, 0.1), 0 30px 60px -30px rgba(80, 50, 10, 0.45); }
+.hero-stage .v2-phone { box-shadow: 0 0 0 1px #3A3936, 0 30px 50px -24px rgba(60, 35, 5, 0.55); }
+.hero-stage .v2-demo-hint { left: 0; right: 0; bottom: -40px; text-align: center; color: #5B4210; font-weight: 500; }
+
+.hero-marquee { margin: 30px 0 0; padding: 18px 0; overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); }
+.hero-marquee-track { display: flex; width: max-content; }
+.hero-marquee-set { display: flex; gap: 10px; padding-right: 10px; }
+.hero-marquee span { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; background: var(--card); box-shadow: inset 0 0 0 1px var(--line); font-size: 14px; font-weight: 500; white-space: nowrap; }
+.hero-marquee i { width: 8px; height: 8px; border-radius: 2px; background: var(--primary); }
+.hero-marquee i.kind-pdf { background: #E5644E; }
+.hero-marquee i.kind-clip { background: #8A8173; border-radius: 50%; }
+.hero-marquee i.kind-link { background: #4F7BE8; border-radius: 50%; }
+.hero-marquee i.kind-doc { background: var(--live); }
+@media (prefers-reduced-motion: no-preference) {
+  .hero-marquee-track { animation: hero-marquee 42s linear infinite; }
+  .hero-marquee:hover .hero-marquee-track { animation-play-state: paused; }
+}
+@keyframes hero-marquee { to { transform: translateX(-50%); } }
+
+@media (max-width: 760px) {
+  .hero-v3 { padding-top: 28px; }
+  .hero-v3 h1 { margin-top: 20px; }
+  .hero-stage { width: calc(100% - 20px); margin-top: 40px; padding: 28px 12px 56px; border-radius: 24px; }
 }

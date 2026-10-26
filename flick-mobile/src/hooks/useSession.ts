@@ -185,6 +185,11 @@ export function useSession() {
   const signInWithGoogle = useCallback(async () => {
     try {
       const redirectTo = authRedirectUrl();
+      // Supabase only returns to this URL if it is listed under Auth → URL
+      // Configuration → Redirect URLs. If it isn't, Supabase sends the browser to
+      // the Site URL instead and the app never hears back. In Expo Go this is an
+      // exp://<your-ip>:8081/--/auth-callback URL, so it needs its own entry.
+      if (__DEV__) console.log(`[auth] Google redirectTo (must be allow-listed in Supabase): ${redirectTo}`);
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: { redirectTo, skipBrowserRedirect: true },

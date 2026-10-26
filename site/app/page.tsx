@@ -21,6 +21,20 @@ const ICON_PATHS: Record<string, string> = {
   lock: "M6.5 10.5h11A1.5 1.5 0 0 1 19 12v7a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 19v-7a1.5 1.5 0 0 1 1.5-1.5ZM8 10.5V8a4 4 0 1 1 8 0v2.5",
 };
 
+// Things people actually move between devices, for the strip under the hero.
+const MARQUEE = [
+  { kind: "img", label: "lake-sunset.jpg" },
+  { kind: "pdf", label: "Invoice-2026-1043.pdf" },
+  { kind: "clip", label: "npm run dev" },
+  { kind: "img", label: "floor-plan-v2.png" },
+  { kind: "link", label: "figma.com/file/brand" },
+  { kind: "doc", label: "pitch-deck.key" },
+  { kind: "clip", label: "Wi-Fi: Studio_5G" },
+  { kind: "img", label: "receipt-scan.jpg" },
+  { kind: "doc", label: "voice-memo.m4a" },
+  { kind: "link", label: "maps.app/dinner" },
+];
+
 function FeatureIcon({ name }: { name: string }) {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
@@ -42,12 +56,23 @@ export default function Home() {
           Get early access
         </a>
       </nav>
-      <section className="hero wrap" id="top">
-        <div className="hero-copy">
+      <section className="hero-v3" id="top">
+        <div className="hero-v3-copy wrap">
+          <a className="hero-badge" href="#waitlist">
+            <i aria-hidden="true" />
+            Early access is open
+            <span aria-hidden="true">→</span>
+          </a>
           <h1>
             It’s on your phone.
             <br />
-            Now it’s here.
+            Now it’s{" "}
+            <span className="hero-here">
+              here.
+              <svg viewBox="0 0 300 24" preserveAspectRatio="none" aria-hidden="true">
+                <path d="M4 17 C 70 6, 150 4, 296 12" />
+              </svg>
+            </span>
           </h1>
           <p className="hero-sub">
             Send a photo, file or clip from one device and pick it up on the
@@ -62,7 +87,20 @@ export default function Home() {
             <b>Windows</b>
           </div>
         </div>
-        <DeviceDemo />
+        <div className="hero-stage wrap">
+          <DeviceDemo />
+        </div>
+        <div className="hero-marquee" aria-hidden="true">
+          <div className="hero-marquee-track">
+            {[0, 1].map((copy) => (
+              <div className="hero-marquee-set" key={copy}>
+                {MARQUEE.map((item) => (
+                  <span key={item.label}><i className={`kind-${item.kind}`} />{item.label}</span>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
       </section>
       <section className="intro-section wrap">
         <div className="section-label">How it works</div>
