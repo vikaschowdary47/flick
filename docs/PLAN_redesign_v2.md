@@ -1,6 +1,6 @@
 # Plan R2 — Redesign v2 ("the drop point")
 
-**Size: L** · Branch `redesign-v2`. Plan only so far; nothing in the apps has changed.
+**Size: L** · Branch `redesign-v2`. Mobile, desktop and site are redesigned on this branch; `main` is unchanged.
 
 Mockup: `docs/redesign-v2/mockup/index.html` (open it in a browser; tap the amber button for the live demo).
 
@@ -33,9 +33,24 @@ Move the apps to the v2 look (minimal and native: one typeface, hairlines instea
 
 Then the desktop app (`flick-desktop/src/design/tokens.ts`) follows the same steps, and Clips, Settings and Sign-in get their v2 layouts.
 
-## Before starting on your Mac
-Your Mac's disk is full (about 100 MB free of 229 GB). Builds, `npm install` and even git can fail halfway on a full disk, which is the main way this could break things. Free at least 10–15 GB first. Xcode's DerivedData and old simulators are usually the biggest wins.
+## Decisions
+1. Name in Settings: "Minimal" (internal key `drop`).
+2. The site gets the v2 look too.
 
-## Open questions
-1. Name in Settings: "Drop", "Minimal" or something else?
-2. Should Drop also become the look for the landing site (`site/`), or only the apps?
+## Status (on `redesign-v2`)
+Done, each as its own commit, all visual only (no Supabase, upload, download, IPC or expiry changes):
+
+- **Mobile:** Hanken Grotesk, hairlines, no sticker shadows or tilt. "Minimal" theme is the default (Playful and Classy still in Settings, now as color variants). New newest-file card with a 24-hour fuse, a round send button with Photos and Paste, a segmented Files/Clips control, and grouped lists. `npm ci` works again (lock file back in sync).
+- **Desktop:** same look; flat macOS-style rows; segmented control; quiet header and footer. Fixed three existing bugs: dark mode never applied (tokens were inline styles), the dark logo was never used, and secondary buttons were unreadable in dark mode. Dev preview gained `state=signin`.
+- **Site:** new hero ("It's on your phone. Now it's here.") with a v2 phone-to-Mac demo, sentence-case labels, neutral feature cards, an amber waitlist button. Fonts are bundled locally, so the build no longer fetches Google Fonts.
+
+Checks run: mobile `tsc --noEmit`; desktop typecheck, lint, build and `test:windows`; site lint and build.
+
+## Test on device before merging
+1. Phone: sign in, send a photo with the round button, send a file from Photos, Paste a clip, open Settings and switch themes, check light and dark.
+2. Mac: receive a file, drag it out, check the Clips tab, settings, sign out and back in, light and dark.
+3. Site: `npm run dev` in `site/`, check the home page, privacy, terms and delete-account in light and dark.
+
+## If something breaks
+- Go back to the working app at any time: `git switch main`.
+- Undo one part: `git revert <commit>` on this branch (each area is its own commit).

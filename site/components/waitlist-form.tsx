@@ -70,7 +70,7 @@ export function WaitlistForm({ compact = false }: { compact?: boolean }) {
           <option value="personal">Personal</option>
           <option value="team">Team</option>
         </select>
-        <button disabled={status === "loading"} type="submit">{status === "loading" ? "Joining…" : "Join the waitlist"}<span>↗</span></button>
+        <button disabled={status === "loading"} type="submit">{status === "loading" ? "Joining…" : "Join the waitlist"}</button>
       </div>
       {/* Hidden from people and autofill; only bots fill it. */}
       <div className="honeypot" aria-hidden="true">
