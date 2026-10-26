@@ -7,9 +7,9 @@ import type { FileRow } from "./types";
 export type SectionKey = "pinned" | "today" | "earlier";
 
 export const SECTION_TITLES: Record<SectionKey, string> = {
-  pinned: "PINNED",
-  today: "TODAY",
-  earlier: "EARLIER",
+  pinned: "Pinned",
+  today: "Today",
+  earlier: "Earlier",
 };
 
 function isToday(iso: string, now: number): boolean {

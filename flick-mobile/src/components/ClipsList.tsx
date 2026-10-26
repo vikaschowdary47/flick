@@ -132,7 +132,7 @@ export function ClipsList({ header, clips, error, now, deviceId, deviceNames, on
             </Text>
           )}
           <Text accessibilityRole="header" style={styles.eyebrow}>
-            CLIPS
+            Recent clips
           </Text>
         </View>
       }

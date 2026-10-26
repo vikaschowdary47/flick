@@ -44,6 +44,7 @@ const DENSITIES: { value: Density; label: string }[] = [
 ];
 
 const THEMES: { value: ThemeName; label: string }[] = [
+  { value: "drop", label: "Minimal" },
   { value: "playful", label: "Playful" },
   { value: "classy", label: "Classy" },
 ];
@@ -98,7 +99,7 @@ export function SettingsSheet({ email, onDeleteAccount, visible, onClose, device
         </Text>
         {email && (
           <View style={styles.group}>
-            <Text style={styles.eyebrow}>SIGNED IN AS</Text>
+            <Text style={styles.eyebrow}>Signed in as</Text>
             <Text style={styles.accountEmail} numberOfLines={1} ellipsizeMode="middle" selectable>
               {email}
             </Text>
@@ -108,7 +109,7 @@ export function SettingsSheet({ email, onDeleteAccount, visible, onClose, device
         <Segmented label="Theme" options={THEMES} value={themeName} onChange={setThemeName} />
         <Segmented label="Density" options={DENSITIES} value={density} onChange={onDensityChange} />
         <View style={styles.group}>
-          <Text style={styles.eyebrow}>THIS DEVICE</Text>
+          <Text style={styles.eyebrow}>This device</Text>
           <TextInput
             style={styles.input}
             value={draft}
@@ -131,7 +132,7 @@ export function SettingsSheet({ email, onDeleteAccount, visible, onClose, device
           )}
         </View>
         <View style={styles.group}>
-          <Text style={styles.eyebrow}>STORAGE</Text>
+          <Text style={styles.eyebrow}>Storage</Text>
           {usage && (
             <Text style={styles.cacheText}>
               {usage.pinsUsed} of {usage.maxPins} pins, {Math.round(usage.storageUsedBytes / (1024 * 1024))} of{" "}
@@ -160,7 +161,7 @@ export function SettingsSheet({ email, onDeleteAccount, visible, onClose, device
           // Saved for this device only (devices.widget_mode). iOS doesn't let
           // apps remove a placed widget, so "off" makes it say so instead.
           <View style={styles.group}>
-            <Text style={styles.eyebrow}>WIDGETS ON THIS IPHONE</Text>
+            <Text style={styles.eyebrow}>Widgets on this iPhone</Text>
             {(
               [
                 ["home", "Home Screen widget", null],
@@ -187,7 +188,7 @@ export function SettingsSheet({ email, onDeleteAccount, visible, onClose, device
         )}
         {showClipboardSetting && (
           <View style={styles.group}>
-            <Text style={styles.eyebrow}>CLIPBOARD SHARING</Text>
+            <Text style={styles.eyebrow}>Clipboard sharing</Text>
             <View style={styles.cacheRow}>
               <Text style={styles.cacheText}>
                 Share text and links between your devices. {APP_NAME} only reads your clipboard when you tap Send
@@ -222,7 +223,7 @@ function Segmented<T extends string>({ label, options, value, onChange }: Segmen
   const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.group}>
-      <Text style={styles.eyebrow}>{label.toUpperCase()}</Text>
+      <Text style={styles.eyebrow}>{label}</Text>
       <View accessibilityRole="radiogroup" accessibilityLabel={label} style={styles.segments}>
         {options.map((option) => {
           const selected = option.value === value;

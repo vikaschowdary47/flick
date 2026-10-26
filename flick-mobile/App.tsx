@@ -1,7 +1,8 @@
-// Only the two weights the app uses. Importing from the package root would
-// bundle all 16 Nunito files (~2 MB).
-import { Nunito_600SemiBold } from "@expo-google-fonts/nunito/600SemiBold";
-import { Nunito_800ExtraBold } from "@expo-google-fonts/nunito/800ExtraBold";
+// Only the three weights the app uses. Importing from the package root would
+// bundle every Hanken Grotesk file.
+import { HankenGrotesk_400Regular } from "@expo-google-fonts/hanken-grotesk/400Regular";
+import { HankenGrotesk_500Medium } from "@expo-google-fonts/hanken-grotesk/500Medium";
+import { HankenGrotesk_600SemiBold } from "@expo-google-fonts/hanken-grotesk/600SemiBold";
 import { useFonts } from "expo-font";
 import { StatusBar } from "expo-status-bar";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
@@ -26,7 +27,7 @@ export default function App() {
 }
 
 function Root() {
-  const [fontsLoaded] = useFonts({ Nunito_600SemiBold, Nunito_800ExtraBold });
+  const [fontsLoaded] = useFonts({ HankenGrotesk_400Regular, HankenGrotesk_500Medium, HankenGrotesk_600SemiBold });
   const {
     session,
     loading,

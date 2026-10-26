@@ -330,7 +330,7 @@ export function HomeScreen({ userId, email, onSignOut, onDeleteAccount }: Props)
       <UploadCard state={upload} onDismiss={reset} />
       <StorageNudge usage={usage.usage} files={recent.files} onRemove={remover.removeNow} />
       <Text accessibilityRole="header" style={styles.eyebrow}>
-        RECENTLY SENT
+        Recent
       </Text>
       {openError && (
         <Text accessibilityRole="alert" style={styles.openError}>

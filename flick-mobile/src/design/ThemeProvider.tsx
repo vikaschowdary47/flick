@@ -37,7 +37,7 @@ function isSaved(value: unknown): value is Saved {
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const system = useColorScheme();
   const [appearance, setAppearanceState] = useState<AppearancePreference>("system");
-  const [themeName, setThemeNameState] = useState<ThemeName>("playful");
+  const [themeName, setThemeNameState] = useState<ThemeName>("drop");
 
   useEffect(() => {
     AsyncStorage.getItem(STORAGE_KEY)

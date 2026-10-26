@@ -109,7 +109,7 @@ export function LimitScreen({
 
           {limit === "devices" && (
             <View style={styles.devices}>
-              <Text style={styles.eyebrow}>REMOVE A DEVICE</Text>
+              <Text style={styles.eyebrow}>Remove a device</Text>
               {devices.map((device) => {
                 const isThis = device.id === thisDeviceId;
                 return (

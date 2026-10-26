@@ -5,16 +5,19 @@
 
 const radii = {
   window: 24,
-  card: 20,
-  thumbnail: 14,
+  card: 16,
+  thumbnail: 10,
   pill: 9999,
 } as const;
 
-// Font family names registered by @expo-google-fonts/nunito.
+// Font family names registered by @expo-google-fonts/hanken-grotesk (redesign v2).
 // In RN each weight is its own family, so pick the family instead of fontWeight.
+// The key names are kept from the Nunito era so every screen picks up the new
+// face without changes: "semibold" is body text, "extrabold" is titles.
 const fonts = {
-  semibold: "Nunito_600SemiBold",
-  extrabold: "Nunito_800ExtraBold",
+  regular: "HankenGrotesk_400Regular",
+  semibold: "HankenGrotesk_500Medium",
+  extrabold: "HankenGrotesk_600SemiBold",
   mono: "Menlo", // HTML source in the iPhone viewer (built into iOS)
 } as const;
 
@@ -23,33 +26,35 @@ const fontSizes = {
   heading: 28,
   cardTitle: 16,
   meta: 13,
-  eyebrow: 13,
-  body: 15,
-  button: 18,
+  eyebrow: 14, // section labels, sentence case
+  body: 16,
+  button: 17,
 } as const;
 
 const letterSpacing = {
-  eyebrow: 13 * 0.08, // 0.08em at 13px
+  eyebrow: 0, // v2: no tracked-out caps
+  heading: -0.4,
 } as const;
 
+// v2: 1pt hairlines instead of 2pt sticker outlines.
 const borderWidth = {
-  outline: 2,
+  outline: 1,
 } as const;
 
-// Flat sticker shadow: 0 4px 0. iOS uses shadow*, Android uses elevation.
-// The color comes from the palette (palette.shadow).
+// v2 has no sticker shadows: depth comes from hairlines and surface color.
+// The keys stay so existing styles keep working; both are now "no shadow".
 const shadows = {
   sticker: {
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 1,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0,
     shadowRadius: 0,
-    elevation: 4,
+    elevation: 0,
   },
   stickerPressed: {
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 1,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0,
     shadowRadius: 0,
-    elevation: 2,
+    elevation: 0,
   },
 } as const;
 
@@ -62,18 +67,20 @@ const springs = {
 
 const motion = {
   maxDurationMs: 380,
-  cardTiltMinDeg: -1.5,
-  cardTiltMaxDeg: 1,
+  // v2: cards sit straight (the old sticker tilt is off).
+  cardTiltMinDeg: 0,
+  cardTiltMaxDeg: 0,
   removeSpinDeg: 8,
 } as const;
 
 const layout = {
   minTouchTarget: 44,
   logoMark: 32,
-  thumbnail: 52,
+  thumbnail: 44,
   cardGap: 12,
   screenPadding: 20,
-  flickButtonHeight: 64,
+  flickButtonHeight: 56,
+  sendButton: 72, // round send button in the dock
   inputHeight: 52,
   signInMark: 56,
   statusDot: 8,
