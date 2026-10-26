@@ -2936,9 +2936,22 @@ input:focus-visible {
   }
 }
 
-/* Popover/panel "+": send files from this computer (opens the file picker). */
-.add-files-button { order: 0; background: var(--flick-yellow, #F5B83D); border-color: transparent; }
-.add-files-button svg { width: 14px; height: 14px; fill: none; stroke: #2B2210; stroke-width: 2.4; stroke-linecap: round; }
-.add-files-button:hover:not(:disabled) { filter: brightness(0.96); }
-.add-files-button:disabled { opacity: 0.55; cursor: default; }
-.widget-popover .add-files-button { width: 28px; height: 28px; }
+/* Popover/panel "+": send files from this computer (opens the file picker).
+   Same quiet chip as the status pill, so the header stays calm; the icon
+   uses the text colour so it reads in light and dark. */
+.header-actions .add-files-button {
+  order: 0;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--flick-fill);
+  color: var(--flick-navy);
+  transition: background-color 150ms ease;
+}
+.header-actions .add-files-button svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.header-actions .add-files-button:hover:not(:disabled) { background: var(--flick-hairline); }
+/* The popover focuses its first button when it opens; a bright ring there
+   looked like a stuck highlight. Keyboard focus shows as a hairline ring. */
+.header-actions .add-files-button:focus-visible { outline: none; box-shadow: inset 0 0 0 1.5px var(--flick-navy); }
+.header-actions .add-files-button:disabled { opacity: 0.5; cursor: default; }
