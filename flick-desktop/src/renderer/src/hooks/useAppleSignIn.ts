@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "../supabase";
+import { AUTH_HANDOFF_URL } from "../authHandoff";
 
 export const APPLE_SIGN_IN_ENABLED = import.meta.env.VITE_ENABLE_APPLE_SIGN_IN === "true";
 
@@ -18,7 +19,7 @@ export function useAppleSignIn(setError: (message: string) => void) {
     setError("");
     try {
       const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: "apple", options: { redirectTo: "eqlshare://auth-callback", skipBrowserRedirect: true },
+        provider: "apple", options: { redirectTo: AUTH_HANDOFF_URL, skipBrowserRedirect: true },
       });
       if (error || !data.url) throw error ?? new Error("Couldn't start Apple sign-in.");
       if (controller.signal.aborted) throw new Error("Apple sign-in was cancelled.");

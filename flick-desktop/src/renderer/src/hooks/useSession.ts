@@ -9,6 +9,7 @@ import type { Session } from "@supabase/supabase-js";
 import { useAppleSignIn } from "./useAppleSignIn";
 import { supabase } from "../supabase";
 import { APP_NAME } from "../../../shared/appName";
+import { AUTH_HANDOFF_URL } from "../authHandoff";
 
 export type AuthCallbackNotice = {
   kind: "confirmed" | "reset";
@@ -16,7 +17,7 @@ export type AuthCallbackNotice = {
 };
 
 function authRedirectUrl(email?: string): string {
-  const redirect = new URL("eqlshare://auth-callback");
+  const redirect = new URL(AUTH_HANDOFF_URL);
   if (email) redirect.searchParams.set("email", email.trim());
   return redirect.toString();
 }
@@ -191,7 +192,7 @@ export function useSession() {
     googleAbort.current = controller;
     setIsGoogleSigningIn(true);
     try {
-      const redirectTo = "eqlshare://auth-callback";
+      const redirectTo = AUTH_HANDOFF_URL;
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: { redirectTo, skipBrowserRedirect: true },
