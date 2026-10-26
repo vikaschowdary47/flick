@@ -127,7 +127,7 @@ const makeStyles = (c: Palette) =>
       justifyContent: "center",
       borderRadius: tokens.radii.pill,
       borderWidth: tokens.borderWidth.outline,
-      borderColor: c.outline,
+      borderColor: c.hairline,
       backgroundColor: c.card,
     },
     closeLabel: {
@@ -149,7 +149,7 @@ const makeStyles = (c: Palette) =>
       justifyContent: "center",
       borderRadius: tokens.radii.pill,
       borderWidth: tokens.borderWidth.outline,
-      borderColor: c.outline,
+      borderColor: c.hairline,
       backgroundColor: c.archiveTile,
     },
     raised: {
@@ -167,7 +167,7 @@ const makeStyles = (c: Palette) =>
       overflow: "hidden",
       borderRadius: tokens.radii.card,
       borderWidth: tokens.borderWidth.outline,
-      borderColor: c.outline,
+      borderColor: c.hairline,
       backgroundColor: c.card,
     },
     fill: {

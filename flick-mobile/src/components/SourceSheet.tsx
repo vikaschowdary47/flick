@@ -91,7 +91,7 @@ const makeStyles = (c: Palette) => ({
       borderTopRightRadius: tokens.radii.window,
       borderWidth: tokens.borderWidth.outline,
       borderBottomWidth: 0,
-      borderColor: c.outline,
+      borderColor: c.hairline,
       backgroundColor: c.background,
       // Push the side outlines just off-screen: only the top edge and its
       // rounded corners are outlined, nothing traces the phone's own corners.
@@ -111,7 +111,7 @@ const makeStyles = (c: Palette) => ({
       paddingHorizontal: tokens.spacing.lg,
       borderRadius: tokens.radii.card,
       borderWidth: tokens.borderWidth.outline,
-      borderColor: c.outline,
+      borderColor: c.hairline,
     },
     raised: {
       ...tokens.shadows.sticker,

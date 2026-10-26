@@ -249,7 +249,7 @@ export function SignInScreen({
               <AppleAuthentication.AppleAuthenticationButton
                 buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
                 buttonStyle={scheme === "dark" ? AppleAuthentication.AppleAuthenticationButtonStyle.WHITE : AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
-                cornerRadius={tokens.radii.pill}
+                cornerRadius={14}
                 style={{ width: "100%", height: tokens.layout.inputHeight }}
                 onPress={() => { if (!busy) void apple(); }}
               />
@@ -296,6 +296,8 @@ const makeStyles = (c: Palette) =>
       color: c.text,
       fontFamily: tokens.fonts.extrabold,
       fontSize: tokens.fontSizes.heading,
+      letterSpacing: tokens.letterSpacing.heading,
+      textAlign: "center",
     },
     sub: {
       color: c.textMuted,
@@ -311,9 +313,9 @@ const makeStyles = (c: Palette) =>
     input: {
       minHeight: tokens.layout.inputHeight,
       paddingHorizontal: tokens.spacing.lg,
-      borderRadius: tokens.radii.pill,
+      borderRadius: 12,
       borderWidth: tokens.borderWidth.outline,
-      borderColor: c.outline,
+      borderColor: c.hairline,
       backgroundColor: c.card,
       color: c.text,
       fontFamily: tokens.fonts.semibold,
@@ -336,7 +338,7 @@ const makeStyles = (c: Palette) =>
       flexDirection: "row",
       alignItems: "center",
       borderWidth: 1,
-      borderColor: c.outline,
+      borderColor: c.error,
       borderRadius: 12,
       paddingLeft: 12,
       backgroundColor: c.card,

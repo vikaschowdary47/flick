@@ -99,7 +99,7 @@ const makeStyles = (c: Palette) =>
       paddingHorizontal: tokens.spacing.md,
       borderRadius: tokens.radii.card,
       borderWidth: tokens.borderWidth.outline,
-      borderColor: c.outline,
+      borderColor: c.hairline,
       backgroundColor: c.offlinePill,
     },
     text: {
@@ -113,7 +113,7 @@ const makeStyles = (c: Palette) =>
       paddingVertical: tokens.spacing.xs,
       borderRadius: tokens.radii.pill,
       borderWidth: tokens.borderWidth.outline,
-      borderColor: c.outline,
+      borderColor: c.hairline,
       backgroundColor: c.fallbackTile,
     },
     buttonLabel: {
@@ -139,7 +139,7 @@ const makeStyles = (c: Palette) =>
       borderTopRightRadius: tokens.radii.window,
       borderWidth: tokens.borderWidth.outline,
       borderBottomWidth: 0,
-      borderColor: c.outline,
+      borderColor: c.hairline,
       backgroundColor: c.background,
       // Side outlines just off-screen: only the top edge and its rounded corners
       // are outlined, nothing traces the phone's own screen corners.

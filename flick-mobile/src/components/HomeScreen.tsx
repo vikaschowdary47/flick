@@ -24,7 +24,6 @@ import { usePinFile } from "../hooks/usePinFile";
 import { useRecentFiles } from "../hooks/useRecentFiles";
 import { useRemoveFile } from "../hooks/useRemoveFile";
 import { useUpload } from "../hooks/useUpload";
-import { APP_NAME } from "../lib/appName";
 import { pruneCache } from "../lib/cache";
 import { formatExpiry, formatSender } from "../lib/format";
 import type { FileRow } from "../lib/types";
@@ -36,7 +35,8 @@ import { FileViewer } from "./FileViewer";
 import { Header } from "./Header";
 import { LimitScreen } from "./LimitScreen";
 import { EyeIcon, GearIcon, PinIcon, ShareIcon, SignOutIcon, TrashIcon } from "./Icons";
-import { PillButton } from "./PillButton";
+import { LandedCard } from "./LandedCard";
+import { SendDock } from "./SendDock";
 import { SettingsSheet } from "./SettingsSheet";
 import { SourceSheet } from "./SourceSheet";
 import { Tabs, type HomeTab } from "./Tabs";
@@ -49,6 +49,9 @@ type Props = {
   onSignOut: () => void;
   onDeleteAccount: () => Promise<string | null>;
 };
+
+// How recent the newest file must be to show as the large "landed" card.
+const LANDED_WINDOW_MS = 2 * 60 * 60 * 1000;
 
 function requestIdle(callback: () => void): void {
   const idle = (globalThis as typeof globalThis & {
@@ -158,15 +161,8 @@ export function HomeScreen({ userId, email, onSignOut, onDeleteAccount }: Props)
   const tabs = clipsOn ? <Tabs tab={activeTab} onChange={changeTab} clipsDot={clips.hasNew} slim={compact} /> : null;
   // Compact: Settings / Sign out live in a ⋯ menu in the header.
   const [accountMenuY, setAccountMenuY] = useState<number | null>(null);
-  // Compact: the big heading fades and slides up as the list scrolls.
+  // Scroll position of the compact list (kept for the list's native driver).
   const scrollY = useRef(new Animated.Value(0)).current;
-  const fade = tokens.compact.headingFadeDistance;
-  const headingStyle = {
-    opacity: scrollY.interpolate({ inputRange: [0, fade], outputRange: [1, 0], extrapolate: "clamp" as const }),
-    transform: [
-      { translateY: scrollY.interpolate({ inputRange: [0, fade], outputRange: [0, -tokens.spacing.md], extrapolate: "clamp" as const }) },
-    ],
-  };
   const compactTopBar = compact ? (
     <View style={styles.compactTop}>
       <Header status={connection.status} onMenu={(pageY) => setAccountMenuY(pageY)} />
@@ -201,6 +197,35 @@ export function HomeScreen({ userId, email, onSignOut, onDeleteAccount }: Props)
     () => recent.files.filter((file) => !remover.isHidden(file.id)),
     [recent.files, remover.isHidden],
   );
+  // Redesign v2: the newest file from the last couple of hours "lands" as a
+  // large card above the list (and isn't repeated in it).
+  const landed = useMemo(() => {
+    const newest = visibleFiles[0];
+    if (!newest || newest.pinned) return null;
+    return now - new Date(newest.created_at).getTime() < LANDED_WINDOW_MS ? newest : null;
+  }, [visibleFiles, now]);
+  const listFiles = useMemo(
+    () => (landed ? visibleFiles.filter((file) => file.id !== landed.id) : visibleFiles),
+    [visibleFiles, landed],
+  );
+
+  // Dock "Paste": the clipboard is read only when tapped, then sent as a clip.
+  const [dockNote, setDockNote] = useState<string | null>(null);
+  useEffect(() => {
+    if (!dockNote) return;
+    const timer = setTimeout(() => setDockNote(null), 3500);
+    return () => clearTimeout(timer);
+  }, [dockNote]);
+  const pasteClip = useCallback(async () => {
+    const text = await Clipboard.getStringAsync();
+    if (!text.trim()) {
+      setDockNote("Your clipboard is empty.");
+      return;
+    }
+    const error = await clips.send(text);
+    setDockNote(error ?? "Sent to your devices.");
+    if (!error) changeTab("clips");
+  }, [clips.send]);
 
   // Compact rows/tiles: tap or long-press opens the same menu as the cards.
   const openingId = opener.openingId;
@@ -309,10 +334,18 @@ export function HomeScreen({ userId, email, onSignOut, onDeleteAccount }: Props)
   const openError = shareLinks.status || remover.error || pinner.error || opener.error;
   const filesHeader = compact ? (
     <View style={styles.compactHeader}>
-      <Animated.Text accessibilityRole="header" style={[styles.heading, headingStyle]}>
-        {APP_NAME} it to all your devices
-      </Animated.Text>
       <UploadCard state={upload} onDismiss={reset} />
+      {landed && (
+        <LandedCard
+          file={landed}
+          now={now}
+          sender={senderOf(landed)}
+          opening={opener.openingId === landed.id}
+          selected={menu?.file.id === landed.id}
+          onMenu={openMenu}
+          onShare={(file) => opener.share(file)}
+        />
+      )}
       <StorageNudge usage={usage.usage} files={recent.files} onRemove={remover.removeNow} />
       {openError && (
         <Text accessibilityRole="alert" style={styles.openError}>
@@ -323,11 +356,19 @@ export function HomeScreen({ userId, email, onSignOut, onDeleteAccount }: Props)
   ) : (
     <View style={styles.top}>
       <Header status={connection.status} />
-      <Text accessibilityRole="header" style={styles.heading}>
-        {APP_NAME} it to all your devices
-      </Text>
       {tabs}
       <UploadCard state={upload} onDismiss={reset} />
+      {landed && (
+        <LandedCard
+          file={landed}
+          now={now}
+          sender={senderOf(landed)}
+          opening={opener.openingId === landed.id}
+          selected={menu?.file.id === landed.id}
+          onMenu={openMenu}
+          onShare={(file) => opener.share(file)}
+        />
+      )}
       <StorageNudge usage={usage.usage} files={recent.files} onRemove={remover.removeNow} />
       <Text accessibilityRole="header" style={styles.eyebrow}>
         Recent
@@ -341,7 +382,9 @@ export function HomeScreen({ userId, email, onSignOut, onDeleteAccount }: Props)
   );
   const filesEmpty = (
     <Text style={styles.empty}>
-      {recent.loading ? "Loading…" : recent.error ?? `Nothing yet. Send something with ${APP_NAME}!`}
+      {recent.loading
+        ? "Loading…"
+        : recent.error ?? (landed ? "Nothing else today." : "Nothing has landed yet. Send something from any of your devices and it shows up here for 24 hours.")}
     </Text>
   );
 
@@ -354,9 +397,6 @@ export function HomeScreen({ userId, email, onSignOut, onDeleteAccount }: Props)
             compact ? undefined : (
               <>
                 <Header status={connection.status} />
-                <Text accessibilityRole="header" style={styles.heading}>
-                  {APP_NAME} it to all your devices
-                </Text>
                 {tabs}
               </>
             )
@@ -374,7 +414,7 @@ export function HomeScreen({ userId, email, onSignOut, onDeleteAccount }: Props)
       ) : profile.density === "compact" ? (
         <CompactFilesList
           ref={compactListRef}
-          files={visibleFiles}
+          files={listFiles}
           header={filesHeader}
           empty={filesEmpty}
           now={now}
@@ -389,7 +429,7 @@ export function HomeScreen({ userId, email, onSignOut, onDeleteAccount }: Props)
       ) : (
       <FlatList
         ref={listRef}
-        data={visibleFiles}
+        data={listFiles}
         extraData={[menu, now, device.names]}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
@@ -414,12 +454,16 @@ export function HomeScreen({ userId, email, onSignOut, onDeleteAccount }: Props)
             </Pressable>
           </View>
         )}
-        <PillButton
-          label={`${APP_NAME} it`}
-          size="large"
-          onPress={() => setSourceOpen(true)}
+        {dockNote && (
+          <Text accessibilityLiveRegion="polite" style={styles.dockNote}>
+            {dockNote}
+          </Text>
+        )}
+        <SendDock
+          onSend={() => setSourceOpen(true)}
+          onPhotos={() => void pickAndUpload("photos")}
+          onPaste={clipsOn ? () => void pasteClip() : undefined}
           busy={upload.kind === "uploading"}
-          accessibilityHint="Choose photos, a file, or take a photo to send to all your devices"
         />
         {!compact && email && (
           <Text style={styles.signedInAs} numberOfLines={1} ellipsizeMode="middle">
@@ -607,7 +651,13 @@ const makeStyles = (c: Palette) =>
       paddingHorizontal: tokens.layout.screenPadding,
       paddingTop: tokens.spacing.sm,
       paddingBottom: tokens.spacing.sm,
-      gap: tokens.spacing.xs,
+      gap: tokens.spacing.sm,
+    },
+    dockNote: {
+      alignSelf: "center",
+      color: c.textMuted,
+      fontFamily: tokens.fonts.semibold,
+      fontSize: tokens.fontSizes.meta,
     },
     footerLinks: {
       flexDirection: "row",

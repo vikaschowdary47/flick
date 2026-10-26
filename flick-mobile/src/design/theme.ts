@@ -14,6 +14,8 @@ export type Palette = {
   text: string; // text on background and plain cards
   textMuted: string;
   outline: string; // sticker borders
+  hairline: string; // thin dividers and quiet edges (redesign v2)
+  fill: string; // soft neutral fill: segmented controls, icon buttons, tiles
   shadow: string; // flat sticker shadow
   accent: string; // main button ("eqlShare it")
   onAccent: string; // text on the accent
@@ -52,6 +54,8 @@ const playfulLight: Palette = {
   text: ink,
   textMuted: "#6B6F8A",
   outline: ink,
+  hairline: "rgba(43, 34, 16, 0.14)",
+  fill: "rgba(43, 34, 16, 0.07)",
   shadow: ink,
   accent: themeColors.primary,
   onAccent: themeColors.onPrimary,
@@ -82,6 +86,8 @@ const playfulDark: Palette = {
   text: cream,
   textMuted: "#B8BCD6",
   outline: "#05070F",
+  hairline: "rgba(255, 248, 238, 0.14)",
+  fill: "rgba(255, 248, 238, 0.08)",
   shadow: "#05070F",
   fallbackTile: cream,
   signedOutPill: cream,
@@ -97,6 +103,8 @@ const classyLight: Palette = {
   text: "#1F2329",
   textMuted: "#6A6F78",
   outline: ink,
+  hairline: "rgba(31, 35, 41, 0.12)",
+  fill: "rgba(31, 35, 41, 0.06)",
   shadow: ink,
   accent: themeColors.primary,
   onAccent: themeColors.onPrimary,
@@ -126,6 +134,8 @@ const classyDark: Palette = {
   text: "#EEEEEC",
   textMuted: "#A3A7AE",
   outline: "#000000",
+  hairline: "rgba(238, 238, 236, 0.12)",
+  fill: "rgba(238, 238, 236, 0.08)",
   shadow: "#000000",
   accent: themeColors.primary,
   onAccent: themeColors.onPrimary,
@@ -143,6 +153,8 @@ const dropLight: Palette = {
   text: "#1A1712",
   textMuted: "#5E5A52", // 6.1:1 on background
   outline: "rgba(26, 23, 18, 0.12)", // hairline
+  hairline: "rgba(26, 23, 18, 0.12)",
+  fill: "rgba(26, 23, 18, 0.06)",
   shadow: "transparent",
   accent: themeColors.primary,
   onAccent: themeColors.onPrimary,
@@ -172,6 +184,8 @@ const dropDark: Palette = {
   text: "#F4F1EA",
   textMuted: "#A8A398", // 7.3:1 on card
   outline: "rgba(244, 241, 234, 0.12)",
+  hairline: "rgba(244, 241, 234, 0.12)",
+  fill: "rgba(244, 241, 234, 0.08)",
   shadow: "transparent",
   accent: themeColors.primary,
   onAccent: themeColors.onPrimary,

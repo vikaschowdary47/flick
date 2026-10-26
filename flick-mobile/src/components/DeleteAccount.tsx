@@ -29,6 +29,6 @@ const makeStyles = (c: Palette) => StyleSheet.create({
   group: { gap: 12 },
   heading: { color: c.text, fontFamily: tokens.fonts.extrabold, fontSize: tokens.fontSizes.body },
   text: { color: c.text, fontFamily: tokens.fonts.semibold, fontSize: tokens.fontSizes.meta },
-  input: { minHeight: tokens.layout.inputHeight, borderWidth: tokens.borderWidth.outline, borderRadius: tokens.radii.pill,
-    borderColor: c.outline, backgroundColor: c.card, color: c.text, paddingHorizontal: 16, fontFamily: tokens.fonts.semibold },
+  input: { minHeight: tokens.layout.inputHeight, borderWidth: tokens.borderWidth.outline, borderRadius: 12,
+    borderColor: c.hairline, backgroundColor: c.card, color: c.text, paddingHorizontal: 16, fontFamily: tokens.fonts.semibold },
 });

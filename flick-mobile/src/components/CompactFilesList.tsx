@@ -15,13 +15,13 @@ import type { Palette } from "../design/theme";
 import { tokens } from "../design/tokens";
 import { groupFiles, loadCollapsed, saveCollapsed, SECTION_TITLES, type SectionKey } from "../lib/sections";
 import type { FileRow } from "../lib/types";
-import { CompactFileRow } from "./CompactFileRow";
+import { CompactFileRow, type GroupPosition } from "./CompactFileRow";
 import { ImageTile } from "./ImageTile";
 
 const SECTION_PREVIEW = 5; // items shown before "+N more"
 
 type Item =
-  | { type: "row"; key: string; file: FileRow }
+  | { type: "row"; key: string; file: FileRow; position: GroupPosition }
   | { type: "grid"; key: string; files: FileRow[] }
   | { type: "more"; key: string; section: SectionKey; count: number };
 
@@ -89,9 +89,12 @@ export const CompactFilesList = forwardRef<CompactFilesListHandle, Props>(functi
             const chunk = images.slice(i, i + columns);
             data.push({ type: "grid", key: `${key}-grid-${chunk[0].id}`, files: chunk });
           }
-          for (const file of shown) {
-            if (!isImage(file)) data.push({ type: "row", key: file.id, file });
-          }
+          const rows = shown.filter((file) => !isImage(file));
+          rows.forEach((file, index) => {
+            const position: GroupPosition =
+              rows.length === 1 ? "single" : index === 0 ? "first" : index === rows.length - 1 ? "last" : "middle";
+            data.push({ type: "row", key: file.id, file, position });
+          });
           if (shown.length < sectionFiles.length) {
             data.push({ type: "more", key: `${key}-more`, section: key, count: sectionFiles.length - shown.length });
           }
@@ -115,6 +118,7 @@ export const CompactFilesList = forwardRef<CompactFilesListHandle, Props>(functi
         return (
           <CompactFileRow
             file={item.file}
+            position={item.position}
             now={now}
             sender={senderOf(item.file)}
             opening={openingId === item.file.id}
@@ -168,16 +172,16 @@ export const CompactFilesList = forwardRef<CompactFilesListHandle, Props>(functi
           onPress={() => toggle(section.key)}
           style={styles.sectionHeader}
         >
-          <Text style={styles.sectionTitle}>
-            {section.collapsed ? "▸" : "▾"} {SECTION_TITLES[section.key]}
+          <Text style={styles.sectionTitle}>{SECTION_TITLES[section.key]}</Text>
+          <Text style={styles.sectionCount}>
+            {section.collapsed ? `${section.total} hidden` : section.total}
           </Text>
-          <Text style={styles.sectionCount}>{section.total}</Text>
         </Pressable>
       )}
       stickySectionHeadersEnabled={false}
       ListHeaderComponent={header}
       ListEmptyComponent={empty}
-      ItemSeparatorComponent={Gap}
+      ItemSeparatorComponent={ItemGap}
       SectionSeparatorComponent={Gap}
       contentContainerStyle={styles.content}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.text} />}
@@ -196,6 +200,12 @@ function Gap() {
   return <View style={{ height: tokens.compact.gap }} />;
 }
 
+// Rows in one group touch (they share a card); everything else gets a gap.
+function ItemGap({ leadingItem, trailingItem }: { leadingItem?: Item; trailingItem?: Item }) {
+  if (leadingItem?.type === "row" && trailingItem?.type === "row") return null;
+  return <Gap />;
+}
+
 const makeStyles = (c: Palette) =>
   StyleSheet.create({
     content: {
@@ -208,39 +218,35 @@ const makeStyles = (c: Palette) =>
       gap: tokens.compact.gap,
     },
     sectionHeader: {
-      height: tokens.compact.sectionHeaderHeight,
+      minHeight: tokens.layout.minTouchTarget - 8,
       flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing.sm,
+      alignItems: "flex-end",
+      justifyContent: "space-between",
+      paddingHorizontal: tokens.spacing.xs,
+      paddingBottom: tokens.spacing.xs,
     },
     sectionTitle: {
       color: c.textMuted,
       fontFamily: tokens.fonts.extrabold,
-      fontSize: tokens.fontSizes.eyebrow - 1,
-      letterSpacing: tokens.letterSpacing.eyebrow,
+      fontSize: tokens.fontSizes.eyebrow,
     },
     sectionCount: {
-      paddingHorizontal: tokens.spacing.sm - 2,
-      borderRadius: tokens.radii.pill,
-      borderWidth: 1,
-      borderColor: c.textMuted,
       color: c.textMuted,
-      fontFamily: tokens.fonts.extrabold,
-      fontSize: tokens.compact.meta - 2,
+      fontFamily: tokens.fonts.semibold,
+      fontSize: tokens.compact.meta,
+      fontVariant: ["tabular-nums"],
     },
     moreChip: {
       alignSelf: "flex-start",
-      height: tokens.compact.moreChipHeight,
+      height: tokens.compact.moreChipHeight + 4,
       justifyContent: "center",
       paddingHorizontal: tokens.spacing.md,
-      borderRadius: tokens.radii.pill,
-      borderWidth: tokens.borderWidth.outline,
-      borderColor: c.outline,
-      backgroundColor: c.pinBadge,
+      borderRadius: 10,
+      backgroundColor: c.fill,
     },
     moreLabel: {
-      color: c.onColor,
-      fontFamily: tokens.fonts.extrabold,
+      color: c.text,
+      fontFamily: tokens.fonts.semibold,
       fontSize: tokens.compact.meta,
     },
   });

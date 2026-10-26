@@ -236,7 +236,7 @@ const makeStyles = (c: Palette) =>
       padding: tokens.spacing.md,
       borderRadius: tokens.radii.card,
       borderWidth: tokens.borderWidth.outline,
-      borderColor: c.outline,
+      borderColor: c.hairline,
       backgroundColor: c.card,
       ...tokens.shadows.sticker,
       shadowColor: c.shadow,
@@ -261,7 +261,7 @@ const makeStyles = (c: Palette) =>
       paddingHorizontal: tokens.spacing.md,
       borderRadius: tokens.radii.pill,
       borderWidth: tokens.borderWidth.outline,
-      borderColor: c.outline,
+      borderColor: c.hairline,
       backgroundColor: c.dangerFill,
     },
     removeLabel: {

@@ -1,7 +1,8 @@
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, StyleSheet, View } from "react-native";
 import { useTheme, useThemedStyles } from "../design/ThemeProvider";
 import type { Palette } from "../design/theme";
 import { tokens } from "../design/tokens";
+import { GearIcon } from "./Icons";
 import { StatusPill, type Status } from "./StatusPill";
 
 type Props = {
@@ -12,7 +13,7 @@ type Props = {
 
 export function Header({ status, onMenu }: Props) {
   const styles = useThemedStyles(makeStyles);
-  const { scheme } = useTheme();
+  const { scheme, palette } = useTheme();
   return (
     <View style={styles.row}>
       <View style={styles.brand}>
@@ -33,7 +34,7 @@ export function Header({ status, onMenu }: Props) {
             onPress={(event) => onMenu(event.nativeEvent.pageY)}
             style={styles.menuButton}
           >
-            <Text style={styles.menuLabel}>⋯</Text>
+            <GearIcon size={19} color={palette.text} />
           </Pressable>
         )}
       </View>
@@ -60,19 +61,16 @@ const makeStyles = (c: Palette) =>
       gap: tokens.spacing.sm,
     },
     menuButton: {
-      width: tokens.layout.minTouchTarget,
-      height: tokens.layout.minTouchTarget,
+      width: 36,
+      height: 36,
+      margin: (tokens.layout.minTouchTarget - 36) / 2,
+      borderRadius: tokens.radii.pill,
       alignItems: "center",
       justifyContent: "center",
-    },
-    menuLabel: {
-      color: c.text,
-      fontFamily: tokens.fonts.extrabold,
-      fontSize: tokens.fontSizes.heading,
-      lineHeight: tokens.fontSizes.heading,
+      backgroundColor: c.fill,
     },
     lockup: {
-      width: 148,
-      height: 32,
+      width: 120,
+      height: 26,
     },
   });

@@ -9,6 +9,7 @@ import { formatSender } from "../lib/format";
 import type { Density } from "../hooks/useProfileSettings";
 import { ClipCard } from "./ClipCard";
 import { ClipChip } from "./ClipChip";
+import { PasteIcon } from "./Icons";
 import { PillButton } from "./PillButton";
 
 type Props = {
@@ -104,6 +105,8 @@ export function ClipsList({ header, clips, error, now, deviceId, deviceNames, on
           {header}
           <PillButton
             label="Send clipboard"
+            variant="secondary"
+            icon={<PasteIcon size={18} color={palette.text} />}
             onPress={() => void sendClipboard()}
             busy={busy}
             accessibilityHint="Reads your clipboard now and sends it to your devices"
@@ -121,7 +124,6 @@ export function ClipsList({ header, clips, error, now, deviceId, deviceNames, on
             />
             <PillButton
               label="Send"
-              variant="secondary"
               onPress={() => void send(draft, true)}
               disabled={busy || !draft.trim()}
             />
@@ -174,7 +176,7 @@ const makeStyles = (c: Palette) =>
       paddingBottom: tokens.spacing.md,
       borderRadius: tokens.radii.card,
       borderWidth: tokens.borderWidth.outline,
-      borderColor: c.outline,
+      borderColor: c.hairline,
       backgroundColor: c.card,
       color: c.text,
       fontFamily: tokens.fonts.semibold,
