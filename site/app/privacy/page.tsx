@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { pageMetadata } from "../../lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Privacy Policy",
   description: "What eqlShare collects, why, how long we keep it, and how to delete it.",
-};
+  path: "/privacy",
+});
 
 const SUPPORT = "support@eqlshare.com";
 

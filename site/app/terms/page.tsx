@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { pageMetadata } from "../../lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Terms of Service",
-  description: "The rules for using eqlShare.",
-};
+  description: "The terms for using the eqlShare apps and website, including your account and the files you share.",
+  path: "/terms",
+});
 
 const SUPPORT = "support@eqlshare.com";
 

@@ -1,4 +1,9 @@
+import type { Metadata } from "next";
 import { BrandLockup } from "../components/brand-lockup";
+import { DEFAULT_DESCRIPTION, pageMetadata } from "../lib/seo";
+import { StructuredData } from "../components/structured-data";
+
+export const metadata: Metadata = pageMetadata({ description: DEFAULT_DESCRIPTION, path: "/" });
 import { DeviceDemo } from "../components/device-demo";
 import { FAQ } from "../components/faq";
 import { SiteFooter } from "../components/site-footer";
@@ -27,6 +32,7 @@ function FeatureIcon({ name }: { name: string }) {
 export default function Home() {
   return (
     <main>
+      <StructuredData />
       <AuthCodeForwarder />
       <nav className="nav wrap">
         <a className="brand" href="#top">
