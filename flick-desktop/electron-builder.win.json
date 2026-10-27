@@ -1,6 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
-  "appId": "dev.flickit.desktop",
+  "appId": "com.eqlshare.desktop",
   "productName": "eqlShare",
   "asar": true,
   "directories": {

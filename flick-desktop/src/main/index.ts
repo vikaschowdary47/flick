@@ -46,7 +46,7 @@ import {
 } from "./tray";
 
 app.setName(APP_NAME);
-if (process.platform === "win32") app.setAppUserModelId("dev.flickit.desktop");
+if (process.platform === "win32") app.setAppUserModelId("com.eqlshare.desktop");
 
 const currentDirectory = fileURLToPath(new URL(".", import.meta.url));
 const isDevelopment = !app.isPackaged;

@@ -8,10 +8,10 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "dev.flickit.app",
+      "bundleIdentifier": "com.eqlshare.app",
       "entitlements": {
         "com.apple.security.application-groups": [
-          "group.dev.flickit.app"
+          "group.com.eqlshare.app"
         ]
       },
       "infoPlist": {
@@ -27,7 +27,7 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "dev.flickit.app"
+      "package": "com.eqlshare.app"
     },
     "web": {
       "favicon": "./assets/favicon.png",

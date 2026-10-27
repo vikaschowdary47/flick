@@ -2,7 +2,7 @@
 
 ## Build and download
 
-The Windows target is an x64 NSIS installer named `eqlShare-Setup.exe`. It includes the eqlShare multi-size `.ico`, creates a Start Menu shortcut with AppUserModelID `dev.flickit.desktop`, and registers `flick://` for authentication callbacks. The existing macOS packaging command is unchanged.
+The Windows target is an x64 NSIS installer named `eqlShare-Setup.exe`. It includes the eqlShare multi-size `.ico`, creates a Start Menu shortcut with AppUserModelID `com.eqlshare.desktop`, and registers `flick://` for authentication callbacks. The existing macOS packaging command is unchanged.
 
 On Windows, in `flick-desktop`:
 

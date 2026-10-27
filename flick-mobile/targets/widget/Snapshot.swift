@@ -42,7 +42,7 @@ struct WidgetSnapshot: Codable {
 }
 
 enum SharedStore {
-  static let appGroup = "group.dev.flickit.app"
+  static let appGroup = "group.com.eqlshare.app"
 
   // Lets a screenshot harness point at a folder of sample data.
   static var containerOverride: URL?
