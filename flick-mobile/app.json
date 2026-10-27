@@ -34,6 +34,7 @@
       "themeColor": "#F5B83D"
     },
     "plugins": [
+      "./plugins/withAndroidGradle9",
       "expo-font",
       "expo-status-bar",
       "expo-sharing",
