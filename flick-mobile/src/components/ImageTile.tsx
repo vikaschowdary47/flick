@@ -68,28 +68,27 @@ const makeStyles = (c: Palette) =>
       overflow: "hidden",
       alignItems: "center",
       justifyContent: "center",
-      borderRadius: tokens.radii.card,
+      borderRadius: tokens.radii.card - 2,
       borderWidth: tokens.borderWidth.outline,
-      borderColor: c.outline,
+      borderColor: c.hairline,
       backgroundColor: c.imageTile,
-      ...tokens.shadows.stickerPressed,
-      shadowColor: c.shadow,
     },
     selected: {
-      backgroundColor: c.accent,
+      borderColor: c.accent,
+      borderWidth: 2,
     },
     thumb: {
       ...StyleSheet.absoluteFill,
-      borderRadius: tokens.radii.card - tokens.borderWidth.outline,
     },
     timeOnThumb: {
-      // Readable over any photo: a small cream pill.
+      // Readable over any photo: a small dark pill, like a camera roll badge.
       alignSelf: "center",
       left: undefined,
       right: undefined,
       paddingHorizontal: tokens.spacing.sm,
       borderRadius: tokens.radii.pill,
-      backgroundColor: c.fallbackTile,
+      backgroundColor: "rgba(20, 18, 14, 0.62)",
+      color: "#FFFFFF",
       overflow: "hidden",
     },
     label: {
@@ -118,8 +117,8 @@ const makeStyles = (c: Palette) =>
       width: tokens.layout.statusDot + 2,
       height: tokens.layout.statusDot + 2,
       borderRadius: tokens.radii.pill,
-      borderWidth: tokens.borderWidth.outline,
-      borderColor: c.outline,
-      backgroundColor: c.pinBadge,
+      borderWidth: 1.5,
+      borderColor: "#FFFFFF",
+      backgroundColor: c.accent,
     },
   });

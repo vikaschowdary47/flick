@@ -1,78 +1,77 @@
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
-import { useTheme, useThemedStyles } from "../design/ThemeProvider";
-import type { Palette } from "../design/theme";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { tokens } from "../design/tokens";
-import { StatusPill, type Status } from "./StatusPill";
+import { useV2, type V2 } from "../design/v2";
+import { AppMark, GearIcon, LaptopIcon, PhoneIcon } from "./Icons";
+import type { Status } from "./StatusPill";
+
+export type DeviceKind = "phone" | "laptop";
 
 type Props = {
   status: Status;
-  // Compact mode: a ⋯ button that opens Settings / Sign out.
+  // Your other devices (not this one), for the little stack in the presence pill.
+  devices?: DeviceKind[];
+  // How many of them were seen recently ("2 online").
+  online?: number;
+  // Opens Settings.
   onMenu?: (pageY: number) => void;
 };
 
-export function Header({ status, onMenu }: Props) {
-  const styles = useThemedStyles(makeStyles);
-  const { scheme } = useTheme();
+// Redesign v2 top bar: mark, "eqlShare", who you're connected to, Settings.
+export function Header({ status, devices = [], online, onMenu }: Props) {
+  const v = useV2();
+  const s = makeStyles(v);
+  const label = status === "offline" ? "Offline" : status === "signedOut" ? "Signed out" : online ? `${online} online` : devices.length > 0 ? `${devices.length} ${devices.length === 1 ? "device" : "devices"}` : "Connected";
+  const live = status === "connected";
   return (
-    <View style={styles.row}>
-      <View style={styles.brand}>
-        <Image
-          accessibilityIgnoresInvertColors
-          accessibilityLabel="eqlShare"
-          source={scheme === "dark" ? require("../../assets/lockup-dark.png") : require("../../assets/lockup-light.png")}
-          resizeMode="contain"
-          style={styles.lockup}
-        />
-      </View>
-      <View style={styles.right}>
-        <StatusPill status={status} />
-        {onMenu && (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Settings and sign out"
-            onPress={(event) => onMenu(event.nativeEvent.pageY)}
-            style={styles.menuButton}
-          >
-            <Text style={styles.menuLabel}>⋯</Text>
-          </Pressable>
+    <View style={s.bar}>
+      <AppMark size={28} />
+      <Text style={s.name} accessibilityRole="header" accessibilityLabel="eqlShare">
+        <Text style={s.eql}>eql</Text>Share
+      </Text>
+      <View style={s.grow} />
+      <View accessibilityRole="text" accessibilityLabel={`Status: ${live ? "connected" : label}${devices.length ? `, ${label}` : ""}`} style={s.presence}>
+        {devices.length > 0 ? (
+          <View style={s.devs}>
+            {devices.slice(0, 3).map((kind, index) => (
+              <View key={`${kind}-${index}`} style={[s.dev, index > 0 && s.devOverlap]}>
+                {kind === "laptop" ? <LaptopIcon size={13} color={v.ink} /> : <PhoneIcon size={13} color={v.ink} />}
+                {live && <View style={s.devDot} />}
+              </View>
+            ))}
+          </View>
+        ) : (
+          <View style={[s.dot, live && s.dotLive]} />
         )}
+        <Text style={s.presenceText}>{label}</Text>
       </View>
+      {onMenu && (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Settings"
+          onPress={(event) => onMenu(event.nativeEvent.pageY)}
+          hitSlop={4}
+          style={({ pressed }) => [s.ibtn, pressed && { opacity: 0.7 }]}
+        >
+          <GearIcon size={19} color={v.ink} />
+        </Pressable>
+      )}
     </View>
   );
 }
 
-const makeStyles = (c: Palette) =>
+const makeStyles = (v: V2) =>
   StyleSheet.create({
-    row: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      minHeight: tokens.layout.minTouchTarget,
-    },
-    brand: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing.sm,
-    },
-    right: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing.sm,
-    },
-    menuButton: {
-      width: tokens.layout.minTouchTarget,
-      height: tokens.layout.minTouchTarget,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    menuLabel: {
-      color: c.text,
-      fontFamily: tokens.fonts.extrabold,
-      fontSize: tokens.fontSizes.heading,
-      lineHeight: tokens.fontSizes.heading,
-    },
-    lockup: {
-      width: 148,
-      height: 32,
-    },
+    bar: { flexDirection: "row", alignItems: "center", gap: 10, height: 48, paddingTop: 6, paddingLeft: 4, paddingRight: 2 },
+    name: { color: v.ink, fontFamily: tokens.fonts.extrabold, fontSize: 17, letterSpacing: -0.17 },
+    eql: { color: v.ink3 },
+    grow: { flex: 1 },
+    presence: { flexDirection: "row", alignItems: "center", gap: 8, height: 32, paddingLeft: 6, paddingRight: 10, borderRadius: 999, backgroundColor: v.fill },
+    devs: { flexDirection: "row" },
+    dev: { width: 22, height: 22, borderRadius: 11, alignItems: "center", justifyContent: "center", backgroundColor: v.surface, borderWidth: 2, borderColor: v.canvas },
+    devOverlap: { marginLeft: -6 },
+    devDot: { position: "absolute", right: -2, bottom: -2, width: 8, height: 8, borderRadius: 4, backgroundColor: v.liveDot, borderWidth: 1.5, borderColor: v.canvas },
+    dot: { width: 7, height: 7, marginLeft: 4, borderRadius: 4, backgroundColor: v.ink3 },
+    dotLive: { backgroundColor: v.liveDot },
+    presenceText: { color: v.ink2, fontFamily: tokens.fonts.extrabold, fontSize: 13 },
+    ibtn: { width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center", backgroundColor: v.fill },
   });

@@ -144,15 +144,19 @@ export type WindowMode = "popover" | "panel" | "main";
 // between these bounds: a quick dropdown, not a window.
 const POPOVER_WIDTH = 360;
 // Low enough that the one-line empty state isn't padded with blank space.
-const POPOVER_MIN_HEIGHT = 140;
+const POPOVER_MIN_HEIGHT = 300;
 const POPOVER_MAX_HEIGHT = 560;
 const POPOVER_MAX_SHARE = 0.65; // of the screen's work area height
 // "Open eqlShare" makes the same popover taller (never wider), up to this.
 const EXPANDED_MAX_HEIGHT = 680;
 const EXPANDED_MAX_SHARE = 0.8;
 const RESIZE_MS = 180;
-let popoverContentHeight = POPOVER_MIN_HEIGHT;
 let popoverExpanded = false;
+// Fits its content, without the jitter: while open, the height only grows
+// within the same view (a list loading in two steps doesn't bounce), and
+// changes between views (Files, Clips, Settings) animate.
+let popoverContentHeight = POPOVER_MIN_HEIGHT;
+let popoverView = "";
 let resizeTimer: NodeJS.Timeout | null = null;
 const PANEL_SIZE = { width: 320, height: 460 };
 const MAIN_SIZE = { width: 480, height: 640 };
@@ -175,6 +179,7 @@ function popoverSize(window: BrowserWindow): { width: number; height: number } {
 function cancelResize(): void {
   if (resizeTimer) {
     clearInterval(resizeTimer);
+    clearTimeout(resizeTimer);
     resizeTimer = null;
   }
 }
@@ -193,6 +198,16 @@ function fitPopover(window: BrowserWindow, animate = false): void {
   const from = window.getBounds();
   if (!animate || !window.isVisible()) {
     window.setBounds(target, false);
+    return;
+  }
+  if (process.platform === "darwin") {
+    // macOS animates the frame natively, which is smoother than stepping
+    // setBounds from a timer. Settle on the latest height once it's done.
+    window.setBounds(target, true);
+    resizeTimer = setTimeout(() => {
+      resizeTimer = null;
+      if (!window.isDestroyed()) fitPopover(window);
+    }, RESIZE_MS + 60) as unknown as NodeJS.Timeout;
     return;
   }
   const start = Date.now();
@@ -338,6 +353,34 @@ function rememberBounds(window: BrowserWindow): void {
   }, 400);
 }
 
+// Show with a short fade, like a native menu, instead of popping in at once.
+let fadeTimer: NodeJS.Timeout | null = null;
+const FADE_MS = 140;
+function fadeIn(window: BrowserWindow): void {
+  if (fadeTimer) clearInterval(fadeTimer);
+  const canFade = process.platform === "darwin" || process.platform === "win32";
+  if (!canFade || window.isVisible()) {
+    window.setOpacity(1);
+    window.show();
+    return;
+  }
+  window.setOpacity(0);
+  window.show();
+  const start = Date.now();
+  fadeTimer = setInterval(() => {
+    const t = Math.min(1, (Date.now() - start) / FADE_MS);
+    if (window.isDestroyed()) {
+      if (fadeTimer) clearInterval(fadeTimer);
+      return;
+    }
+    window.setOpacity(1 - (1 - t) ** 2);
+    if (t >= 1 && fadeTimer) {
+      clearInterval(fadeTimer);
+      fadeTimer = null;
+    }
+  }, 1000 / 60);
+}
+
 function showIn(next: WindowMode): void {
   const window = getWindow();
   if (!window) {
@@ -354,7 +397,10 @@ function showIn(next: WindowMode): void {
     // pulled to the current Space and then pinned there.
     window.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true, skipTransformProcessType: true });
   }
-  window.show();
+  // Size and place the popover before it appears, so it never shows at an
+    // old size and then jumps.
+  if (next === "popover") fitPopover(window);
+  fadeIn(window);
   if (process.platform === "darwin") {
     // A menu-bar (dock-less) app doesn't become active on its own, so the window
     // never got focus: clicks outside didn't close it and the tray click re-opened it.
@@ -666,14 +712,19 @@ export function setupWindowModeIpc(): void {
   // The popover page reports its natural height whenever its list changes.
   // The page reports its natural height and layout after every change. A
   // layout change (Open eqlShare / Show less) animates; anything else snaps.
-  ipcMain.on("popover:content-height", (_event, height: unknown, expanded: unknown) => {
+  ipcMain.on("popover:content-height", (_event, height: unknown, expanded: unknown, view: unknown) => {
     if (typeof height !== "number" || !Number.isFinite(height)) {
       return;
     }
     const window = getWindow();
     const toggled = (expanded === true) !== popoverExpanded;
-    popoverContentHeight = height;
+    const nextView = typeof view === "string" ? view : "";
+    const viewChanged = nextView !== popoverView;
     popoverExpanded = expanded === true;
+    popoverView = nextView;
+    const visible = Boolean(window?.isVisible());
+    // Same view while open: never shrink (no bounce while things load).
+    popoverContentHeight = visible && !viewChanged && !toggled ? Math.max(popoverContentHeight, height) : height;
     if (!window) {
       return;
     }
@@ -685,10 +736,10 @@ export function setupWindowModeIpc(): void {
       return;
     }
     if (mode !== "popover") return;
-    if (toggled) {
+    if (!visible) {
+      fitPopover(window); // hidden: just be the right size for next time
+    } else if (toggled || viewChanged || !resizeTimer) {
       fitPopover(window, true);
-    } else if (!resizeTimer) {
-      fitPopover(window); // mid-animation, the tween already heads there
     }
   });
   ipcMain.on("window:open-main", () => openMainWindow());

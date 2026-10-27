@@ -334,7 +334,7 @@ export function useSession() {
       const { data, error } = await supabase.functions.invoke("delete-account", {
         body: { confirmation: "DELETE", appleRefreshToken: session.provider_refresh_token ?? undefined },
       });
-      if (error || !data?.deleted) return "Couldn't finish deleting your account. Check your connection and retry; uploads may be paused until cleanup finishes.";
+      if (error || !data?.deleted) return await deletionFailureMessage(error);
       let cleanupFailed = false;
       try { await window.flick.clearAccountData(); } catch { cleanupFailed = true; }
       await supabase.auth.signOut({ scope: "local" });
@@ -356,7 +356,9 @@ export function useSession() {
     }
 
     try {
-      const { error } = await supabase.auth.signOut();
+      // "local": sign out this computer only. Its session ends on the server,
+      // so it stops counting toward your devices; your phone stays signed in.
+      const { error } = await supabase.auth.signOut({ scope: "local" });
       if (error) {
         console.error(`Could not sign out of ${APP_NAME}:`, error);
         setAuthError(friendlyAuthError(error.message));
@@ -419,4 +421,24 @@ function friendlyAuthError(message: string): string {
   if (/cancel|dismiss|closed|access_denied/i.test(message)) return "Google sign-in was cancelled.";
   if (/network|fetch/i.test(message)) return `Can't reach ${APP_NAME} right now. Check your connection.`;
   return message || "Could not sign in with Google.";
+}
+
+// Turns a failed delete-account call into a message that says what to do.
+// 404 means the function isn't deployed on the Supabase project yet.
+export async function deletionFailureMessage(error: unknown): Promise<string> {
+  const context = (error as { context?: unknown } | null)?.context;
+  if (context instanceof Response) {
+    if (context.status === 404) return "Account deletion isn't switched on yet: the delete-account function isn't deployed on the server.";
+    if (context.status === 401) return "Sign in again, then delete your account.";
+    let step = "";
+    try {
+      const body: unknown = await context.clone().json();
+      if (body && typeof body === "object" && "step" in body && typeof body.step === "string") step = body.step;
+    } catch {
+      // not JSON
+    }
+    const where: Record<string, string> = { start: "starting", files: "removing your files", apple: "revoking Sign in with Apple", account: "removing your account" };
+    return `Couldn't finish deleting your account${where[step] ? ` (it stopped while ${where[step]})` : ""}. Try again in a moment; uploads stay paused until it finishes.`;
+  }
+  return "Couldn't reach the server to delete your account. Check your connection and try again.";
 }

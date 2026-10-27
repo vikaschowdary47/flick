@@ -10,18 +10,19 @@ import {
   View,
   useWindowDimensions,
 } from "react-native";
-import { useTheme, useThemedStyles } from "../design/ThemeProvider";
+import { useTheme } from "../design/ThemeProvider";
 import type { Palette } from "../design/theme";
 import { tokens } from "../design/tokens";
+import { useV2, type V2 } from "../design/v2";
 import { groupFiles, loadCollapsed, saveCollapsed, SECTION_TITLES, type SectionKey } from "../lib/sections";
 import type { FileRow } from "../lib/types";
-import { CompactFileRow } from "./CompactFileRow";
+import { CompactFileRow, type GroupPosition } from "./CompactFileRow";
 import { ImageTile } from "./ImageTile";
 
 const SECTION_PREVIEW = 5; // items shown before "+N more"
 
 type Item =
-  | { type: "row"; key: string; file: FileRow }
+  | { type: "row"; key: string; file: FileRow; position: GroupPosition }
   | { type: "grid"; key: string; files: FileRow[] }
   | { type: "more"; key: string; section: SectionKey; count: number };
 
@@ -53,7 +54,8 @@ export const CompactFilesList = forwardRef<CompactFilesListHandle, Props>(functi
   ref,
 ) {
   const { palette } = useTheme();
-  const styles = useThemedStyles(makeStyles);
+  const v2 = useV2();
+  const styles = useMemo(() => makeStyles(palette, v2), [palette, v2]);
   const { width } = useWindowDimensions();
   const [collapsed, setCollapsed] = useState<SectionKey[]>([]);
   const [expanded, setExpanded] = useState<SectionKey[]>([]);
@@ -82,16 +84,15 @@ export const CompactFilesList = forwardRef<CompactFilesListHandle, Props>(functi
       groupFiles(files, now).map(({ key, files: sectionFiles }) => {
         const isCollapsed = collapsed.includes(key);
         const shown = expanded.includes(key) ? sectionFiles : sectionFiles.slice(0, SECTION_PREVIEW);
-        const images = shown.filter(isImage);
         const data: Item[] = [];
         if (!isCollapsed) {
-          for (let i = 0; i < images.length; i += columns) {
-            const chunk = images.slice(i, i + columns);
-            data.push({ type: "grid", key: `${key}-grid-${chunk[0].id}`, files: chunk });
-          }
-          for (const file of shown) {
-            if (!isImage(file)) data.push({ type: "row", key: file.id, file });
-          }
+          // Redesign v2: one grouped list per section; images are rows with
+          // their real thumbnail (no separate grid).
+          shown.forEach((file, index) => {
+            const position: GroupPosition =
+              shown.length === 1 ? "single" : index === 0 ? "first" : index === shown.length - 1 ? "last" : "middle";
+            data.push({ type: "row", key: file.id, file, position });
+          });
           if (shown.length < sectionFiles.length) {
             data.push({ type: "more", key: `${key}-more`, section: key, count: sectionFiles.length - shown.length });
           }
@@ -115,6 +116,7 @@ export const CompactFilesList = forwardRef<CompactFilesListHandle, Props>(functi
         return (
           <CompactFileRow
             file={item.file}
+            position={item.position}
             now={now}
             sender={senderOf(item.file)}
             opening={openingId === item.file.id}
@@ -168,17 +170,16 @@ export const CompactFilesList = forwardRef<CompactFilesListHandle, Props>(functi
           onPress={() => toggle(section.key)}
           style={styles.sectionHeader}
         >
-          <Text style={styles.sectionTitle}>
-            {section.collapsed ? "▸" : "▾"} {SECTION_TITLES[section.key]}
+          <Text style={styles.sectionTitle}>{SECTION_TITLES[section.key]}</Text>
+          <Text style={styles.sectionCount}>
+            {section.collapsed ? `${section.total} hidden` : `${section.total} ${section.total === 1 ? "file" : "files"}`}
           </Text>
-          <Text style={styles.sectionCount}>{section.total}</Text>
         </Pressable>
       )}
       stickySectionHeadersEnabled={false}
       ListHeaderComponent={header}
       ListEmptyComponent={empty}
-      ItemSeparatorComponent={Gap}
-      SectionSeparatorComponent={Gap}
+      ItemSeparatorComponent={ItemGap}
       contentContainerStyle={styles.content}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={palette.text} />}
       onScroll={onScroll}
@@ -196,11 +197,17 @@ function Gap() {
   return <View style={{ height: tokens.compact.gap }} />;
 }
 
-const makeStyles = (c: Palette) =>
+// Rows in one group touch (they share a card); everything else gets a gap.
+function ItemGap({ leadingItem, trailingItem }: { leadingItem?: Item; trailingItem?: Item }) {
+  if (leadingItem?.type === "row" && trailingItem?.type === "row") return null;
+  return <Gap />;
+}
+
+const makeStyles = (c: Palette, v: V2) =>
   StyleSheet.create({
     content: {
-      paddingHorizontal: tokens.layout.screenPadding,
-      paddingTop: tokens.spacing.sm,
+      paddingHorizontal: 16,
+      paddingTop: 16,
       paddingBottom: tokens.spacing.lg,
     },
     gridRow: {
@@ -208,39 +215,36 @@ const makeStyles = (c: Palette) =>
       gap: tokens.compact.gap,
     },
     sectionHeader: {
-      height: tokens.compact.sectionHeaderHeight,
       flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing.sm,
+      alignItems: "flex-end",
+      justifyContent: "space-between",
+      paddingHorizontal: 4,
+      paddingTop: 18,
+      paddingBottom: 8,
     },
     sectionTitle: {
-      color: c.textMuted,
+      color: v.ink2,
       fontFamily: tokens.fonts.extrabold,
-      fontSize: tokens.fontSizes.eyebrow - 1,
-      letterSpacing: tokens.letterSpacing.eyebrow,
+      fontSize: 14,
     },
     sectionCount: {
-      paddingHorizontal: tokens.spacing.sm - 2,
-      borderRadius: tokens.radii.pill,
-      borderWidth: 1,
-      borderColor: c.textMuted,
-      color: c.textMuted,
-      fontFamily: tokens.fonts.extrabold,
-      fontSize: tokens.compact.meta - 2,
+      color: v.ink3,
+      fontFamily: tokens.fonts.semibold,
+      fontSize: 14,
+      fontVariant: ["tabular-nums"],
     },
     moreChip: {
       alignSelf: "flex-start",
-      height: tokens.compact.moreChipHeight,
+      height: 34,
       justifyContent: "center",
-      paddingHorizontal: tokens.spacing.md,
-      borderRadius: tokens.radii.pill,
-      borderWidth: tokens.borderWidth.outline,
-      borderColor: c.outline,
-      backgroundColor: c.pinBadge,
+      marginTop: 8,
+      paddingHorizontal: 12,
+      borderRadius: 10,
+      backgroundColor: v.fill,
     },
     moreLabel: {
-      color: c.onColor,
+      color: v.ink,
       fontFamily: tokens.fonts.extrabold,
-      fontSize: tokens.compact.meta,
+      fontSize: 13.5,
     },
   });

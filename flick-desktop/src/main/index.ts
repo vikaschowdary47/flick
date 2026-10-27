@@ -33,6 +33,7 @@ import { findAuthCallback, isAuthCallbackUrl } from "./auth-links";
 import { notifyWindowsArrival } from "./notifications";
 import { designTokens } from "../design/tokens";
 import { setupClips } from "./clips";
+import { clearClipHistory, setupClipHistory } from "./clipHistory";
 import { APP_NAME } from "../shared/appName";
 import {
   attachWindow,
@@ -588,6 +589,7 @@ ipcMain.handle("account:set-active", (event, active: unknown) => {
 ipcMain.handle("account:clear-local-data", async (event) => {
   assertMainWindow(event);
   accountCacheBlocked = true;
+  clearClipHistory();
   await serializeFileMutation(async () => {
     // Fixed app-owned directory only; never delete the user's source files.
     await rm(join(app.getPath("userData"), "downloads"), { recursive: true, force: true });
@@ -709,6 +711,7 @@ if (!hasSingleInstanceLock) {
       setupTray(() => mainWindow);
       setupWindowModeIpc();
       setupClips(() => mainWindow);
+      setupClipHistory(() => mainWindow);
 
       const initialCallback = findAuthCallback(process.argv);
       if (initialCallback) handleAuthCallback(initialCallback);

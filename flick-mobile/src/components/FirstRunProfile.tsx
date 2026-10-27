@@ -51,9 +51,9 @@ const makeStyles = (c: Palette) => StyleSheet.create({
   content: { flexGrow: 1, justifyContent: "center", padding: tokens.layout.screenPadding, gap: 12 },
   heading: { color: c.text, fontFamily: tokens.fonts.extrabold, fontSize: tokens.fontSizes.heading },
   text: { color: c.text, fontFamily: tokens.fonts.semibold, fontSize: tokens.fontSizes.body },
-  input: { minHeight: tokens.layout.inputHeight, borderWidth: tokens.borderWidth.outline, borderColor: c.outline,
-    borderRadius: tokens.radii.pill, paddingHorizontal: 16, color: c.text, backgroundColor: c.card, fontFamily: tokens.fonts.semibold },
+  input: { minHeight: tokens.layout.inputHeight, borderWidth: tokens.borderWidth.outline, borderColor: c.hairline,
+    borderRadius: 12, paddingHorizontal: 16, color: c.text, backgroundColor: c.card, fontFamily: tokens.fonts.semibold },
   row: { flexDirection: "row", gap: 8 },
   option: { flex: 1, minHeight: tokens.layout.minTouchTarget, alignItems: "center", justifyContent: "center",
-    borderWidth: tokens.borderWidth.outline, borderColor: c.outline, borderRadius: tokens.radii.pill, backgroundColor: c.card },
+    borderWidth: tokens.borderWidth.outline, borderColor: c.hairline, borderRadius: 12, backgroundColor: c.card },
 });

@@ -66,7 +66,7 @@ const makeStyles = (c: Palette) =>
       paddingLeft: tokens.spacing.md,
       borderRadius: tokens.radii.pill,
       borderWidth: tokens.borderWidth.outline,
-      borderColor: c.outline,
+      borderColor: c.hairline,
       ...tokens.shadows.stickerPressed,
       shadowColor: c.shadow,
     },

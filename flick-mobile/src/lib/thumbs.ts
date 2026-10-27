@@ -80,3 +80,43 @@ export function localThumbnail(fileId: string, thumbPath: string): Promise<strin
   inflight.set(fileId, job);
   return job;
 }
+
+// The newest photo is shown large, so the 200px thumbnail looks blurry there.
+// This downloads the original once (photos up to 15 MB; not HEIC on Android,
+// which can't draw it) into flick-thumbs/<file id>.full.jpg, cleaned up with
+// the other cached thumbnails.
+const FULL_MAX_BYTES = 15 * 1024 * 1024;
+const fullInflight = new Map<string, Promise<string | null>>();
+
+export function canShowFullImage(mimeType: string | null, size: number, platform: string): boolean {
+  const mime = (mimeType ?? "").toLowerCase();
+  if (!mime.startsWith("image/") || size > FULL_MAX_BYTES) return false;
+  if (/hei[cf]/.test(mime) && platform !== "ios") return false;
+  return !/svg/.test(mime);
+}
+
+export function localFullImage(fileId: string, storagePath: string): Promise<string | null> {
+  const epoch = cacheEpoch();
+  if (!cacheEpochActive(epoch)) return Promise.resolve(null);
+  const target = new File(new Directory(Paths.cache, THUMB_DIR), `${fileId}.full.jpg`);
+  if (target.exists && (target.size ?? 0) > 0) return Promise.resolve(target.uri);
+  const pending = fullInflight.get(fileId);
+  if (pending) return pending;
+  const job = (async () => {
+    try {
+      const { data, error } = await supabase.storage.from(FILES_BUCKET).createSignedUrl(storagePath, LINK_SECONDS);
+      if (error || !data?.signedUrl) return null;
+      if (!cacheEpochActive(epoch)) return null;
+      new Directory(Paths.cache, THUMB_DIR).create({ intermediates: true, idempotent: true });
+      const downloaded = await File.downloadFileAsync(data.signedUrl, target);
+      if (!cacheEpochActive(epoch)) { if (downloaded.exists) downloaded.delete(); return null; }
+      return downloaded.uri;
+    } catch {
+      return null;
+    } finally {
+      fullInflight.delete(fileId);
+    }
+  })();
+  fullInflight.set(fileId, job);
+  return job;
+}

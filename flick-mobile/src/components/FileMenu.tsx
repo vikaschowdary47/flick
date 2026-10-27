@@ -80,7 +80,7 @@ const makeStyles = (c: Palette) =>
       padding: tokens.spacing.sm,
       borderRadius: tokens.radii.card,
       borderWidth: tokens.borderWidth.outline,
-      borderColor: c.outline,
+      borderColor: c.hairline,
       backgroundColor: c.card,
       ...tokens.shadows.sticker,
       shadowColor: c.shadow,
@@ -100,7 +100,7 @@ const makeStyles = (c: Palette) =>
       paddingHorizontal: tokens.spacing.md,
       borderRadius: tokens.radii.thumbnail,
       borderWidth: tokens.borderWidth.outline,
-      borderColor: c.outline,
+      borderColor: c.hairline,
     },
     preview: {
       backgroundColor: c.documentTile,

@@ -41,7 +41,7 @@ export function PillButton({
         styles.button,
         secondary && styles.secondary,
         size === "large" && styles.large,
-        pressed ? styles.pressed : styles.raised,
+        pressed && styles.pressed,
         inactive && styles.inactive,
       ]}
     >
@@ -66,10 +66,8 @@ const makeStyles = (c: Palette) =>
     button: {
       minHeight: tokens.layout.inputHeight,
       paddingHorizontal: tokens.spacing.xl,
-      borderRadius: tokens.radii.pill,
+      borderRadius: 14,
       backgroundColor: c.accent,
-      borderWidth: tokens.borderWidth.outline,
-      borderColor: c.outline,
       alignItems: "center",
       justifyContent: "center",
     },
@@ -81,18 +79,14 @@ const makeStyles = (c: Palette) =>
     },
     secondary: {
       backgroundColor: c.card,
+      borderWidth: tokens.borderWidth.outline,
+      borderColor: c.hairline,
     },
     large: {
       minHeight: tokens.layout.flickButtonHeight,
     },
-    raised: {
-      ...tokens.shadows.sticker,
-      shadowColor: c.shadow,
-    },
     pressed: {
-      ...tokens.shadows.stickerPressed,
-      shadowColor: c.shadow,
-      transform: [{ translateY: tokens.shadows.sticker.shadowOffset.height - tokens.shadows.stickerPressed.shadowOffset.height }],
+      transform: [{ scale: 0.97 }],
     },
     inactive: {
       opacity: 0.6,
@@ -100,7 +94,7 @@ const makeStyles = (c: Palette) =>
     label: {
       color: c.onAccent,
       fontFamily: tokens.fonts.extrabold,
-      fontSize: tokens.fontSizes.cardTitle,
+      fontSize: tokens.fontSizes.body,
       textAlign: "center",
     },
     secondaryLabel: {

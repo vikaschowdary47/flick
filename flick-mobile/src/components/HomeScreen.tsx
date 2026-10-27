@@ -24,7 +24,6 @@ import { usePinFile } from "../hooks/usePinFile";
 import { useRecentFiles } from "../hooks/useRecentFiles";
 import { useRemoveFile } from "../hooks/useRemoveFile";
 import { useUpload } from "../hooks/useUpload";
-import { APP_NAME } from "../lib/appName";
 import { pruneCache } from "../lib/cache";
 import { formatExpiry, formatSender } from "../lib/format";
 import type { FileRow } from "../lib/types";
@@ -35,8 +34,10 @@ import { FileMenu, type FileMenuItem } from "./FileMenu";
 import { FileViewer } from "./FileViewer";
 import { Header } from "./Header";
 import { LimitScreen } from "./LimitScreen";
-import { EyeIcon, GearIcon, PinIcon, ShareIcon, SignOutIcon, TrashIcon } from "./Icons";
-import { PillButton } from "./PillButton";
+import { AppMark, DownloadIcon, EyeIcon, GearIcon, PinIcon, ShareIcon, SignOutIcon, TrashIcon } from "./Icons";
+import { useV2, type V2 } from "../design/v2";
+import { LandedCard } from "./LandedCard";
+import { SendDock } from "./SendDock";
 import { SettingsSheet } from "./SettingsSheet";
 import { SourceSheet } from "./SourceSheet";
 import { Tabs, type HomeTab } from "./Tabs";
@@ -49,6 +50,11 @@ type Props = {
   onSignOut: () => void;
   onDeleteAccount: () => Promise<string | null>;
 };
+
+// How recent the newest file must be to show as the large "landed" card.
+const LANDED_WINDOW_MS = 2 * 60 * 60 * 1000;
+// A device counts as online if it checked in within this window.
+const ONLINE_WINDOW_MS = 15 * 60 * 1000;
 
 function requestIdle(callback: () => void): void {
   const idle = (globalThis as typeof globalThis & {
@@ -81,7 +87,9 @@ export function HomeScreen({ userId, email, onSignOut, onDeleteAccount }: Props)
     });
   });
   const listRef = useRef<FlatList<FileRow>>(null);
-  const opener = useOpenFile();
+  // Short notes under the dock: paste results, "Saved to Download".
+  const [dockNote, setDockNote] = useState<string | null>(null);
+  const opener = useOpenFile(setDockNote);
   const now = useNow();
   const remover = useRemoveFile(recent.refresh);
   const pinner = usePinFile(recent.refresh);
@@ -102,7 +110,8 @@ export function HomeScreen({ userId, email, onSignOut, onDeleteAccount }: Props)
     setTab(next);
     if (next === "clips") clips.clearNew();
   };
-  const compact = profile.density === "compact";
+  // Redesign v2 has one layout (the old Comfy cards are retired).
+  const compact = true;
   // Home/Lock Screen widgets (development build only), switched per device
   // in Settings (devices.widget_mode).
   const widgetSenderOf = useCallback(
@@ -155,21 +164,20 @@ export function HomeScreen({ userId, email, onSignOut, onDeleteAccount }: Props)
     deepLink.consume();
   }, [deepLink.target, recent.files, clipsOn, clips.clips]);
 
-  const tabs = clipsOn ? <Tabs tab={activeTab} onChange={changeTab} clipsDot={clips.hasNew} slim={compact} /> : null;
+  const tabs = clipsOn ? (
+    <Tabs tab={activeTab} onChange={changeTab} clipsDot={clips.hasNew} slim={compact} fileCount={recent.files.filter((file) => !remover.isHidden(file.id)).length} clipCount={clips.clips.length} />
+  ) : null;
+  // Your other devices for the header: laptop or phone, and how many were seen lately.
+  const otherDevices = device.devices.filter((row) => row.id !== device.deviceId);
+  const deviceKinds = otherDevices.map((row) => (/^(ios|android)$/i.test(row.platform) ? "phone" : "laptop") as "phone" | "laptop");
+  const onlineCount = otherDevices.filter((row) => now - new Date(row.last_seen_at).getTime() < ONLINE_WINDOW_MS).length;
   // Compact: Settings / Sign out live in a ⋯ menu in the header.
   const [accountMenuY, setAccountMenuY] = useState<number | null>(null);
-  // Compact: the big heading fades and slides up as the list scrolls.
+  // Scroll position of the compact list (kept for the list's native driver).
   const scrollY = useRef(new Animated.Value(0)).current;
-  const fade = tokens.compact.headingFadeDistance;
-  const headingStyle = {
-    opacity: scrollY.interpolate({ inputRange: [0, fade], outputRange: [1, 0], extrapolate: "clamp" as const }),
-    transform: [
-      { translateY: scrollY.interpolate({ inputRange: [0, fade], outputRange: [0, -tokens.spacing.md], extrapolate: "clamp" as const }) },
-    ],
-  };
   const compactTopBar = compact ? (
     <View style={styles.compactTop}>
-      <Header status={connection.status} onMenu={(pageY) => setAccountMenuY(pageY)} />
+      <Header status={connection.status} devices={deviceKinds} online={onlineCount} onMenu={() => setSettingsOpen(true)} />
       {tabs}
     </View>
   ) : null;
@@ -201,6 +209,34 @@ export function HomeScreen({ userId, email, onSignOut, onDeleteAccount }: Props)
     () => recent.files.filter((file) => !remover.isHidden(file.id)),
     [recent.files, remover.isHidden],
   );
+  // Redesign v2: the newest file from the last couple of hours "lands" as a
+  // large card above the list (and isn't repeated in it).
+  const landed = useMemo(() => {
+    const newest = visibleFiles[0];
+    if (!newest || newest.pinned) return null;
+    return now - new Date(newest.created_at).getTime() < LANDED_WINDOW_MS ? newest : null;
+  }, [visibleFiles, now]);
+  const listFiles = useMemo(
+    () => (landed ? visibleFiles.filter((file) => file.id !== landed.id) : visibleFiles),
+    [visibleFiles, landed],
+  );
+
+  // Dock "Paste": the clipboard is read only when tapped, then sent as a clip.
+  useEffect(() => {
+    if (!dockNote) return;
+    const timer = setTimeout(() => setDockNote(null), 3500);
+    return () => clearTimeout(timer);
+  }, [dockNote]);
+  const pasteClip = useCallback(async () => {
+    const text = await Clipboard.getStringAsync();
+    if (!text.trim()) {
+      setDockNote("Your clipboard is empty.");
+      return;
+    }
+    const error = await clips.send(text);
+    setDockNote(error ?? "Sent to your devices.");
+    if (!error) changeTab("clips");
+  }, [clips.send]);
 
   // Compact rows/tiles: tap or long-press opens the same menu as the cards.
   const openingId = opener.openingId;
@@ -266,6 +302,13 @@ export function HomeScreen({ userId, email, onSignOut, onDeleteAccount }: Props)
           onPress: () => opener.open(menu.file),
         },
         {
+          key: "save",
+          label: "Save to phone",
+          icon: <DownloadIcon />,
+          fill: "share",
+          onPress: () => opener.save(menu.file),
+        },
+        {
           key: "share",
           label: "Share",
           icon: <ShareIcon />,
@@ -309,10 +352,20 @@ export function HomeScreen({ userId, email, onSignOut, onDeleteAccount }: Props)
   const openError = shareLinks.status || remover.error || pinner.error || opener.error;
   const filesHeader = compact ? (
     <View style={styles.compactHeader}>
-      <Animated.Text accessibilityRole="header" style={[styles.heading, headingStyle]}>
-        {APP_NAME} it to all your devices
-      </Animated.Text>
       <UploadCard state={upload} onDismiss={reset} />
+      {landed && (
+        <LandedCard
+          file={landed}
+          now={now}
+          sender={senderOf(landed)}
+          opening={opener.openingId === landed.id}
+          selected={menu?.file.id === landed.id}
+          onMenu={openMenu}
+          onShare={(file) => opener.share(file)}
+          onSave={(file) => opener.save(file)}
+          onPreview={(file) => opener.open(file)}
+        />
+      )}
       <StorageNudge usage={usage.usage} files={recent.files} onRemove={remover.removeNow} />
       {openError && (
         <Text accessibilityRole="alert" style={styles.openError}>
@@ -323,14 +376,22 @@ export function HomeScreen({ userId, email, onSignOut, onDeleteAccount }: Props)
   ) : (
     <View style={styles.top}>
       <Header status={connection.status} />
-      <Text accessibilityRole="header" style={styles.heading}>
-        {APP_NAME} it to all your devices
-      </Text>
       {tabs}
       <UploadCard state={upload} onDismiss={reset} />
+      {landed && (
+        <LandedCard
+          file={landed}
+          now={now}
+          sender={senderOf(landed)}
+          opening={opener.openingId === landed.id}
+          selected={menu?.file.id === landed.id}
+          onMenu={openMenu}
+          onShare={(file) => opener.share(file)}
+        />
+      )}
       <StorageNudge usage={usage.usage} files={recent.files} onRemove={remover.removeNow} />
       <Text accessibilityRole="header" style={styles.eyebrow}>
-        RECENTLY SENT
+        Recent
       </Text>
       {openError && (
         <Text accessibilityRole="alert" style={styles.openError}>
@@ -339,11 +400,12 @@ export function HomeScreen({ userId, email, onSignOut, onDeleteAccount }: Props)
       )}
     </View>
   );
-  const filesEmpty = (
-    <Text style={styles.empty}>
-      {recent.loading ? "Loading…" : recent.error ?? `Nothing yet. Send something with ${APP_NAME}!`}
-    </Text>
-  );
+  const filesEmpty =
+    recent.loading || recent.error || landed ? (
+      <Text style={styles.empty}>{recent.loading ? "Loading…" : recent.error ?? "Nothing else today."}</Text>
+    ) : (
+      <EmptyFiles />
+    );
 
   return (
     <SafeAreaView style={styles.safe} edges={["top", "left", "right", "bottom"]}>
@@ -354,9 +416,6 @@ export function HomeScreen({ userId, email, onSignOut, onDeleteAccount }: Props)
             compact ? undefined : (
               <>
                 <Header status={connection.status} />
-                <Text accessibilityRole="header" style={styles.heading}>
-                  {APP_NAME} it to all your devices
-                </Text>
                 {tabs}
               </>
             )
@@ -374,7 +433,7 @@ export function HomeScreen({ userId, email, onSignOut, onDeleteAccount }: Props)
       ) : profile.density === "compact" ? (
         <CompactFilesList
           ref={compactListRef}
-          files={visibleFiles}
+          files={listFiles}
           header={filesHeader}
           empty={filesEmpty}
           now={now}
@@ -389,7 +448,7 @@ export function HomeScreen({ userId, email, onSignOut, onDeleteAccount }: Props)
       ) : (
       <FlatList
         ref={listRef}
-        data={visibleFiles}
+        data={listFiles}
         extraData={[menu, now, device.names]}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
@@ -414,12 +473,16 @@ export function HomeScreen({ userId, email, onSignOut, onDeleteAccount }: Props)
             </Pressable>
           </View>
         )}
-        <PillButton
-          label={`${APP_NAME} it`}
-          size="large"
-          onPress={() => setSourceOpen(true)}
+        {dockNote && (
+          <Text accessibilityLiveRegion="polite" style={styles.dockNote}>
+            {dockNote}
+          </Text>
+        )}
+        <SendDock
+          onSend={() => setSourceOpen(true)}
+          onPhotos={() => void pickAndUpload("photos")}
+          onPaste={clipsOn ? () => void pasteClip() : undefined}
           busy={upload.kind === "uploading"}
-          accessibilityHint="Choose photos, a file, or take a photo to send to all your devices"
         />
         {!compact && email && (
           <Text style={styles.signedInAs} numberOfLines={1} ellipsizeMode="middle">
@@ -509,10 +572,65 @@ export function HomeScreen({ userId, email, onSignOut, onDeleteAccount }: Props)
         onDensityChange={profile.setDensity}
         widgetMode={device.widgetMode}
         onWidgetModeChange={device.setWidgetMode}
+        onSignOut={() => {
+          setSettingsOpen(false);
+          onSignOut();
+        }}
       />
     </SafeAreaView>
   );
 }
+
+// First run / nothing today (v2): a quiet drop zone and the three ways to send.
+export function EmptyFiles() {
+  const v = useV2();
+  const s = emptyStyles(v);
+  const ways = [
+    ["Tap the amber button", "Pick a file or photo"],
+    ["Share from any app", "Share, then eqlShare"],
+    ["Paste text or a link", "It becomes a clip"],
+  ];
+  return (
+    <View style={s.wrap}>
+      <Text accessibilityRole="header" style={s.today}>Today</Text>
+      <View style={s.dz} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+        <AppMark size={44} />
+      </View>
+      <Text style={s.title}>Nothing has landed yet</Text>
+      <Text style={s.sub}>Send something from any of your devices and it shows up here for 24 hours.</Text>
+      <Text style={s.label}>Three ways to send</Text>
+      <View style={s.group}>
+        {ways.map(([title, sub], index) => (
+          <View key={title} style={s.row}>
+            {index > 0 && <View style={s.sep} />}
+            <View style={s.step}><Text style={s.stepText}>{index + 1}</Text></View>
+            <View style={{ flex: 1 }}>
+              <Text style={s.rowTitle}>{title}</Text>
+              <Text style={s.rowSub}>{sub}</Text>
+            </View>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+const emptyStyles = (v: V2) =>
+  StyleSheet.create({
+    wrap: { paddingHorizontal: 4 },
+    today: { color: v.ink, fontFamily: tokens.fonts.extrabold, fontSize: 32, letterSpacing: -0.6, marginTop: 2 },
+    dz: { width: 200, height: 132, alignSelf: "center", marginTop: 28, marginBottom: 22, borderRadius: 24, borderWidth: 1.5, borderStyle: "dashed", borderColor: v.ink3, alignItems: "center", justifyContent: "center" },
+    title: { color: v.ink, fontFamily: tokens.fonts.extrabold, fontSize: 22, letterSpacing: -0.2, textAlign: "center", marginBottom: 6 },
+    sub: { color: v.ink2, fontFamily: tokens.fonts.regular, fontSize: 16, lineHeight: 22, textAlign: "center", alignSelf: "center", maxWidth: 290 },
+    label: { color: v.ink2, fontFamily: tokens.fonts.extrabold, fontSize: 14, marginTop: 26, marginBottom: 8, marginHorizontal: 4 },
+    group: { borderRadius: 18, backgroundColor: v.surface, borderWidth: 1, borderColor: v.edge, overflow: "hidden" },
+    row: { minHeight: 56, flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 14, paddingVertical: 10 },
+    sep: { position: "absolute", top: 0, left: 54, right: 0, height: StyleSheet.hairlineWidth, backgroundColor: v.hair },
+    step: { width: 28, height: 28, borderRadius: 14, backgroundColor: v.fill, alignItems: "center", justifyContent: "center" },
+    stepText: { color: v.ink2, fontFamily: tokens.fonts.extrabold, fontSize: 13 },
+    rowTitle: { color: v.ink, fontFamily: tokens.fonts.semibold, fontSize: 15.5 },
+    rowSub: { color: v.ink3, fontFamily: tokens.fonts.regular, fontSize: 13 },
+  });
 
 function Separator() {
   const styles = useThemedStyles(makeStyles);
@@ -607,7 +725,13 @@ const makeStyles = (c: Palette) =>
       paddingHorizontal: tokens.layout.screenPadding,
       paddingTop: tokens.spacing.sm,
       paddingBottom: tokens.spacing.sm,
-      gap: tokens.spacing.xs,
+      gap: tokens.spacing.sm,
+    },
+    dockNote: {
+      alignSelf: "center",
+      color: c.textMuted,
+      fontFamily: tokens.fonts.semibold,
+      fontSize: tokens.fontSizes.meta,
     },
     footerLinks: {
       flexDirection: "row",

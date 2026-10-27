@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { pageMetadata } from "../../lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Terms of Service",
-  description: "The rules for using eqlShare.",
-};
+  description: "The terms for using the eqlShare apps and website, including your account and the files you share.",
+  path: "/terms",
+});
 
 const SUPPORT = "support@eqlshare.com";
 
@@ -16,7 +18,7 @@ export default function Terms() {
         <span className="kicker">eqlShare / terms</span>
         <h1>Terms of service.</h1>
         <p className="legal-lede">The short version: use eqlShare responsibly, keep your own copies of anything important, and we&apos;ll work hard to keep it useful.</p>
-        <p><strong>Last updated: October 25, 2026</strong></p>
+        <p><strong>Last updated: October 27, 2026</strong></p>
 
         <h2>Agreeing to these terms</h2>
         <p>By creating an account or using eqlShare&apos;s apps or website, you agree to these terms and to our <Link href="/privacy">Privacy Policy</Link>. If you don&apos;t agree, please don&apos;t use eqlShare.</p>
@@ -26,6 +28,7 @@ export default function Terms() {
 
         <h2>Your content</h2>
         <p>You own what you upload. You give us permission to store, process and transmit it only as needed to run eqlShare for you: delivering it to your devices and to people you share links with. We don&apos;t use your content for anything else.</p>
+        <p>Some features work only on your own device. The desktop app&apos;s clipboard history is stored on that computer and never uploaded unless you send an item; see the <Link href="/privacy">Privacy Policy</Link>. You can turn it off in Settings. Anything you choose to send from it is your content under these terms.</p>
 
         <h2>Temporary by design</h2>
         <p>eqlShare is for moving things, not storing them. Files and clips are deleted automatically 24 hours after upload unless pinned, and plans have limits on file size, total storage, pins and devices. eqlShare is not a backup service: keep your own copy of anything important.</p>

@@ -24,15 +24,6 @@
 .legal-card li { margin: 6px 0; }
 .legal-card li strong, .legal-card p strong { color: var(--ink); }
 
-@media (prefers-color-scheme: dark) {
-  .hero h1 em, .feature-heading em, .intro-heading span, .faq-layout em, .not-found em { color: var(--primary); background: none; padding: 0; }
-  .footer nav a:hover, .legal-card a, .faq-list p a { color: var(--primary); }
-  .cta-section h2, .cta-section p, .cta-note { color: var(--on-primary); }
-}
-@media (prefers-color-scheme: dark) {
-  .cta-section .form-row button { background: var(--on-primary); color: #FFF8EE; }
-  .cta-section .form-row button span { color: var(--primary); }
-}
 .form-success { flex-wrap: wrap; }
 .form-success-again { margin-left: auto; border: 0; background: none; font: inherit; font-size: 12px; font-weight: 800; color: var(--on-color); text-decoration: underline; cursor: pointer; }
 .form-note a { color: inherit; text-decoration: underline; }
@@ -44,6 +35,3 @@
 .legal-card a.primary-button { color: var(--cream); text-decoration: none; }
 .legal-card a.primary-button span { color: var(--yellow); }
 .auth-handoff .legal-card h1 { font-size: clamp(40px, 6vw, 60px); overflow-wrap: anywhere; }
-@media (prefers-color-scheme: dark) {
-  .legal-card a.primary-button, .legal-card a.primary-button span { color: var(--on-primary); }
-}

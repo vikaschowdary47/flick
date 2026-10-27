@@ -35,8 +35,12 @@ export function createDeleteAccountHandler(deps: Dependencies) {
     } catch { return json({ error: 'Invalid request' }, 400); }
     if (body.confirmation !== 'DELETE') return json({ error: 'Type DELETE to confirm.' }, 400);
     // Never accept a target user ID from the body.
+    // Which step failed is returned (no internals) and the real error is
+    // logged, so "couldn't finish" can be traced in the function logs.
+    let step: 'start' | 'files' | 'apple' | 'account' = 'start';
     try {
       await deps.beginDeletion(user.id);
+      step = 'files';
       let batches = 0;
       const emptyPrefix = async (prefix: string, depth = 0): Promise<void> => {
         if (depth > 20) throw new Error('Storage nesting limit');
@@ -56,14 +60,17 @@ export function createDeleteAccountHandler(deps: Dependencies) {
         }
       };
       await emptyPrefix(user.id);
+      step = 'apple';
       const appleRevoked = await deps.revokeApple(user, body);
       // files, clips, devices, profiles, waitlist and share_links all reference
       // auth.users with ON DELETE CASCADE; link rate limits cascade from links.
+      step = 'account';
       await deps.deleteUser(user.id);
       return json({ deleted: true, appleRevocationRequired: !appleRevoked });
-    } catch {
+    } catch (reason) {
+      console.error(`delete-account failed at ${step}:`, reason);
       // Marker stays in place; retries continue cleanup without orphaning storage.
-      return json({ error: "Couldn't finish deleting your account. Please retry; uploads are paused until cleanup finishes." }, 503);
+      return json({ error: "Couldn't finish deleting your account. Please retry; uploads are paused until cleanup finishes.", step }, 503);
     }
   };
 }

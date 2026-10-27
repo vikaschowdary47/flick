@@ -185,6 +185,11 @@ export function useSession() {
   const signInWithGoogle = useCallback(async () => {
     try {
       const redirectTo = authRedirectUrl();
+      // Supabase only returns to this URL if it is listed under Auth → URL
+      // Configuration → Redirect URLs. If it isn't, Supabase sends the browser to
+      // the Site URL instead and the app never hears back. In Expo Go this is an
+      // exp://<your-ip>:8081/--/auth-callback URL, so it needs its own entry.
+      if (__DEV__) console.log(`[auth] Google redirectTo (must be allow-listed in Supabase): ${redirectTo}`);
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: { redirectTo, skipBrowserRedirect: true },
@@ -267,7 +272,7 @@ export function useSession() {
       const { data, error } = await supabase.functions.invoke("delete-account", {
         body: { confirmation: "DELETE", appleAuthorizationCode, appleRefreshToken: session.provider_refresh_token ?? undefined },
       });
-      if (error || !data?.deleted) return "Couldn't finish deleting your account. Check your connection and retry; uploads may be paused until cleanup finishes.";
+      if (error || !data?.deleted) return await deletionFailureMessage(error);
       setAccountCacheEnabled(false);
       let cleanupFailed = false;
       try { clearAccountCache(); } catch { cleanupFailed = true; }
@@ -289,7 +294,9 @@ export function useSession() {
   const signOut = useCallback(async () => {
     clearCache(); // no downloaded copies stay behind after sign-out
     void widgetsBridge.clear(); // widgets don't keep showing this account
-    await supabase.auth.signOut();
+    // "local": sign out this phone only. Its session ends on the server, so it
+    // stops counting toward your devices; your other devices stay signed in.
+    await supabase.auth.signOut({ scope: "local" });
   }, []);
 
   return {
@@ -316,4 +323,24 @@ function friendlyAuthError(message: string): string {
   if (/email not confirmed/i.test(message)) return "Confirm your email first, then try again.";
   if (/cancel|dismiss|closed|access_denied/i.test(message)) return "Sign-in was cancelled.";
   return message;
+}
+
+// Turns a failed delete-account call into a message that says what to do.
+// 404 means the function isn't deployed on the Supabase project yet.
+export async function deletionFailureMessage(error: unknown): Promise<string> {
+  const context = (error as { context?: unknown } | null)?.context;
+  if (context instanceof Response) {
+    if (context.status === 404) return "Account deletion isn't switched on yet: the delete-account function isn't deployed on the server.";
+    if (context.status === 401) return "Sign in again, then delete your account.";
+    let step = "";
+    try {
+      const body: unknown = await context.clone().json();
+      if (body && typeof body === "object" && "step" in body && typeof body.step === "string") step = body.step;
+    } catch {
+      // not JSON
+    }
+    const where: Record<string, string> = { start: "starting", files: "removing your files", apple: "revoking Sign in with Apple", account: "removing your account" };
+    return `Couldn't finish deleting your account${where[step] ? ` (it stopped while ${where[step]})` : ""}. Try again in a moment; uploads stay paused until it finishes.`;
+  }
+  return "Couldn't reach the server to delete your account. Check your connection and try again.";
 }

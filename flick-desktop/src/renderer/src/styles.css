@@ -58,7 +58,7 @@ input:focus-visible {
   min-height: 0;
   flex-direction: column;
   overflow: hidden;
-  border: 1px solid var(--flick-navy);
+  border: 1px solid var(--flick-hairline);
   border-radius: var(--flick-radius-window);
   background: var(--flick-cream);
   box-shadow: var(--flick-window-shadow);
@@ -118,7 +118,7 @@ input:focus-visible {
   align-items: center;
   gap: 7px;
   padding: 0 12px;
-  border: 1px solid var(--flick-navy);
+  border: 1px solid var(--flick-hairline);
   border-radius: var(--flick-radius-pill);
   font-size: var(--flick-font-size-status);
   font-weight: var(--flick-font-weight-semibold);
@@ -141,7 +141,7 @@ input:focus-visible {
   width: 7px;
   height: 7px;
   flex: 0 0 7px;
-  border: 1px solid var(--flick-navy);
+  border: 1px solid var(--flick-hairline);
   border-radius: 50%;
   background: currentColor;
 }
@@ -160,7 +160,7 @@ input:focus-visible {
 }
 
 .sign-out-button:hover {
-  border-color: var(--flick-navy);
+  border-color: var(--flick-hairline);
   color: var(--flick-navy);
 }
 
@@ -174,7 +174,7 @@ input:focus-visible {
   width: var(--flick-button-target);
   height: var(--flick-button-target);
   place-items: center;
-  border: 2px solid var(--flick-navy);
+  border: 2px solid var(--flick-hairline);
   border-radius: var(--flick-radius-circle);
   background: var(--flick-white);
   cursor: pointer;
@@ -214,7 +214,7 @@ input:focus-visible {
   align-items: stretch;
   gap: 12px;
   padding: 14px;
-  border: 1.5px solid var(--flick-navy);
+  border: 1.5px solid var(--flick-hairline);
   border-radius: var(--flick-radius-card);
   background: var(--flick-cream);
   box-shadow: var(--flick-window-shadow);
@@ -230,7 +230,7 @@ input:focus-visible {
 
 .account-popover .sign-out-button {
   min-height: 40px;
-  border-color: var(--flick-navy);
+  border-color: var(--flick-hairline);
   background: var(--flick-coral);
   box-shadow: var(--flick-button-shadow);
   color: var(--flick-navy);
@@ -239,7 +239,7 @@ input:focus-visible {
 }
 
 .account-popover .sign-out-button:hover {
-  border-color: var(--flick-navy);
+  border-color: var(--flick-hairline);
   background: var(--flick-yellow);
   color: var(--flick-navy);
 }
@@ -293,7 +293,7 @@ input:focus-visible {
   width: var(--flick-button-target);
   height: var(--flick-button-target);
   place-items: center;
-  border: 1.5px solid var(--flick-navy);
+  border: 1.5px solid var(--flick-hairline);
   border-radius: 50%;
   background: var(--flick-coral);
   box-shadow: var(--flick-button-shadow);
@@ -308,12 +308,12 @@ input:focus-visible {
 
 .add-file-button:hover:not(:disabled) {
   transform: translateY(-2px) rotate(8deg);
-  box-shadow: 0 6px 0 var(--flick-navy);
+  box-shadow: none;
 }
 
 .add-file-button:active:not(:disabled) {
   transform: translateY(2px);
-  box-shadow: 0 2px 0 var(--flick-navy);
+  box-shadow: none;
 }
 
 .add-file-button:disabled,
@@ -345,7 +345,7 @@ input:focus-visible {
   display: flex;
   min-height: 82px;
   align-items: center;
-  border: 1.5px solid var(--flick-navy);
+  border: 1.5px solid var(--flick-hairline);
   border-radius: var(--flick-radius-card);
   background: var(--flick-fallback-tile);
   box-shadow: var(--flick-card-shadow);
@@ -414,7 +414,7 @@ input:focus-visible {
   width: 32px;
   height: 32px;
   place-items: center;
-  border: 1px solid var(--flick-navy);
+  border: 1px solid var(--flick-hairline);
   border-radius: var(--flick-radius-circle);
   background: var(--flick-cream);
   box-shadow: var(--flick-button-shadow);
@@ -448,7 +448,7 @@ input:focus-visible {
   width: max-content;
   max-width: 180px;
   padding: 5px 8px;
-  border: 1px solid var(--flick-navy);
+  border: 1px solid var(--flick-hairline);
   border-radius: var(--flick-radius-small);
   background: var(--flick-cream);
   box-shadow: var(--flick-drag-pill-shadow);
@@ -500,7 +500,7 @@ input:focus-visible {
   flex: 0 0 var(--flick-thumbnail-size);
   place-items: center;
   overflow: hidden;
-  border: 1.5px solid var(--flick-navy);
+  border: 1.5px solid var(--flick-hairline);
   border-radius: var(--flick-radius-thumbnail);
   background: var(--flick-cream);
   color: var(--flick-navy);
@@ -631,7 +631,7 @@ input:focus-visible {
   width: 8px;
   height: 8px;
   flex: 0 0 8px;
-  border: 1px solid var(--flick-navy);
+  border: 1px solid var(--flick-hairline);
   border-radius: 50%;
   background: var(--flick-coral);
 }
@@ -641,10 +641,10 @@ input:focus-visible {
   top: -10px;
   right: 12px;
   padding: 4px 9px;
-  border: 1px solid var(--flick-navy);
+  border: 1px solid var(--flick-hairline);
   border-radius: var(--flick-radius-pill);
   background: var(--flick-cream);
-  box-shadow: 0 2px 0 var(--flick-navy);
+  box-shadow: none;
   font-size: var(--flick-font-size-status);
   font-weight: var(--flick-font-weight-extrabold);
   opacity: 0;
@@ -665,10 +665,10 @@ input:focus-visible {
   min-height: 38px;
   margin-right: 12px;
   padding: 0 12px;
-  border: 1px solid var(--flick-navy);
+  border: 1px solid var(--flick-hairline);
   border-radius: var(--flick-radius-pill);
   background: var(--flick-coral);
-  box-shadow: 0 3px 0 var(--flick-navy);
+  box-shadow: none;
   cursor: pointer;
   font-size: var(--flick-font-size-status);
   font-weight: var(--flick-font-weight-extrabold);
@@ -696,7 +696,7 @@ input:focus-visible {
   align-items: center;
   gap: 10px;
   padding: 5px 7px 5px 14px;
-  border: 1px solid var(--flick-navy);
+  border: 1px solid var(--flick-hairline);
   border-radius: var(--flick-radius-pill);
   background: var(--flick-navy);
   box-shadow: var(--flick-window-shadow);
@@ -708,7 +708,7 @@ input:focus-visible {
 .removal-toast button {
   min-height: 30px;
   padding: 0 12px;
-  border: 1px solid var(--flick-navy);
+  border: 1px solid var(--flick-hairline);
   border-radius: var(--flick-radius-pill);
   background: var(--flick-yellow);
   color: var(--flick-navy);
@@ -786,7 +786,7 @@ input:focus-visible {
 .sign-in-button {
   min-height: var(--flick-button-target);
   padding: 0 22px;
-  border: 1.5px solid var(--flick-navy);
+  border: 1.5px solid var(--flick-hairline);
   border-radius: var(--flick-radius-button);
   background: var(--flick-coral);
   box-shadow: var(--flick-button-shadow);
@@ -802,13 +802,13 @@ input:focus-visible {
 .choose-files-button:hover:not(:disabled),
 .sign-in-button:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 6px 0 var(--flick-navy);
+  box-shadow: none;
 }
 
 .choose-files-button:active:not(:disabled),
 .sign-in-button:active:not(:disabled) {
   transform: translateY(2px);
-  box-shadow: 0 2px 0 var(--flick-navy);
+  box-shadow: none;
 }
 
 .empty-drop-hint {
@@ -898,7 +898,7 @@ input:focus-visible {
   width: 100%;
   min-height: 40px;
   padding: 0 16px;
-  border: 1.5px solid var(--flick-navy);
+  border: 1.5px solid var(--flick-hairline);
   border-radius: var(--flick-radius-input);
   background: var(--flick-white);
   color: var(--flick-navy);
@@ -999,7 +999,7 @@ input:focus-visible {
   justify-content: center;
   gap: 8px;
   padding: 0 20px;
-  border-top: 1px solid var(--flick-navy);
+  border-top: 1px solid var(--flick-hairline);
   color: var(--flick-muted);
   font-size: var(--flick-font-size-helper);
   font-weight: var(--flick-font-weight-semibold);
@@ -1012,7 +1012,7 @@ input:focus-visible {
   height: 21px;
   flex: 0 0 21px;
   place-items: center;
-  border: 1px solid var(--flick-navy);
+  border: 1px solid var(--flick-hairline);
   border-radius: 50%;
   background: var(--flick-yellow);
   color: var(--flick-navy);
@@ -1027,7 +1027,7 @@ input:focus-visible {
   inset: 8px;
   display: grid;
   place-items: center;
-  border: 2px dashed var(--flick-navy);
+  border: 1.5px dashed var(--flick-muted);
   border-radius: calc(var(--flick-radius-window) - 4px);
   background: var(--flick-overlay);
   color: var(--flick-cream);
@@ -1051,7 +1051,7 @@ input:focus-visible {
   position: absolute;
   width: 7px;
   height: 11px;
-  border: 1px solid var(--flick-navy);
+  border: 1px solid var(--flick-hairline);
   border-radius: 2px;
   animation: confetti-pop var(--flick-motion-duration) ease-out both;
 }
@@ -1162,7 +1162,7 @@ input:focus-visible {
   height: 18px;
   margin-right: 6px;
   vertical-align: -3px;
-  border: 2px solid var(--flick-navy);
+  border: 2px solid var(--flick-hairline);
   border-radius: 999px;
   background: var(--flick-yellow);
 }
@@ -1221,7 +1221,7 @@ input:focus-visible {
   flex-direction: column;
   gap: 4px;
   padding: 6px;
-  border: 1.5px solid var(--flick-navy);
+  border: 1.5px solid var(--flick-hairline);
   border-radius: var(--flick-radius-card);
   background: var(--flick-cream);
   box-shadow: var(--flick-card-shadow);
@@ -1291,7 +1291,7 @@ input:focus-visible {
 .device-name-form input {
   min-height: 32px;
   padding: 0 10px;
-  border: 1.5px solid var(--flick-navy);
+  border: 1.5px solid var(--flick-hairline);
   border-radius: var(--flick-radius-small);
   background: var(--flick-white);
   color: var(--flick-navy);
@@ -1325,7 +1325,7 @@ input:focus-visible {
   flex-direction: column;
   gap: 12px;
   padding: 18px;
-  border: 1.5px solid var(--flick-navy);
+  border: 1.5px solid var(--flick-hairline);
   border-radius: var(--flick-radius-card);
   background: var(--flick-cream);
   box-shadow: var(--flick-card-shadow);
@@ -1359,7 +1359,7 @@ input:focus-visible {
   align-items: center;
   gap: 10px;
   padding: 8px 10px;
-  border: 1.5px solid var(--flick-navy);
+  border: 1.5px solid var(--flick-hairline);
   border-radius: var(--flick-radius-small);
   background: var(--flick-white);
 }
@@ -1386,7 +1386,7 @@ input:focus-visible {
 .limit-remove-button {
   min-height: 32px;
   padding: 0 12px;
-  border: 1.5px solid var(--flick-navy);
+  border: 1.5px solid var(--flick-hairline);
   border-radius: 999px;
   background: var(--flick-coral);
   color: var(--flick-navy);
@@ -1430,7 +1430,7 @@ input:focus-visible {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  border: 1.5px solid var(--flick-navy);
+  border: 1.5px solid var(--flick-hairline);
   border-radius: 999px;
   background: var(--flick-white);
   color: var(--flick-navy);
@@ -1456,7 +1456,7 @@ input:focus-visible {
 .home-tab-dot {
   width: 8px;
   height: 8px;
-  border: 1px solid var(--flick-navy);
+  border: 1px solid var(--flick-hairline);
   border-radius: 50%;
   background: var(--flick-coral);
 }
@@ -1478,7 +1478,7 @@ input:focus-visible {
   align-items: center;
   gap: 8px;
   padding: 8px;
-  border: 1.5px solid var(--flick-navy);
+  border: 1.5px solid var(--flick-hairline);
   border-radius: var(--flick-radius-card);
   background: var(--flick-lilac);
   box-shadow: var(--flick-card-shadow);
@@ -1525,7 +1525,7 @@ input:focus-visible {
 .clip-copy {
   min-height: 32px;
   padding: 0 12px;
-  border: 1.5px solid var(--flick-navy);
+  border: 1.5px solid var(--flick-hairline);
   border-radius: 999px;
   background: var(--flick-cream);
   color: var(--flick-navy);
@@ -1564,10 +1564,10 @@ input:focus-visible {
   align-items: center;
   gap: 4px;
   padding: 0 6px 0 0;
-  border: 1.5px solid var(--flick-navy);
+  border: 1.5px solid var(--flick-hairline);
   border-radius: var(--flick-radius-card);
   background: var(--flick-white);
-  box-shadow: 0 2px 0 var(--flick-navy);
+  box-shadow: none;
   color: var(--flick-navy);
 }
 
@@ -1596,7 +1596,7 @@ input:focus-visible {
   height: 28px;
   flex: none;
   place-items: center;
-  border: 1.5px solid var(--flick-navy);
+  border: 1.5px solid var(--flick-hairline);
   border-radius: 9px;
   background: var(--flick-fallback-tile);
   font-size: 8px;
@@ -1665,7 +1665,7 @@ input:focus-visible {
   height: 28px;
   flex: none;
   place-items: center;
-  border: 1px solid var(--flick-navy);
+  border: 1px solid var(--flick-hairline);
   border-radius: 50%;
   background: var(--flick-cream);
   color: var(--flick-navy);
@@ -1685,7 +1685,7 @@ input:focus-visible {
 .compact-retry {
   min-height: 26px;
   padding: 0 8px;
-  border: 1px solid var(--flick-navy);
+  border: 1px solid var(--flick-hairline);
   border-radius: 999px;
   background: var(--flick-yellow);
   color: var(--flick-navy);
@@ -1713,10 +1713,10 @@ input:focus-visible {
   height: 100%;
   place-items: center;
   padding: 0;
-  border: 1.5px solid var(--flick-navy);
+  border: 1.5px solid var(--flick-hairline);
   border-radius: var(--flick-radius-card);
   background: var(--flick-image-tile);
-  box-shadow: 0 2px 0 var(--flick-navy);
+  box-shadow: none;
   color: var(--flick-navy);
   cursor: grab;
   font: inherit;
@@ -1753,7 +1753,7 @@ input:focus-visible {
   left: 6px;
   width: 9px;
   height: 9px;
-  border: 1.5px solid var(--flick-navy);
+  border: 1.5px solid var(--flick-hairline);
   border-radius: 50%;
   background: var(--flick-yellow);
 }
@@ -1777,10 +1777,10 @@ input:focus-visible {
   align-items: center;
   gap: 2px;
   padding-right: 4px;
-  border: 1.5px solid var(--flick-navy);
+  border: 1.5px solid var(--flick-hairline);
   border-radius: 14px;
   background: var(--flick-white);
-  box-shadow: 0 2px 0 var(--flick-navy);
+  box-shadow: none;
   color: var(--flick-navy);
 }
 
@@ -1806,7 +1806,7 @@ input:focus-visible {
   height: 24px;
   flex: none;
   place-items: center;
-  border: 1.5px solid var(--flick-navy);
+  border: 1.5px solid var(--flick-hairline);
   border-radius: 8px;
   background: var(--flick-lilac);
 }
@@ -1921,10 +1921,10 @@ input:focus-visible {
   align-self: flex-start;
   min-height: 26px;
   padding: 0 12px;
-  border: 1.5px solid var(--flick-navy);
+  border: 1.5px solid var(--flick-hairline);
   border-radius: 999px;
   background: var(--flick-yellow);
-  box-shadow: 0 2px 0 var(--flick-navy);
+  box-shadow: none;
   color: var(--flick-navy);
   cursor: pointer;
   font: inherit;
@@ -1968,7 +1968,7 @@ input:focus-visible {
   height: 26px;
   order: 99;
   place-items: center;
-  border: 1px solid var(--flick-navy);
+  border: 1px solid var(--flick-hairline);
   border-radius: 50%;
   background: var(--flick-cream);
   color: var(--flick-navy);
@@ -2052,7 +2052,7 @@ input:focus-visible {
   width: 28px;
   height: 28px;
   flex: 0 0 28px;
-  box-shadow: 0 2px 0 var(--flick-navy);
+  box-shadow: none;
 }
 
 .widget-popover .account-button svg {
@@ -2064,7 +2064,7 @@ input:focus-visible {
   height: 28px;
   min-height: 28px;
   padding: 0 10px;
-  box-shadow: 0 2px 0 var(--flick-navy);
+  box-shadow: none;
 }
 
 .widget-popover .header-actions {
@@ -2099,10 +2099,10 @@ input:focus-visible {
 .popover-open {
   min-height: 26px;
   padding: 0 14px;
-  border: 1.5px solid var(--flick-navy);
+  border: 1.5px solid var(--flick-hairline);
   border-radius: 999px;
   background: var(--flick-yellow);
-  box-shadow: 0 2px 0 var(--flick-navy);
+  box-shadow: none;
   color: var(--flick-navy);
   cursor: pointer;
   font: inherit;
@@ -2112,10 +2112,10 @@ input:focus-visible {
 
 .compact-tile-more-images {
   aspect-ratio: 1;
-  border: 1.5px solid var(--flick-navy);
+  border: 1.5px solid var(--flick-hairline);
   border-radius: var(--flick-radius-card);
   background: var(--flick-cream);
-  box-shadow: 0 2px 0 var(--flick-navy);
+  box-shadow: none;
   color: var(--flick-navy);
   cursor: pointer;
   font: inherit;
@@ -2140,7 +2140,7 @@ input:focus-visible {
 .density-option {
   flex: 1;
   min-height: 28px;
-  border: 1.5px solid var(--flick-navy);
+  border: 1.5px solid var(--flick-hairline);
   border-radius: 999px;
   background: var(--flick-white);
   color: var(--flick-navy);
@@ -2250,7 +2250,7 @@ input:focus-visible {
   border: 1.5px solid var(--flick-error-outline);
   border-radius: var(--flick-radius-card);
   background: var(--flick-white);
-  box-shadow: 0 2px 0 var(--flick-navy);
+  box-shadow: none;
   color: var(--flick-navy);
 }
 
@@ -2267,7 +2267,7 @@ input:focus-visible {
   flex: none;
   min-height: 28px;
   padding: 0 12px;
-  border: 1.5px solid var(--flick-navy);
+  border: 1.5px solid var(--flick-hairline);
   border-radius: 999px;
   background: var(--flick-yellow);
   color: var(--flick-navy);
@@ -2294,10 +2294,10 @@ input:focus-visible {
   height: 28px;
   flex: none;
   place-items: center;
-  border: 1.5px solid var(--flick-navy);
+  border: 1.5px solid var(--flick-hairline);
   border-radius: 9px;
   background: var(--flick-primary);
-  box-shadow: 0 2px 0 var(--flick-navy);
+  box-shadow: none;
   color: var(--flick-on-primary);
   font-weight: var(--flick-font-weight-extrabold);
 }
@@ -2416,7 +2416,7 @@ input:focus-visible {
   flex-direction: column;
   gap: 8px;
   padding: 10px 12px;
-  border: 1.5px solid var(--flick-navy);
+  border: 1.5px solid var(--flick-hairline);
   border-radius: 14px;
   background: var(--flick-white);
   color: var(--flick-navy);
@@ -2469,7 +2469,7 @@ input:focus-visible {
 .usage-bar-track {
   height: 6px;
   overflow: hidden;
-  border: 1px solid var(--flick-navy);
+  border: 1px solid var(--flick-hairline);
   border-radius: 999px;
   background: var(--flick-cream);
 }
@@ -2490,7 +2490,7 @@ input:focus-visible {
   height: 22px;
   flex: none;
   padding: 0;
-  border: 1.5px solid var(--flick-navy);
+  border: 1.5px solid var(--flick-hairline);
   border-radius: 999px;
   background: var(--flick-cream);
   cursor: pointer;
@@ -2507,7 +2507,7 @@ input:focus-visible {
   left: 2px;
   width: 15px;
   height: 15px;
-  border: 1.5px solid var(--flick-navy);
+  border: 1.5px solid var(--flick-hairline);
   border-radius: 50%;
   background: var(--flick-white);
   transition: transform 120ms ease;
@@ -2525,7 +2525,7 @@ input:focus-visible {
 .settings-segment {
   flex: 1;
   min-height: 28px;
-  border: 1.5px solid var(--flick-navy);
+  border: 1.5px solid var(--flick-hairline);
   border-radius: 999px;
   background: var(--flick-white);
   color: var(--flick-navy);
@@ -2558,7 +2558,7 @@ input:focus-visible {
   align-items: center;
   gap: 4px;
   padding: 0 10px;
-  border: 1.5px solid var(--flick-navy);
+  border: 1.5px solid var(--flick-hairline);
   border-radius: 999px;
   background: var(--flick-white);
   color: var(--flick-navy);
@@ -2573,7 +2573,7 @@ input:focus-visible {
 .storage-nudge {
   margin-bottom: 6px;
   padding: 6px 8px;
-  border: 1.5px solid var(--flick-navy);
+  border: 1.5px solid var(--flick-hairline);
   border-radius: 12px;
   background: var(--flick-yellow);
   color: var(--flick-navy);
@@ -2595,7 +2595,7 @@ input:focus-visible {
   flex: none;
   min-height: 24px;
   padding: 0 10px;
-  border: 1.5px solid var(--flick-navy);
+  border: 1.5px solid var(--flick-hairline);
   border-radius: 999px;
   background: var(--flick-cream);
   color: var(--flick-navy);
@@ -2631,7 +2631,7 @@ input:focus-visible {
 .settings-input {
   min-height: 30px;
   padding: 0 10px;
-  border: 1.5px solid var(--flick-navy);
+  border: 1.5px solid var(--flick-hairline);
   border-radius: 10px;
   background: var(--flick-cream);
   color: var(--flick-navy);
@@ -2656,7 +2656,7 @@ input:focus-visible {
   gap: 16px;
   margin: 0;
   padding: 8px 12px;
-  border: 1px solid var(--flick-navy);
+  border: 1px solid var(--flick-hairline);
   border-radius: var(--flick-radius-small);
 }
 .profile-account-types label { flex-direction: row; align-items: center; gap: 6px; }
@@ -2732,13 +2732,226 @@ input:focus-visible {
   color: var(--flick-on-primary);
 }
 
+/* ------------------------------------------------------------------
+   Redesign v2 ("Minimal", docs/PLAN_redesign_v2.md)
+   Overrides only: flat native rows, a segmented Files/Clips control,
+   quiet header controls. Colors and type come from the tokens.
+   ------------------------------------------------------------------ */
+
+.widget {
+  border: 0.5px solid var(--flick-hairline);
+}
+
+.brand-lockup {
+  width: 112px;
+  height: 24px;
+  flex: 0 0 112px;
+}
+
+.status-pill {
+  min-height: 26px;
+  padding: 0 10px;
+  border: 0;
+  background: var(--flick-fill);
+  color: var(--flick-muted);
+}
+
+.status-pill-dot {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 6px;
+  border: 0;
+  background: var(--flick-muted);
+}
+
+.status-pill-connected .status-pill-dot {
+  background: var(--flick-live);
+}
+
+.account-button {
+  width: 30px;
+  height: 30px;
+  border: 0;
+  background: transparent;
+  transition: background-color 120ms ease;
+}
+
+.account-button:hover,
+.account-button[aria-expanded="true"] {
+  background: var(--flick-fill);
+  transform: none;
+}
+
+.account-button svg {
+  width: 18px;
+  height: 18px;
+  stroke: var(--flick-muted);
+}
+
+.home-tabs {
+  gap: 2px;
+  padding: 2px;
+  border-radius: 8px;
+  background: var(--flick-fill);
+}
+
+.home-tab {
+  min-height: 26px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--flick-muted);
+  font-size: 12.5px;
+  font-weight: var(--flick-font-weight-semibold);
+}
+
+.home-tab[aria-selected="true"] {
+  background: var(--flick-white);
+  color: var(--flick-navy);
+  box-shadow: 0 0 0 0.5px var(--flick-hairline);
+}
+
+.home-tab[aria-selected="true"] svg {
+  stroke: var(--flick-navy);
+}
+
+.home-tab-dot {
+  border: 0;
+  background: var(--flick-primary);
+}
+
+.compact-section-header {
+  font-size: 11.5px;
+  font-weight: var(--flick-font-weight-extrabold);
+  letter-spacing: 0;
+}
+
+.compact-section-count {
+  padding: 0;
+  border: 0;
+  font-size: 11px;
+  font-weight: var(--flick-font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.compact-row {
+  min-height: 46px;
+  gap: 8px;
+  padding: 0 8px 0 2px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  transition: background-color 120ms ease;
+}
+
+.compact-row:hover,
+.compact-row:focus-within {
+  background: var(--flick-fill);
+}
+
+.compact-icon {
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 7px;
+  background: var(--flick-fill);
+  font-size: 8.5px;
+  letter-spacing: 0;
+}
+
+.compact-name {
+  font-weight: var(--flick-font-weight-semibold);
+}
+
+.clip-chip {
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+}
+
+.clip-chip:hover,
+.clip-chip:focus-within {
+  background: var(--flick-fill);
+}
+
+.popover-empty-icon {
+  border: 0;
+  border-radius: 7px;
+  background: var(--flick-fill);
+  color: var(--flick-muted);
+}
+
+.popover-footer {
+  border-top: 0.5px solid var(--flick-hairline);
+}
+
+.popover-open {
+  min-height: 24px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--flick-muted);
+  font-weight: var(--flick-font-weight-semibold);
+}
+
+.popover-open:hover,
+.popover-open:focus-visible {
+  background: var(--flick-fill);
+  color: var(--flick-navy);
+}
+
+.sign-in-button.sign-in-button-secondary {
+  border-color: var(--flick-hairline);
+  background: var(--flick-white);
+  color: var(--flick-navy);
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --flick-background: var(--flick-dark-background);
     --flick-cream: var(--flick-dark-background);
-    --flick-white: #263447;
-    --flick-navy: #F9FAFB;
-    --flick-text: #F9FAFB;
-    --flick-muted: #CBD5E1;
+    --flick-white: #2A2926;
+    --flick-navy: #F4F1EA;
+    --flick-text: #F4F1EA;
+    --flick-muted: #A8A398;
+    --flick-hairline: rgba(244, 241, 234, 0.12);
+    --flick-fill: rgba(244, 241, 234, 0.08);
+    --flick-yellow: #3B301A;
+    --flick-coral: #4A2730;
+    --flick-mint: rgba(244, 241, 234, 0.08);
+    --flick-lilac: #2E2D2A;
+    --flick-image-tile: #2E2D2A;
+    --flick-document-tile: #2E2D2A;
+    --flick-archive-tile: #2E2D2A;
+    --flick-fallback-tile: #2E2D2A;
+    --flick-downloading-card: #2A2926;
+    --flick-connected-pill: rgba(244, 241, 234, 0.08);
+    --flick-signed-out-pill: rgba(244, 241, 234, 0.08);
+    --flick-offline-pill: #3B301A;
+    --flick-error-surface: #3A2328;
+    --flick-error-outline: #FF6B7A;
+    --flick-progress-ring-track: rgba(244, 241, 234, 0.12);
+    --flick-progress-ring-stroke: #F4F1EA;
   }
 }
+
+/* Popover/panel "+": send files from this computer (opens the file picker).
+   Same quiet chip as the status pill, so the header stays calm; the icon
+   uses the text colour so it reads in light and dark. */
+.header-actions .add-files-button {
+  order: 0;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--flick-fill);
+  color: var(--flick-navy);
+  transition: background-color 150ms ease;
+}
+.header-actions .add-files-button svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.header-actions .add-files-button:hover:not(:disabled) { background: var(--flick-hairline); }
+/* The popover focuses its first button when it opens; a bright ring there
+   looked like a stuck highlight. Keyboard focus shows as a hairline ring. */
+.header-actions .add-files-button:focus-visible { outline: none; box-shadow: inset 0 0 0 1.5px var(--flick-navy); }
+.header-actions .add-files-button:disabled { opacity: 0.5; cursor: default; }

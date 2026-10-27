@@ -2,6 +2,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
 import { groupSections, loadCollapsed, saveCollapsed, type SectionKey } from "../sections";
 import type { ChangeEvent, RefObject } from "react";
+import { FileRowV2, ShelfItem } from "./PopoverItems";
+import { AppMark } from "./PopoverHeader";
 import CompactFileRow from "./CompactFileRow";
 import StorageNudge from "./StorageNudge";
 import type { Usage } from "../limits";
@@ -11,7 +13,6 @@ import type { Density } from "../density";
 import { CloudFile, formatSender, getFileVisualType } from "../types";
 import type { PendingRemoval } from "../hooks/useFiles";
 import { useNow } from "../hooks/useNow";
-import { APP_NAME } from "../../../shared/appName";
 
 interface FileListProps {
   files: CloudFile[];
@@ -127,16 +128,17 @@ export default function FileList({
               </button>
             </div>
           </div>
-          <input
-            ref={fileInputRef}
-            className="visually-hidden"
-            type="file"
-            multiple
-            onChange={onFileSelection}
-            aria-label="Choose files to upload"
-          />
         </>
       )}
+      {/* Always mounted: the main window's "+" and the popover header's "+" both open it. */}
+      <input
+        ref={fileInputRef}
+        className="visually-hidden"
+        type="file"
+        multiple
+        onChange={onFileSelection}
+        aria-label="Choose files to upload"
+      />
 
       {view === "list" && (
         <StorageNudge usage={usage} files={files.filter((file) => !pendingIds.has(file.id))} onRemove={onRemove} />
@@ -166,12 +168,13 @@ export default function FileList({
       )}
 
       {view === "empty" && popover && (
-        <p className="popover-empty">
-          <span className="popover-empty-icon" aria-hidden="true">
-            ↗
-          </span>
-          Nothing yet — send something from your phone
-        </p>
+        <div className="popover-empty pv-empty">
+          <div className="pv-dz" aria-hidden="true">
+            <AppMark size={30} />
+          </div>
+          <p className="pv-empty-title">Nothing has landed yet</p>
+          <p className="pv-empty-sub">Send from your phone, or drop a file here to send it there.</p>
+        </div>
       )}
 
       {view === "empty" && !popover && (
@@ -361,7 +364,7 @@ function CompactFiles({ files, now, senderOf, pendingIds, ...actions }: CompactF
   );
 }
 
-const POPOVER_GRID = 5; // image tiles per row in the popover (~64px each)
+const POPOVER_GRID = 3; // images on the popover shelf (~104px each)
 
 // What the menu bar popover shows: the newest `limit` items, with at most
 // one pinned file (pins sort first, so they'd otherwise fill it).
@@ -388,31 +391,46 @@ function RecentFiles({
   const { shown } = popoverSelection(files, limit);
   const images = shown.filter((file) => getFileVisualType(file) === "image");
   const others = shown.filter((file) => getFileVisualType(file) !== "image");
-  // Compact: one row, the last tile "+N". Taller: every image, row after row.
+  const imageTotal = files.filter((file) => getFileVisualType(file) === "image").length;
+  const otherTotal = files.length - imageTotal;
+  // Compact: one shelf of three (the last becomes "+N" when there are more).
+  // Taller: every image, shelf after shelf.
   const overflow = Number.isFinite(limit) && images.length > POPOVER_GRID;
   const tiles = overflow ? images.slice(0, POPOVER_GRID - 1) : images;
+  const newest = files[0]?.id;
   return (
-    <div className="compact-list">
+    <div className="compact-list pv-list">
       {images.length > 0 && (
-        <div className="compact-grid compact-grid-popover">
-          {tiles.map((file) => (
-            <CompactImageTile key={file.id} file={file} now={now} sender={senderOf(file)} pending={pendingIds.has(file.id)} {...actions} />
-          ))}
-          {overflow && (
-            <button
-              type="button"
-              className="compact-tile-more-images"
-              aria-label={`${images.length - tiles.length} more images. Open ${APP_NAME}`}
-              onClick={onShowMore}
-            >
-              +{images.length - tiles.length}
-            </button>
-          )}
-        </div>
+        <>
+          <div className="pv-lbl">Images<span>{imageTotal}</span></div>
+          <div className="pv-shelf">
+            {tiles.map((file) => (
+              <ShelfItem key={file.id} file={file} now={now} sender={senderOf(file)} pending={pendingIds.has(file.id)} lifted={file.id === newest && now - Date.parse(file.created_at) < 120_000} {...actions} />
+            ))}
+            {overflow && (
+              <button
+                type="button"
+                className="pv-it pv-it-more"
+                aria-label={`${images.length - tiles.length} more images. Show all`}
+                onClick={onShowMore}
+              >
+                <span className="pv-im">+{imageTotal - tiles.length}</span>
+                <span className="pv-nm">Show all</span>
+              </button>
+            )}
+          </div>
+        </>
       )}
-      {others.map((file) => (
-        <CompactFileRow key={file.id} file={file} now={now} sender={senderOf(file)} pending={pendingIds.has(file.id)} {...actions} />
-      ))}
+      {others.length > 0 && (
+        <>
+          <div className="pv-lbl">Files<span>{otherTotal}</span></div>
+          <div className="pv-rows">
+            {others.map((file) => (
+              <FileRowV2 key={file.id} file={file} now={now} sender={senderOf(file)} pending={pendingIds.has(file.id)} {...actions} />
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }

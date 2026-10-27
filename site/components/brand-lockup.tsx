@@ -1,3 +1,4 @@
 export function BrandLockup({ className = "" }: { className?: string }) {
-  return <picture className={`brand-lockup ${className}`}><source media="(prefers-color-scheme: dark)" srcSet="/eqlshare-lockup-dark.svg"/><img src="/eqlshare-lockup-light.svg" alt="eqlShare"/></picture>;
+  // Light-only site, so one logo. The <picture> wrapper stays because the CSS sizes `.brand-lockup img`.
+  return <picture className={`brand-lockup ${className}`}><img src="/eqlshare-lockup-light.svg" alt="eqlShare"/></picture>;
 }

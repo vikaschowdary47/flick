@@ -11,11 +11,6 @@ const LABELS: Record<Status, string> = {
   offline: "Offline",
 };
 
-function pillColor(status: Status, c: Palette): string {
-  if (status === "connected") return c.connectedPill;
-  if (status === "offline") return c.offlinePill;
-  return c.signedOutPill;
-}
 
 export function StatusPill({ status }: { status: Status }) {
   const { palette } = useTheme();
@@ -24,9 +19,9 @@ export function StatusPill({ status }: { status: Status }) {
     <View
       accessibilityRole="text"
       accessibilityLabel={`Status: ${LABELS[status]}`}
-      style={[styles.pill, { backgroundColor: pillColor(status, palette) }]}
+      style={[styles.pill, { backgroundColor: palette.fill }]}
     >
-      <View style={styles.dot} />
+      <View style={[styles.dot, status === "connected" && styles.liveDot]} />
       <Text style={styles.label}>{LABELS[status]}</Text>
     </View>
   );
@@ -37,22 +32,23 @@ const makeStyles = (c: Palette) =>
     pill: {
       flexDirection: "row",
       alignItems: "center",
-      gap: tokens.spacing.sm,
+      gap: tokens.spacing.xs + 2,
+      height: 32,
       paddingHorizontal: tokens.spacing.md,
-      paddingVertical: tokens.spacing.xs,
       borderRadius: tokens.radii.pill,
-      borderWidth: tokens.borderWidth.outline,
-      borderColor: c.outline,
     },
     dot: {
-      width: tokens.layout.statusDot,
-      height: tokens.layout.statusDot,
+      width: tokens.layout.statusDot - 1,
+      height: tokens.layout.statusDot - 1,
       borderRadius: tokens.radii.pill,
-      backgroundColor: c.onColor,
+      backgroundColor: c.textMuted,
+    },
+    liveDot: {
+      backgroundColor: "#34C46E", // live green, same as the desktop
     },
     label: {
-      color: c.onColor,
-      fontFamily: tokens.fonts.extrabold,
+      color: c.text,
+      fontFamily: tokens.fonts.semibold,
       fontSize: tokens.fontSizes.meta,
     },
   });

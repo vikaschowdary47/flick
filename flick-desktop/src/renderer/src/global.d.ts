@@ -25,7 +25,7 @@ interface Window {
     setLaunchAtLogin: (on: boolean) => Promise<import('../../shared/appSettings').DesktopAppSettings>
     setShortcut: (shortcut: string) => Promise<{ error: string | null; settings: import('../../shared/appSettings').DesktopAppSettings }>
     onOpenSettings: (listener: () => void) => () => void
-    reportPopoverHeight: (height: number, expanded: boolean) => void
+    reportPopoverHeight: (height: number, expanded: boolean, view?: string) => void
     onPopoverExpanded: (listener: (expanded: boolean) => void) => () => void
     setClipsActive: (active: boolean) => Promise<void>
     readClipboard: () => Promise<string>
@@ -36,5 +36,11 @@ interface Window {
     openAuthUrl: (authUrl: string) => Promise<void>
     onAuthCallback: (listener: (url: string) => void) => () => void
     getDefaultDevice: () => Promise<{ name: string; platform: string }>
+    getClipHistory: () => Promise<import('../../shared/appSettings').ClipHistoryState>
+    setClipHistoryEnabled: (on: boolean) => Promise<import('../../shared/appSettings').ClipHistoryState>
+    removeClipHistoryEntry: (id: string) => Promise<import('../../shared/appSettings').ClipHistoryState>
+    pinClipHistoryEntry: (id: string, pinned: boolean) => Promise<import('../../shared/appSettings').ClipHistoryState>
+    clearClipHistory: () => Promise<import('../../shared/appSettings').ClipHistoryState>
+    onClipHistory: (listener: (state: import('../../shared/appSettings').ClipHistoryState) => void) => () => void
   }
 }

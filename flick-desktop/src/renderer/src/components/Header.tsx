@@ -3,6 +3,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useState, type RefObject } from "react";
 import { DEVICE_NAME_MAX } from "../hooks/useDevice";
 import type { Usage } from "../limits";
+import { formatFileSize } from "../types";
 import type { Density } from "../density";
 import type { Session } from "@supabase/supabase-js";
 import { designTokens } from "../../../design/tokens";
@@ -35,6 +36,9 @@ interface HeaderProps {
   onDensityChange?: (density: Density) => void;
   clipboardSharing?: boolean | null; // null/undefined hides it (flag off)
   onClipboardSharingChange?: (on: boolean) => void;
+  // Popover and panel: a "+" that opens the file picker to send files from this computer.
+  onAddFiles?: () => void;
+  isUploading?: boolean;
 }
 
 export default function Header({
@@ -59,6 +63,8 @@ export default function Header({
   onDensityChange,
   clipboardSharing = null,
   onClipboardSharingChange,
+  onAddFiles,
+  isUploading = false,
 }: HeaderProps) {
   const prefersReducedMotion = useReducedMotion();
   const [draftName, setDraftName] = useState(deviceName ?? "");
@@ -115,13 +121,27 @@ export default function Header({
             }}
           >
             <img
-              src={isDarkMode ? "./lockup-light.png" : "./lockup-light.png"}
+              src={isDarkMode ? "./lockup-dark.png" : "./lockup-light.png"}
               alt={APP_NAME}
             />
           </motion.div>
         </div>
       )}
       <div className="header-actions">
+        {onAddFiles && !settingsOpen && (
+          <button
+            type="button"
+            className="window-close-button add-files-button"
+            aria-label={isUploading ? "Uploading…" : "Send files from this computer"}
+            title={isUploading ? "Uploading…" : "Send files"}
+            disabled={isUploading}
+            onClick={onAddFiles}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+          </button>
+        )}
         {onPopOut && (
           <button
             type="button"
@@ -194,7 +214,7 @@ export default function Header({
                   {usage && (
                     <span className="account-usage">
                       {usage.pinsUsed} of {usage.maxPins} pins,{" "}
-                      {Math.round(usage.storageUsedBytes / (1024 * 1024))} of{" "}
+                      {usage.storageUsedBytes > 0 ? formatFileSize(usage.storageUsedBytes) : "0 MB"} of{" "}
                       {usage.maxStorageMb} MB, {usage.devicesUsed} of{" "}
                       {usage.maxDevices} devices
                     </span>

@@ -20,7 +20,10 @@ function sendClipboard(): void {
   if (!window || !active) {
     return;
   }
-  window.webContents.send("clips:send-text", clipboard.readText());
+  // readText() is async in this Electron version; send the text, not a Promise.
+  void Promise.resolve(clipboard.readText()).then((text) => {
+    if (!window.isDestroyed()) window.webContents.send("clips:send-text", text);
+  });
 }
 
 function setActive(next: boolean): void {
