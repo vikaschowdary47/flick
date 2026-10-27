@@ -5,7 +5,7 @@ import SignIn from "./components/SignIn";
 import ClipsPanel from "./components/ClipsPanel";
 import LimitScreen from "./components/LimitScreen";
 import Widget from "./components/Widget";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useClips } from "./hooks/useClips";
 import { useClipboardSetting } from "./hooks/useClipboardSetting";
 import { useDensity } from "./hooks/useDensity";
@@ -42,6 +42,8 @@ export default function App() {
   const flags = useFeatureFlags(homeSession);
   const clipboardSetting = useClipboardSetting(homeSession, flags.clipboard);
   const clips = useClips(homeSession, device.deviceId, clipboardSetting.clipsActive);
+  const latestClipRef = useRef(clips.clips[0]);
+  latestClipRef.current = clips.clips[0];
   const [sendStatus, setSendStatus] = useState("");
   const sendClip = clips.send;
   useEffect(() => {
@@ -66,7 +68,15 @@ export default function App() {
         notify("Your clipboard is empty.");
         return;
       }
-      void sendClip(text).then((error) => notify(error ?? "Clipboard sent to your devices."));
+      // Pressing the shortcut twice shouldn't send the same text twice.
+      const latest = latestClipRef.current;
+      if (latest && latest.content === text && Date.now() - new Date(latest.created_at).getTime() < 10 * 60_000) {
+        notify("Already sent: that's your newest clip.");
+        return;
+      }
+      const preview = text.trim().replace(/\s+/g, " ");
+      const snippet = preview.length > 40 ? `${preview.slice(0, 40)}…` : preview;
+      void sendClip(text).then((error) => notify(error ?? `Sent “${snippet}” to your devices.`));
     });
   }, [clipboardSetting.clipsActive, sendClip]);
 
