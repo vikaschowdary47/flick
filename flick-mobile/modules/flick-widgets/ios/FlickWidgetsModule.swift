@@ -15,7 +15,7 @@ struct FlickActivityAttributes: ActivityAttributes {
 // thumbnail copies into the shared App Group container; the widget
 // extension reads them. Nothing here talks to the network.
 public class FlickWidgetsModule: Module {
-  static let appGroup = "group.dev.flickit.app"
+  static let appGroup = "group.com.eqlshare.app"
 
   static var container: URL? {
     FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroup)

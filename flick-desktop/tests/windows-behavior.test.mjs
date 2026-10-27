@@ -51,7 +51,7 @@ test('finds auth callback in cold and second-instance Windows arguments', () => 
 });
 test('NSIS configuration uses the same app identity, protocol and exact installer name', () => {
   const config = JSON.parse(readFileSync(new URL('../electron-builder.win.json', import.meta.url)));
-  assert.equal(config.appId, 'dev.flickit.desktop');
+  assert.equal(config.appId, 'com.eqlshare.desktop');
   assert.equal(config.nsis.artifactName, 'eqlShare-Setup.exe');
   assert.deepEqual(config.protocols[0].schemes, ['eqlshare', 'flick']);
   assert.equal(config.nsis.createStartMenuShortcut, true);

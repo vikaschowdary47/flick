@@ -29,7 +29,7 @@ const plist = join(bundle, 'Contents/Info.plist');
 const set = (command) => execFileSync('/usr/libexec/PlistBuddy', ['-c', command, plist]);
 set('Set :CFBundleName eqlShare');
 set('Set :CFBundleDisplayName eqlShare');
-set('Set :CFBundleIdentifier dev.flickit.desktop');
+set('Set :CFBundleIdentifier com.eqlshare.desktop');
 set(`Set :CFBundleShortVersionString ${version}`);
 set(`Set :CFBundleVersion ${version}`);
 set('Set :CFBundleExecutable eqlShare');

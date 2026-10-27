@@ -37,7 +37,7 @@ enum FlickShareError: LocalizedError {
 }
 
 final class FlickUploader {
-  static let appGroup = "group.dev.flickit.app"
+  static let appGroup = "group.com.eqlshare.app"
   static let bucket = "flick-files"
   static let maxBytes = 52_428_800
 

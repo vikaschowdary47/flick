@@ -1,4 +1,4 @@
-appId: dev.flickit.app
+appId: com.eqlshare.app
 ---
 - launchApp
 - assertVisible: "Sign in to eqlShare"
