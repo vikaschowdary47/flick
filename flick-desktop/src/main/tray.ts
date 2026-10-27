@@ -145,13 +145,12 @@ export type WindowMode = "popover" | "panel" | "main";
 const POPOVER_WIDTH = 360;
 // Low enough that the one-line empty state isn't padded with blank space.
 const POPOVER_MIN_HEIGHT = 140;
-const POPOVER_MAX_HEIGHT = 560;
+const POPOVER_MAX_HEIGHT = 540;
 const POPOVER_MAX_SHARE = 0.65; // of the screen's work area height
 // "Open eqlShare" makes the same popover taller (never wider), up to this.
 const EXPANDED_MAX_HEIGHT = 680;
 const EXPANDED_MAX_SHARE = 0.8;
 const RESIZE_MS = 180;
-let popoverContentHeight = POPOVER_MIN_HEIGHT;
 let popoverExpanded = false;
 let resizeTimer: NodeJS.Timeout | null = null;
 const PANEL_SIZE = { width: 320, height: 460 };
@@ -164,12 +163,17 @@ let mode: WindowMode = "popover";
 // current state (compact or expanded), never taller than the screen allows.
 function popoverSize(window: BrowserWindow): { width: number; height: number } {
   const area = (process.platform === "win32" ? trayDisplay() : screen.getDisplayMatching(window.getBounds())).workArea;
-  const max = popoverExpanded
+  // A fixed height (not the content's): switching Files, Clips and Settings,
+  // or a list loading, no longer makes the popover grow and shrink. The list
+  // scrolls inside it. Only "Show all" / "Show less" change the height.
+  const height = popoverExpanded
     ? Math.min(EXPANDED_MAX_HEIGHT, Math.floor(area.height * EXPANDED_MAX_SHARE))
     : Math.min(POPOVER_MAX_HEIGHT, Math.floor(area.height * POPOVER_MAX_SHARE));
   const usable = area.height - POPOVER_GAP * 2;
-  const height = Math.min(usable, Math.max(POPOVER_MIN_HEIGHT, Math.min(max, Math.ceil(popoverContentHeight))));
-  return { width: process.platform === "win32" ? Math.min(POPOVER_WIDTH, area.width - POPOVER_GAP * 2) : POPOVER_WIDTH, height };
+  return {
+    width: process.platform === "win32" ? Math.min(POPOVER_WIDTH, area.width - POPOVER_GAP * 2) : POPOVER_WIDTH,
+    height: Math.max(POPOVER_MIN_HEIGHT, Math.min(usable, height)),
+  };
 }
 
 function cancelResize(): void {
@@ -349,6 +353,34 @@ function rememberBounds(window: BrowserWindow): void {
   }, 400);
 }
 
+// Show with a short fade, like a native menu, instead of popping in at once.
+let fadeTimer: NodeJS.Timeout | null = null;
+const FADE_MS = 140;
+function fadeIn(window: BrowserWindow): void {
+  if (fadeTimer) clearInterval(fadeTimer);
+  const canFade = process.platform === "darwin" || process.platform === "win32";
+  if (!canFade || window.isVisible()) {
+    window.setOpacity(1);
+    window.show();
+    return;
+  }
+  window.setOpacity(0);
+  window.show();
+  const start = Date.now();
+  fadeTimer = setInterval(() => {
+    const t = Math.min(1, (Date.now() - start) / FADE_MS);
+    if (window.isDestroyed()) {
+      if (fadeTimer) clearInterval(fadeTimer);
+      return;
+    }
+    window.setOpacity(1 - (1 - t) ** 2);
+    if (t >= 1 && fadeTimer) {
+      clearInterval(fadeTimer);
+      fadeTimer = null;
+    }
+  }, 1000 / 60);
+}
+
 function showIn(next: WindowMode): void {
   const window = getWindow();
   if (!window) {
@@ -368,7 +400,7 @@ function showIn(next: WindowMode): void {
   // Size and place the popover before it appears, so it never shows at an
     // old size and then jumps.
   if (next === "popover") fitPopover(window);
-  window.show();
+  fadeIn(window);
   if (process.platform === "darwin") {
     // A menu-bar (dock-less) app doesn't become active on its own, so the window
     // never got focus: clicks outside didn't close it and the tray click re-opened it.
@@ -686,7 +718,6 @@ export function setupWindowModeIpc(): void {
     }
     const window = getWindow();
     const toggled = (expanded === true) !== popoverExpanded;
-    popoverContentHeight = height;
     popoverExpanded = expanded === true;
     if (!window) {
       return;

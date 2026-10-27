@@ -165,22 +165,6 @@ export default function Widget({
   const expandedRef = useRef(expanded || showSettings);
   expandedRef.current = expanded || showSettings;
 
-  // Popover and panel: a short fade and drop each time they open, like a
-  // native menu, instead of appearing all at once.
-  useEffect(() => {
-    if (!(isPopover || isPanel)) return;
-    const widget = widgetRef.current;
-    const play = () => {
-      if (!widget || document.hidden) return;
-      widget.classList.remove("pv-enter");
-      void widget.offsetWidth; // restart the animation
-      widget.classList.add("pv-enter");
-    };
-    play();
-    document.addEventListener("visibilitychange", play);
-    return () => document.removeEventListener("visibilitychange", play);
-  }, [isPopover, isPanel]);
-
   // Popover: report the natural height (header + all content + footer) so
   // the main process can size the window to it; the list scrolls past the cap.
   const widgetRef = useRef<HTMLElement>(null);
