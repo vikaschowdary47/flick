@@ -25,7 +25,7 @@ interface Window {
     setLaunchAtLogin: (on: boolean) => Promise<import('../../shared/appSettings').DesktopAppSettings>
     setShortcut: (shortcut: string) => Promise<{ error: string | null; settings: import('../../shared/appSettings').DesktopAppSettings }>
     onOpenSettings: (listener: () => void) => () => void
-    reportPopoverHeight: (height: number, expanded: boolean) => void
+    reportPopoverHeight: (height: number, expanded: boolean, view?: string) => void
     onPopoverExpanded: (listener: (expanded: boolean) => void) => () => void
     setClipsActive: (active: boolean) => Promise<void>
     readClipboard: () => Promise<string>

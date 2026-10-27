@@ -722,4 +722,4 @@
 
 /* Fixed-height popover: the list scrolls; empty states sit in the middle. */
 .widget-v2 .content { min-height: 0; }
-.widget-v2 .content > .pv-empty { margin-block: auto; padding-bottom: 26px; }
+.widget-v2 .content > .pv-empty { padding-bottom: 18px; }

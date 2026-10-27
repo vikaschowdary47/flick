@@ -119,8 +119,8 @@ contextBridge.exposeInMainWorld('flick', {
     if (pendingSettingsOpen) { pendingSettingsOpen = false; listener() }
     return () => { settingsListeners.delete(listener) }
   },
-  reportPopoverHeight: (height: number, expanded: boolean) =>
-    ipcRenderer.send('popover:content-height', height, expanded),
+  reportPopoverHeight: (height: number, expanded: boolean, view?: string) =>
+    ipcRenderer.send('popover:content-height', height, expanded, view ?? ''),
   onPopoverExpanded: (listener: (expanded: boolean) => void): (() => void) => {
     const handler = (_event: unknown, expanded: unknown) => listener(expanded === true)
     ipcRenderer.on('popover:expanded', handler)

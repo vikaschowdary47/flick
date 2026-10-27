@@ -163,6 +163,9 @@ export default function Widget({
       : 0;
   // The settings panel sizes like the taller popover (same max height).
   const expandedRef = useRef(expanded || showSettings);
+  // Which view is showing; the main process animates between views.
+  const viewRef = useRef("files");
+  viewRef.current = showSettings ? "settings" : activeTab;
   expandedRef.current = expanded || showSettings;
 
   // Popover: report the natural height (header + all content + footer) so
@@ -179,7 +182,7 @@ export default function Widget({
     // the size is right before the popover shows again (no jump on open).
     const nextFrame = (callback: () => void) => {
       if (document.hidden) timer = window.setTimeout(callback, 0);
-      else frame = requestAnimationFrame(callback);
+      else timer = window.setTimeout(() => { frame = requestAnimationFrame(callback); }, 60);
     };
     const measure = () => {
       cancelAnimationFrame(frame);
@@ -210,7 +213,7 @@ export default function Widget({
           return;
         }
         const authMinimum = widget.classList.contains("widget-auth") ? 520 : 0;
-        window.flick.reportPopoverHeight(Math.max(authMinimum, chrome + bottom + padding), expandedRef.current);
+        window.flick.reportPopoverHeight(Math.max(authMinimum, chrome + bottom + padding), expandedRef.current, viewRef.current);
       });
     };
     const resize = new ResizeObserver(measure);
@@ -220,6 +223,12 @@ export default function Widget({
       document.querySelectorAll(".limit-screen").forEach((node) => resize.observe(node));
       measure();
     };
+    // Re-measure when hidden, so the next open is exactly the content's size
+    // (while open the height only grows within a view).
+    const onVisibility = () => {
+      if (document.hidden) measure();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
     const mutations = new MutationObserver(observeAll);
     mutations.observe(document.body, { childList: true, subtree: true });
     observeAll();
@@ -228,8 +237,9 @@ export default function Widget({
       window.clearTimeout(timer);
       resize.disconnect();
       mutations.disconnect();
+      document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [isPopover, expanded, showSettings]);
+  }, [isPopover, expanded, showSettings, activeTab]);
 
   return (
     <main

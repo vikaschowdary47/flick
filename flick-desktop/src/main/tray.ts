@@ -145,13 +145,18 @@ export type WindowMode = "popover" | "panel" | "main";
 const POPOVER_WIDTH = 360;
 // Low enough that the one-line empty state isn't padded with blank space.
 const POPOVER_MIN_HEIGHT = 140;
-const POPOVER_MAX_HEIGHT = 540;
+const POPOVER_MAX_HEIGHT = 560;
 const POPOVER_MAX_SHARE = 0.65; // of the screen's work area height
 // "Open eqlShare" makes the same popover taller (never wider), up to this.
 const EXPANDED_MAX_HEIGHT = 680;
 const EXPANDED_MAX_SHARE = 0.8;
 const RESIZE_MS = 180;
 let popoverExpanded = false;
+// Fits its content, without the jitter: while open, the height only grows
+// within the same view (a list loading in two steps doesn't bounce), and
+// changes between views (Files, Clips, Settings) animate.
+let popoverContentHeight = POPOVER_MIN_HEIGHT;
+let popoverView = "";
 let resizeTimer: NodeJS.Timeout | null = null;
 const PANEL_SIZE = { width: 320, height: 460 };
 const MAIN_SIZE = { width: 480, height: 640 };
@@ -163,17 +168,12 @@ let mode: WindowMode = "popover";
 // current state (compact or expanded), never taller than the screen allows.
 function popoverSize(window: BrowserWindow): { width: number; height: number } {
   const area = (process.platform === "win32" ? trayDisplay() : screen.getDisplayMatching(window.getBounds())).workArea;
-  // A fixed height (not the content's): switching Files, Clips and Settings,
-  // or a list loading, no longer makes the popover grow and shrink. The list
-  // scrolls inside it. Only "Show all" / "Show less" change the height.
-  const height = popoverExpanded
+  const max = popoverExpanded
     ? Math.min(EXPANDED_MAX_HEIGHT, Math.floor(area.height * EXPANDED_MAX_SHARE))
     : Math.min(POPOVER_MAX_HEIGHT, Math.floor(area.height * POPOVER_MAX_SHARE));
   const usable = area.height - POPOVER_GAP * 2;
-  return {
-    width: process.platform === "win32" ? Math.min(POPOVER_WIDTH, area.width - POPOVER_GAP * 2) : POPOVER_WIDTH,
-    height: Math.max(POPOVER_MIN_HEIGHT, Math.min(usable, height)),
-  };
+  const height = Math.min(usable, Math.max(POPOVER_MIN_HEIGHT, Math.min(max, Math.ceil(popoverContentHeight))));
+  return { width: process.platform === "win32" ? Math.min(POPOVER_WIDTH, area.width - POPOVER_GAP * 2) : POPOVER_WIDTH, height };
 }
 
 function cancelResize(): void {
@@ -712,13 +712,19 @@ export function setupWindowModeIpc(): void {
   // The popover page reports its natural height whenever its list changes.
   // The page reports its natural height and layout after every change. A
   // layout change (Open eqlShare / Show less) animates; anything else snaps.
-  ipcMain.on("popover:content-height", (_event, height: unknown, expanded: unknown) => {
+  ipcMain.on("popover:content-height", (_event, height: unknown, expanded: unknown, view: unknown) => {
     if (typeof height !== "number" || !Number.isFinite(height)) {
       return;
     }
     const window = getWindow();
     const toggled = (expanded === true) !== popoverExpanded;
+    const nextView = typeof view === "string" ? view : "";
+    const viewChanged = nextView !== popoverView;
     popoverExpanded = expanded === true;
+    popoverView = nextView;
+    const visible = Boolean(window?.isVisible());
+    // Same view while open: never shrink (no bounce while things load).
+    popoverContentHeight = visible && !viewChanged && !toggled ? Math.max(popoverContentHeight, height) : height;
     if (!window) {
       return;
     }
@@ -730,10 +736,10 @@ export function setupWindowModeIpc(): void {
       return;
     }
     if (mode !== "popover") return;
-    if (toggled) {
+    if (!visible) {
+      fitPopover(window); // hidden: just be the right size for next time
+    } else if (toggled || viewChanged || !resizeTimer) {
       fitPopover(window, true);
-    } else if (!resizeTimer) {
-      fitPopover(window); // mid-animation, the tween already heads there
     }
   });
   ipcMain.on("window:open-main", () => openMainWindow());
