@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { DEVICE_NAME_MAX } from "../hooks/useDevice";
 import type { Usage } from "../limits";
 import { formatFileSize } from "../types";
+import { useClipHistory } from "../hooks/useClipHistory";
 
 interface SettingsPanelProps {
   email: string | null;
@@ -50,6 +51,7 @@ export default function SettingsPanel({
   deviceName,
   onRenameDevice,
 }: SettingsPanelProps) {
+  const history = useClipHistory();
   const [draftName, setDraftName] = useState(deviceName ?? "");
   const [nameMessage, setNameMessage] = useState("");
   useEffect(() => setDraftName(deviceName ?? ""), [deviceName]);
@@ -126,6 +128,20 @@ export default function SettingsPanel({
           </div>
         </>
       )}
+
+      <div className="pv-box">
+        <div className="pv-r">
+          <span className="pv-k">Clipboard history</span>
+          <Toggle label="Clipboard history" checked={history.enabled} onChange={history.setEnabled} />
+        </div>
+        {history.entries.length > 0 && (
+          <div className="pv-r">
+            <span className="pv-k">{history.entries.length} copied {history.entries.length === 1 ? "item" : "items"}</span>
+            <button type="button" className="pv-lbl-btn" onClick={history.clear}>Clear</button>
+          </div>
+        )}
+      </div>
+      <p className="pv-help">Keeps what you copy on this computer so you can copy it again or send it to your phone. It stays here; password managers’ copies are skipped.</p>
 
       <div className="pv-btns">
         <button type="button" className="pv-btn" onClick={onSignOut}>

@@ -413,7 +413,7 @@ export default function Widget({
             </button>
           ) : clipboardSharing ? (
             <span className="pv-foot-hint">
-              Clipboard <span className="pv-kbd">{navigator.platform.startsWith("Mac") ? "⌥⇧C" : "Alt+Shift+C"}</span>
+              Send clipboard <span className="pv-kbd">{navigator.platform.startsWith("Mac") ? "⌥⇧C" : "Alt+Shift+C"}</span>
             </span>
           ) : null}
         </footer>

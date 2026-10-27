@@ -136,6 +136,19 @@ contextBridge.exposeInMainWorld('flick', {
     ipcRenderer.on('clips:send-text', handler)
     return () => ipcRenderer.removeListener('clips:send-text', handler)
   },
+  getClipHistory: (): Promise<import('../shared/appSettings').ClipHistoryState> => ipcRenderer.invoke('clip-history:get'),
+  setClipHistoryEnabled: (on: boolean): Promise<import('../shared/appSettings').ClipHistoryState> =>
+    ipcRenderer.invoke('clip-history:set-enabled', on),
+  removeClipHistoryEntry: (id: string): Promise<import('../shared/appSettings').ClipHistoryState> =>
+    ipcRenderer.invoke('clip-history:remove', id),
+  pinClipHistoryEntry: (id: string, pinned: boolean): Promise<import('../shared/appSettings').ClipHistoryState> =>
+    ipcRenderer.invoke('clip-history:pin', id, pinned),
+  clearClipHistory: (): Promise<import('../shared/appSettings').ClipHistoryState> => ipcRenderer.invoke('clip-history:clear'),
+  onClipHistory: (listener: (state: import('../shared/appSettings').ClipHistoryState) => void): (() => void) => {
+    const handler = (_event: unknown, state: unknown) => listener(state as import('../shared/appSettings').ClipHistoryState)
+    ipcRenderer.on('clip-history:changed', handler)
+    return () => ipcRenderer.removeListener('clip-history:changed', handler)
+  },
   getDefaultDevice: (): Promise<{ name: string; platform: string }> =>
     ipcRenderer.invoke('device:default'),
   setAccountActive: (active: boolean): Promise<void> => ipcRenderer.invoke('account:set-active', active),

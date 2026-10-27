@@ -36,5 +36,11 @@ interface Window {
     openAuthUrl: (authUrl: string) => Promise<void>
     onAuthCallback: (listener: (url: string) => void) => () => void
     getDefaultDevice: () => Promise<{ name: string; platform: string }>
+    getClipHistory: () => Promise<import('../../shared/appSettings').ClipHistoryState>
+    setClipHistoryEnabled: (on: boolean) => Promise<import('../../shared/appSettings').ClipHistoryState>
+    removeClipHistoryEntry: (id: string) => Promise<import('../../shared/appSettings').ClipHistoryState>
+    pinClipHistoryEntry: (id: string, pinned: boolean) => Promise<import('../../shared/appSettings').ClipHistoryState>
+    clearClipHistory: () => Promise<import('../../shared/appSettings').ClipHistoryState>
+    onClipHistory: (listener: (state: import('../../shared/appSettings').ClipHistoryState) => void) => () => void
   }
 }

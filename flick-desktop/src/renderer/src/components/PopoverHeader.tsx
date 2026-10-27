@@ -69,13 +69,9 @@ export default function PopoverHeader({
       </header>
     );
   }
-  const status = !isOnline
-    ? "Offline"
-    : !signedIn
-      ? "Signed out"
-      : otherDevices.length > 0
-        ? otherDevices.join(", ")
-        : "Connected";
+  // On the right: "● Connected", or "● 2 devices" with their names on hover.
+  const live = isOnline && signedIn;
+  const label = !isOnline ? "Offline" : !signedIn ? "Signed out" : otherDevices.length > 0 ? `${otherDevices.length} ${otherDevices.length === 1 ? "device" : "devices"}` : "Connected";
   return (
     <header className="topbar pv-head">
       <motion.span
@@ -86,11 +82,24 @@ export default function PopoverHeader({
         <AppMark />
       </motion.span>
       <b className="pv-title" translate="no">{APP_NAME}</b>
-      <span className={`pv-status${isOnline && signedIn ? " is-live" : ""}`} role="status" title={status}>
-        <i aria-hidden="true" />
-        <span>{status}</span>
-      </span>
       <span className="pv-grow" />
+      <span
+        className={`pv-status${live ? " is-live" : ""}${live && otherDevices.length > 0 ? " has-devices" : ""}`}
+        role="status"
+        tabIndex={live && otherDevices.length > 0 ? 0 : undefined}
+        aria-label={live && otherDevices.length > 0 ? `Connected to ${otherDevices.join(", ")}` : label}
+      >
+        <i aria-hidden="true" />
+        <span>{label}</span>
+        {live && otherDevices.length > 0 && (
+          <span className="pv-devices" aria-hidden="true">
+            <b>Signed in on</b>
+            {otherDevices.map((name, index) => (
+              <span key={`${name}-${index}`}>{name}</span>
+            ))}
+          </span>
+        )}
+      </span>
       {onPopOut && (
         <button type="button" className="pv-ib" aria-label="Pop out into a separate window" title="Pop out" onClick={onPopOut}>
           <Icon d={POPOUT} />

@@ -3,6 +3,8 @@ import { formatAgo, siteName, type ClipRow } from "../clips";
 import { useNow } from "../hooks/useNow";
 import type { Density } from "../density";
 import { formatSender } from "../types";
+import { useClipHistory } from "../hooks/useClipHistory";
+import type { ClipHistoryEntry } from "../../../shared/appSettings";
 
 interface ClipsPanelProps {
   clips: ClipRow[];
@@ -204,6 +206,52 @@ function ClipRowV2({ clip, sender, now, onDelete }: { clip: ClipRow; sender: str
   );
 }
 
+// One entry of this computer's clipboard history: click copies it again;
+// on hover, Send shares it with your devices, Pin keeps it, × forgets it.
+function HistoryRowV2({ entry, now, onSend, onPin, onRemove }: { entry: ClipHistoryEntry; now: number; onSend: () => void; onPin: () => void; onRemove: () => void }) {
+  const [copied, setCopied] = useState(false);
+  useEffect(() => {
+    if (!copied) return;
+    const timer = window.setTimeout(() => setCopied(false), COPIED_MS);
+    return () => window.clearTimeout(timer);
+  }, [copied]);
+  const text = entry.text.trim();
+  const isLink = /^https?:\/\/\S+$/i.test(text);
+  const code = !isLink && looksLikeCode(text);
+  const link = isLink ? linkParts(text) : null;
+  const badge = link ? link.badge : code ? "$_" : "Aa";
+  const meta = [link?.site ?? "", entry.pinned ? "Pinned" : "", agoLong(entry.copiedAt, now)].filter(Boolean).join(", ");
+  return (
+    <article className="pv-clip pv-hist" title={entry.text}>
+      <button
+        type="button"
+        className="pv-clip-main"
+        aria-label={`Copy ${link ? `link to ${link.site}` : "this text"} again`}
+        onClick={() => void window.flick.writeClipboard(entry.text).then(() => setCopied(true))}
+      >
+        <span className={`pv-fav${isLink ? " is-link" : code ? " is-code" : ""}`} aria-hidden="true">{badge}</span>
+        <span className="pv-t">
+          <span className="pv-tx">{code ? <span className="pv-code">{text}</span> : link ? link.title : text}</span>
+          <span className="pv-mt">{copied ? "Copied" : meta}</span>
+        </span>
+      </button>
+      <span className="pv-hist-actions">
+        <button type="button" className="pv-ib" aria-label="Send to your devices" title="Send to your devices" onClick={onSend}>
+          <svg className="pv-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M5.5 11.5 12 5l6.5 6.5" /></svg>
+        </button>
+        <button type="button" className={`pv-ib${entry.pinned ? " is-on" : ""}`} aria-label={entry.pinned ? "Unpin" : "Pin"} aria-pressed={Boolean(entry.pinned)} title={entry.pinned ? "Unpin" : "Pin"} onClick={onPin}>
+          <svg className="pv-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4h6l-1 6 3 3H7l3-3-1-6ZM12 13v7" /></svg>
+        </button>
+        <button type="button" className="pv-ib" aria-label="Remove from history" title="Remove" onClick={onRemove}>
+          <svg className="pv-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11" /></svg>
+        </button>
+      </span>
+    </article>
+  );
+}
+
+const HISTORY_COMPACT = 5;
+
 // The Clips tab: Send clipboard (reads the clipboard only on click) and the list.
 export default function ClipsPanel({
   clips,
@@ -234,6 +282,8 @@ export default function ClipsPanel({
 
   const status = message || sendStatus || error;
   const [draft, setDraft] = useState("");
+  const [search, setSearch] = useState("");
+  const history = useClipHistory();
 
   async function sendDraft(): Promise<void> {
     if (!draft.trim()) {
@@ -248,6 +298,12 @@ export default function ClipsPanel({
   }
 
   if (popover) {
+    const compactView = Number.isFinite(limit);
+    const query = search.trim().toLowerCase();
+    const historyRows = history.entries
+      .filter((entry) => !query || entry.text.toLowerCase().includes(query))
+      .sort((a, b) => Number(Boolean(b.pinned)) - Number(Boolean(a.pinned)));
+    const shownHistory = compactView ? historyRows.slice(0, HISTORY_COMPACT) : historyRows;
     return (
       <>
         <form
@@ -273,14 +329,57 @@ export default function ClipsPanel({
           </button>
         </form>
         {status && <p className="pv-note" role="status">{status}</p>}
+        <div className="pv-lbl">Shared with your devices<span>{clips.length}</span></div>
         {clips.length === 0 ? (
           <p className="pv-note">No clips yet. Send one from any device.</p>
         ) : (
           <div className="pv-rows pv-clips">
-            {clips.slice(0, limit).map((clip) => (
+            {clips.slice(0, compactView ? Math.min(limit, 3) : limit).map((clip) => (
               <ClipRowV2 key={clip.id} clip={clip} now={now} sender={formatSender(clip.device_id, deviceId, deviceNames)} onDelete={() => onDelete(clip.id)} />
             ))}
           </div>
+        )}
+        <div className="pv-lbl">
+          Copied on this {navigator.platform.startsWith("Mac") ? "Mac" : "PC"}
+          {history.enabled && history.entries.length > 0 ? (
+            <button type="button" className="pv-lbl-btn" onClick={history.clear} title="Clear history (keeps pinned)">Clear</button>
+          ) : (
+            <span>{history.entries.length}</span>
+          )}
+        </div>
+        {!history.enabled ? (
+          <div className="pv-hist-off">
+            <p>Keep a history of what you copy on this computer, so you can copy it again or send it to your phone. It stays on this computer.</p>
+            <button type="button" className="pv-btn" onClick={() => history.setEnabled(true)}>Turn on clipboard history</button>
+          </div>
+        ) : (
+          <>
+            {!compactView && history.entries.length > 6 && (
+              <input className="pv-fld pv-search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search history" aria-label="Search clipboard history" />
+            )}
+            {shownHistory.length === 0 ? (
+              <p className="pv-note">{query ? "Nothing matches." : "Copy anything and it shows up here."}</p>
+            ) : (
+              <div className="pv-rows pv-clips">
+                {shownHistory.map((entry) => (
+                  <HistoryRowV2
+                    key={entry.id}
+                    entry={entry}
+                    now={now}
+                    onSend={() => {
+                      setBusy(true);
+                      void onSend(entry.text).then((result) => {
+                        setMessage(result ?? "Sent to your devices.");
+                        setBusy(false);
+                      });
+                    }}
+                    onPin={() => history.pin(entry.id, !entry.pinned)}
+                    onRemove={() => history.remove(entry.id)}
+                  />
+                ))}
+              </div>
+            )}
+          </>
         )}
       </>
     );
