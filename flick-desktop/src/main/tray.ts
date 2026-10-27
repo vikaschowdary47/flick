@@ -144,7 +144,7 @@ export type WindowMode = "popover" | "panel" | "main";
 // between these bounds: a quick dropdown, not a window.
 const POPOVER_WIDTH = 360;
 // Low enough that the one-line empty state isn't padded with blank space.
-const POPOVER_MIN_HEIGHT = 140;
+const POPOVER_MIN_HEIGHT = 300;
 const POPOVER_MAX_HEIGHT = 560;
 const POPOVER_MAX_SHARE = 0.65; // of the screen's work area height
 // "Open eqlShare" makes the same popover taller (never wider), up to this.

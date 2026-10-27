@@ -722,4 +722,7 @@
 
 /* Fixed-height popover: the list scrolls; empty states sit in the middle. */
 .widget-v2 .content { min-height: 0; }
-.widget-v2 .content > .pv-empty { padding-bottom: 18px; }
+.widget-v2 .content > .pv-empty { min-height: 0; padding: 30px 22px 30px; }
+/* Children keep their natural height (the old .popover-empty min-height let
+   flexbox squash the empty state, so it measured short and got cut off). */
+.widget-v2 .content > * { flex-shrink: 0; }
