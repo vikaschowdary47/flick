@@ -18,13 +18,13 @@ export default function Privacy() {
         <span className="kicker">eqlShare / privacy</span>
         <h1>Privacy, plainly.</h1>
         <p className="legal-lede">eqlShare moves your files between your devices. We collect only what that needs, we delete it quickly, and we never sell it.</p>
-        <p><strong>Last updated: October 25, 2026</strong></p>
+        <p><strong>Last updated: October 27, 2026</strong></p>
 
         <h2>The short version</h2>
         <ul>
           <li>Files and clips you send are deleted automatically 24 hours after upload, unless you pin them.</li>
           <li>We don&apos;t show ads, we don&apos;t use analytics or tracking tools in our apps, and we don&apos;t sell or rent your data.</li>
-          <li>We only read your clipboard when you tap <em>Send clipboard</em>.</li>
+          <li>On your phone, we read your clipboard only when you tap <em>Paste</em>. On a Mac or PC, eqlShare keeps a history of what you copy, and that history never leaves the computer unless you choose to send an item.</li>
           <li>You can delete your account and everything in it from the app at any time.</li>
         </ul>
 
@@ -44,9 +44,18 @@ export default function Privacy() {
         <ul>
           <li>No advertising IDs, analytics or tracking tools in the apps.</li>
           <li>No location, contacts or microphone access.</li>
-          <li>Your clipboard is read only when you tap <em>Send clipboard</em>. On laptops, your recent clipboard history is kept on that computer only, unless you choose to sync a clip.</li>
+          <li>Your clipboard history. On a phone, the clipboard is read only when you tap <em>Paste</em>. On a Mac or PC, the clipboard history stays on that computer and is never sent to us (see below).</li>
           <li>Camera and photo library access is used only when you choose to take or pick a photo to send.</li>
         </ul>
+
+        <h2>What stays on your device</h2>
+        <p>Some things never reach our servers. They stay on the device they belong to, and only you can see them there:</p>
+        <ul>
+          <li><strong>Clipboard history (Mac and Windows).</strong> The eqlShare desktop app keeps a list of text you copy on that computer (up to 200 items), so you can copy it again or send it to your other devices. It&apos;s on by default and is saved only on that computer. Nothing from it is uploaded unless you press send on an item; that item then becomes a clip and follows the clip rules above. Copies that password managers mark as private (for example from 1Password, Bitwarden or Keychain) are skipped. You can turn the history off or clear it in Settings, and it&apos;s erased if you delete your account on that computer.</li>
+          <li><strong>Downloaded copies.</strong> Files your devices download, and their previews, are cached on that device and cleared after they expire, when you sign out, or when you delete your account.</li>
+          <li><strong>App preferences.</strong> Things like appearance, how the Mac app opens, and launch at login are saved on that device.</li>
+        </ul>
+        <p>Files and clips you send have to pass through our servers to reach your other devices. They&apos;re kept there only until they expire (24 hours) or you delete them, unless you pin them.</p>
 
         <h2>How we use it</h2>
         <p>To run eqlShare: sign you in, deliver what you send to your devices or share links, show your usage against your plan&apos;s limits, send account emails (like confirming your email or resetting your password), keep the service secure and prevent abuse, and answer your questions. We use waitlist emails only to tell you about eqlShare&apos;s launch and major updates.</p>
@@ -56,6 +65,7 @@ export default function Privacy() {
           <li><strong>Files and clips:</strong> deleted automatically 24 hours after upload. Pinned files stay until you unpin them (then the 24 hours start again) or delete them. Deleting a file removes it, and its preview, from every device.</li>
           <li><strong>Share links:</strong> stop working when they expire or when you revoke them, and are removed with the file.</li>
           <li><strong>Account, device and settings data:</strong> kept while you have an account, and deleted when you delete your account.</li>
+          <li><strong>Clipboard history:</strong> never on our servers. It stays on your computer until you remove items, clear it, turn it off, or delete your account there.</li>
           <li><strong>Waitlist:</strong> kept until launch updates are no longer relevant, or until you ask us to remove you.</li>
           <li><strong>Backups:</strong> our hosting provider may keep encrypted backups for a short period before they are overwritten.</li>
         </ul>
