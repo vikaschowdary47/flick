@@ -710,7 +710,7 @@
 /* Clipboard history */
 .widget-v2 .pv-lbl-btn { padding: 0; border: 0; background: none; color: var(--pv-ink-2); font: inherit; font-size: 11.5px; font-weight: 600; cursor: pointer; }
 .widget-v2 .pv-lbl-btn:hover { color: var(--pv-ink); }
-.widget-v2 .pv-search { display: block; width: calc(100% - 24px); margin: 0 12px 6px; }
+
 .widget-v2 .pv-hist { position: relative; }
 .widget-v2 .pv-hist-actions { display: flex; gap: 0; margin-top: 6px; opacity: 0; transition: opacity 120ms ease; }
 .widget-v2 .pv-hist:hover .pv-hist-actions, .widget-v2 .pv-hist:focus-within .pv-hist-actions { opacity: 1; }
@@ -729,3 +729,13 @@
 
 .widget-v2 .pv-more-row { display: block; width: calc(100% - 4px); margin: 2px 2px 4px; padding: 8px; border: 0; border-radius: 8px; background: none; color: var(--pv-ink-2); font: inherit; font-size: 12px; font-weight: 600; text-align: center; cursor: pointer; }
 .widget-v2 .pv-more-row:hover { background: var(--pv-fill); color: var(--pv-ink); }
+
+/* History search: a quiet field with a search icon; focus is a soft ring. */
+.widget-v2 .pv-search { display: flex; align-items: center; gap: 6px; height: 28px; margin: 0 12px 6px; padding: 0 6px 0 8px; border-radius: 7px; background: var(--pv-fill); color: var(--pv-ink-3); transition: box-shadow 120ms ease, background-color 120ms ease; }
+.widget-v2 .pv-search:focus-within { background: var(--pv-fill-2); box-shadow: 0 0 0 1px color-mix(in srgb, var(--pv-amber) 55%, transparent); }
+.widget-v2 .pv-search svg { width: 13px; height: 13px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.widget-v2 .pv-search input { min-width: 0; flex: 1; height: 100%; padding: 0; border: 0; outline: none; background: none; color: var(--pv-ink); font: inherit; font-size: 12.5px; }
+.widget-v2 .pv-search input:focus-visible { outline: none; box-shadow: none; }
+.widget-v2 .pv-search input::placeholder { color: var(--pv-ink-3); }
+.widget-v2 .pv-search button { display: grid; width: 18px; height: 18px; place-items: center; padding: 0; border: 0; border-radius: 50%; background: var(--pv-fill-2); color: var(--pv-ink-2); cursor: pointer; }
+.widget-v2 .pv-search button svg { width: 10px; height: 10px; stroke-width: 2.4; }

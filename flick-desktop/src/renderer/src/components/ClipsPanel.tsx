@@ -358,7 +358,15 @@ export default function ClipsPanel({
         ) : (
           <>
             {!compactView && history.entries.length > 6 && (
-              <input className="pv-fld pv-search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search history" aria-label="Search clipboard history" />
+              <label className="pv-search">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5" /><path d="m16 16 4 4" /></svg>
+                <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search history" aria-label="Search clipboard history" />
+                {search && (
+                  <button type="button" aria-label="Clear search" onClick={() => setSearch("")}>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17" /></svg>
+                  </button>
+                )}
+              </label>
             )}
             {shownHistory.length === 0 ? (
               <p className="pv-note">{query ? "Nothing matches." : "Copy anything and it shows up here."}</p>

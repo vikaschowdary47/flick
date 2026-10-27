@@ -233,6 +233,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
               density="compact"
               popover={view.popover}
               limit={view.limit}
+              onShowMore={view.onShowMore}
             />
           )
         : null
