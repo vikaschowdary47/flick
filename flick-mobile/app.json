@@ -27,7 +27,8 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.eqlshare.app"
+      "package": "com.eqlshare.app",
+      "versionCode": 1
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -35,6 +36,7 @@
     },
     "plugins": [
       "./plugins/withAndroidGradle9",
+      "./plugins/withReleaseSigning",
       "expo-font",
       "expo-status-bar",
       "expo-sharing",
