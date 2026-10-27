@@ -57,7 +57,7 @@ interface WidgetProps {
   // Clips tab content; null when clips are off (flag or setting).
   // Renders the Clips tab (null when clips are off). The popover passes how
   // many clips to show and forces compact chips.
-  clipsPanel: ((view: { popover: boolean; limit?: number }) => ReactNode) | null;
+  clipsPanel: ((view: { popover: boolean; limit?: number; onShowMore?: () => void }) => ReactNode) | null;
   clipsCount: number;
   // Lets the app load usage while the popover's settings panel is open.
   onSettingsVisibleChange?: (visible: boolean) => void;
@@ -354,7 +354,7 @@ export default function Widget({
           </div>
         )}
         {activeTab === "clips" && clipsPanel ? (
-          clipsPanel({ popover: isPopover || isPanel, limit: isPopover && !expanded ? POPOVER_ITEMS : undefined })
+          clipsPanel({ popover: isPopover || isPanel, limit: isPopover && !expanded ? POPOVER_ITEMS : undefined, onShowMore: isPopover && !expanded ? () => setExpanded(true) : undefined })
         ) : (
         <FileList
           files={files}

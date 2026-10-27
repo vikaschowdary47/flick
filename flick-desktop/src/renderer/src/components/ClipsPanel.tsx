@@ -18,6 +18,8 @@ interface ClipsPanelProps {
   // Popover: no heading, and only the newest `limit` clips (all when taller).
   popover?: boolean;
   limit?: number;
+  // Popover: grow to the taller view (all clips and the full history).
+  onShowMore?: () => void;
 }
 
 const COPIED_MS = 1500;
@@ -250,7 +252,7 @@ function HistoryRowV2({ entry, now, onSend, onPin, onRemove }: { entry: ClipHist
   );
 }
 
-const HISTORY_COMPACT = 5;
+export const HISTORY_COMPACT = 8;
 
 // The Clips tab: Send clipboard (reads the clipboard only on click) and the list.
 export default function ClipsPanel({
@@ -264,6 +266,7 @@ export default function ClipsPanel({
   density,
   popover = false,
   limit = Number.POSITIVE_INFINITY,
+  onShowMore,
 }: ClipsPanelProps) {
   const now = useNow();
   const [message, setMessage] = useState("");
@@ -377,6 +380,11 @@ export default function ClipsPanel({
                     onRemove={() => history.remove(entry.id)}
                   />
                 ))}
+                {compactView && historyRows.length > shownHistory.length && onShowMore && (
+                  <button type="button" className="pv-more-row" onClick={onShowMore}>
+                    Show all {historyRows.length} copied items
+                  </button>
+                )}
               </div>
             )}
           </>

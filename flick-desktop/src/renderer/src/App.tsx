@@ -183,6 +183,7 @@ export default function App() {
             density={view.popover ? "compact" : density}
             popover={view.popover}
             limit={view.limit}
+            onShowMore={view.onShowMore}
           />
         ) : null
       }
