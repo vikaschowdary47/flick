@@ -34,7 +34,7 @@ import { FileMenu, type FileMenuItem } from "./FileMenu";
 import { FileViewer } from "./FileViewer";
 import { Header } from "./Header";
 import { LimitScreen } from "./LimitScreen";
-import { AppMark, EyeIcon, GearIcon, PinIcon, ShareIcon, SignOutIcon, TrashIcon } from "./Icons";
+import { AppMark, DownloadIcon, EyeIcon, GearIcon, PinIcon, ShareIcon, SignOutIcon, TrashIcon } from "./Icons";
 import { useV2, type V2 } from "../design/v2";
 import { LandedCard } from "./LandedCard";
 import { SendDock } from "./SendDock";
@@ -87,7 +87,9 @@ export function HomeScreen({ userId, email, onSignOut, onDeleteAccount }: Props)
     });
   });
   const listRef = useRef<FlatList<FileRow>>(null);
-  const opener = useOpenFile();
+  // Short notes under the dock: paste results, "Saved to Download".
+  const [dockNote, setDockNote] = useState<string | null>(null);
+  const opener = useOpenFile(setDockNote);
   const now = useNow();
   const remover = useRemoveFile(recent.refresh);
   const pinner = usePinFile(recent.refresh);
@@ -220,7 +222,6 @@ export function HomeScreen({ userId, email, onSignOut, onDeleteAccount }: Props)
   );
 
   // Dock "Paste": the clipboard is read only when tapped, then sent as a clip.
-  const [dockNote, setDockNote] = useState<string | null>(null);
   useEffect(() => {
     if (!dockNote) return;
     const timer = setTimeout(() => setDockNote(null), 3500);
@@ -301,6 +302,13 @@ export function HomeScreen({ userId, email, onSignOut, onDeleteAccount }: Props)
           onPress: () => opener.open(menu.file),
         },
         {
+          key: "save",
+          label: "Save to phone",
+          icon: <DownloadIcon />,
+          fill: "share",
+          onPress: () => opener.save(menu.file),
+        },
+        {
           key: "share",
           label: "Share",
           icon: <ShareIcon />,
@@ -354,6 +362,7 @@ export function HomeScreen({ userId, email, onSignOut, onDeleteAccount }: Props)
           selected={menu?.file.id === landed.id}
           onMenu={openMenu}
           onShare={(file) => opener.share(file)}
+          onSave={(file) => opener.save(file)}
           onPreview={(file) => opener.open(file)}
         />
       )}

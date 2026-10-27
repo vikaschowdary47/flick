@@ -6,7 +6,7 @@ import { FILE_LIFETIME_MS, expiresAt, formatBytes, formatExpiry } from "../lib/f
 import { canShowFullImage, localFullImage, localThumbnail } from "../lib/thumbs";
 import type { FileRow } from "../lib/types";
 import { extension } from "./FileCard";
-import { EyeIcon, ShareUpIcon } from "./Icons";
+import { EyeIcon, DownloadIcon, ShareUpIcon } from "./Icons";
 
 type Props = {
   file: FileRow;
@@ -17,6 +17,7 @@ type Props = {
   onMenu: (file: FileRow, pageY: number) => void;
   onShare: (file: FileRow) => void;
   onPreview?: (file: FileRow) => void;
+  onSave?: (file: FileRow) => void;
 };
 
 // "23h" → "23 h": the mockup's spacing.
@@ -27,7 +28,7 @@ export function spaced(text: string): string {
 // Redesign v2: the newest file "lands" as a real preview at the top of Files.
 // Tapping it opens the usual menu; Preview and Share are one tap away.
 // The amber line is the 24-hour fuse (full when new, empty at expiry).
-export const LandedCard = memo(function LandedCard({ file, now, sender, opening, selected, onMenu, onShare, onPreview }: Props) {
+export const LandedCard = memo(function LandedCard({ file, now, sender, opening, selected, onMenu, onShare, onPreview, onSave }: Props) {
   const v = useV2();
   const s = makeStyles(v);
   const [thumbUri, setThumbUri] = useState<string | null>(null);
@@ -98,6 +99,11 @@ export const LandedCard = memo(function LandedCard({ file, now, sender, opening,
             {onPreview && (
               <Pressable accessibilityRole="button" accessibilityLabel={`Preview ${file.name}`} onPress={() => onPreview(file)} hitSlop={4} style={({ pressed }) => [s.act, pressed && s.pressed]}>
                 <EyeIcon size={19} color={v.ink} />
+              </Pressable>
+            )}
+            {onSave && (
+              <Pressable accessibilityRole="button" accessibilityLabel={`Save ${file.name} to phone`} onPress={() => onSave(file)} hitSlop={4} style={({ pressed }) => [s.act, pressed && s.pressed]}>
+                <DownloadIcon size={19} color={v.ink} />
               </Pressable>
             )}
             <Pressable accessibilityRole="button" accessibilityLabel={`Share ${file.name}`} onPress={() => onShare(file)} hitSlop={4} style={({ pressed }) => [s.act, pressed && s.pressed]}>

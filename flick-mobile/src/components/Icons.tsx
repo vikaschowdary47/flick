@@ -129,6 +129,9 @@ export function CopyIcon({ size = 19, color }: Props) {
 export function ShareUpIcon({ size = 19, color }: Props) {
   return <Line size={size} color={useInk(color)} d={["M12 15V3.5M7.5 8 12 3.5 16.5 8", "M8 11H6.5A2.5 2.5 0 0 0 4 13.5v5A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5v-5a2.5 2.5 0 0 0-2.5-2.5H16"]} />;
 }
+export function DownloadIcon({ size = 19, color }: Props) {
+  return <Line size={size} color={useInk(color)} d={["M12 3.5V15M7.5 10.5 12 15l4.5-4.5", "M4 15.5v3A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5v-3"]} />;
+}
 export function ChevronIcon({ size = 16, color }: Props) {
   return <Line size={size} color={useInk(color)} d={["m9 5.5 6.5 6.5L9 18.5"]} />;
 }

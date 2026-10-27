@@ -1,7 +1,8 @@
 import { useCallback, useState } from "react";
 import { Platform } from "react-native";
 import { Directory, File } from "expo-file-system";
-import { getContentUriAsync } from "expo-file-system/legacy";
+import { getContentUriAsync, StorageAccessFramework } from "expo-file-system/legacy";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as IntentLauncher from "expo-intent-launcher";
 import * as Sharing from "expo-sharing";
 import { cacheEpoch, cacheEpochActive, cachedCopy, fileCacheDir, pruneCache, touchCachedCopy } from "../lib/cache";
@@ -13,7 +14,11 @@ import type { FileRow } from "../lib/types";
 const LINK_SECONDS = 60 * 5;
 const FLAG_GRANT_READ_URI_PERMISSION = 1; // Android Intent flag
 
-export type OpenMode = "preview" | "share";
+export type OpenMode = "preview" | "share" | "save";
+
+// Android: the folder the person picked for saved files (a SAF tree uri). The
+// permission is persistable, so we only ask once.
+const SAVE_FOLDER_KEY = "flick.saveFolder.v1";
 
 // What the in-app viewer (iPhone Preview) shows.
 export type ViewerKind = "image" | "document" | "source";
@@ -70,7 +75,63 @@ function describeOpenError(error: unknown): {
 // - Preview: iOS shows Quick Look at the top of the share sheet; Android opens
 //   it with a VIEW intent ("Open with"), falling back to the share sheet when
 //   no app can open that type.
-export function useOpenFile() {
+// Android: copy the cached file into the save folder, asking for one the first
+// time (the picker opens in Downloads). Streams the copy, so big files are fine.
+async function saveToFolder(source: File): Promise<string> {
+  const saved = await AsyncStorage.getItem(SAVE_FOLDER_KEY).catch(() => null);
+  if (saved) {
+    try {
+      await copyInto(source, new Directory(saved));
+      return folderLabel(saved);
+    } catch {
+      // Permission revoked or folder gone: ask again below.
+      await AsyncStorage.removeItem(SAVE_FOLDER_KEY).catch(() => {});
+    }
+  }
+  let folder: Directory;
+  try {
+    folder = await Directory.pickDirectoryAsync(StorageAccessFramework.getUriForDirectoryInRoot("Download"));
+  } catch {
+    throw new SaveCancelled();
+  }
+  await copyInto(source, folder);
+  await AsyncStorage.setItem(SAVE_FOLDER_KEY, folder.uri).catch(() => {});
+  return folderLabel(folder.uri);
+}
+
+// Copy keeps the file's name; when the folder already has one, save it as
+// "name (1).ext", "name (2).ext"… like a browser download.
+async function copyInto(source: File, folder: Directory): Promise<void> {
+  for (let n = 0; n < 100; n += 1) {
+    const candidate = n === 0 ? source : new File(source.parentDirectory, numbered(source.name, n));
+    try {
+      if (n > 0) await source.copy(candidate, { overwrite: true });
+      await candidate.copy(folder);
+      return;
+    } catch (error) {
+      if (!/already exists/i.test(String(error))) throw error;
+    } finally {
+      if (n > 0) deleteFile(candidate);
+    }
+  }
+  throw new Error("Too many files with that name");
+}
+
+function numbered(name: string, n: number): string {
+  const dot = name.lastIndexOf(".");
+  return dot > 0 ? `${name.slice(0, dot)} (${n})${name.slice(dot)}` : `${name} (${n})`;
+}
+
+// content://…/tree/primary%3ADownload%2FFlick → "Download/Flick"
+function folderLabel(uri: string): string {
+  const tree = decodeURIComponent(uri.split("/tree/")[1] ?? "").split("/document/")[0];
+  const path = tree.includes(":") ? tree.slice(tree.indexOf(":") + 1) : tree;
+  return path || "your folder";
+}
+
+class SaveCancelled extends Error {}
+
+export function useOpenFile(onSaved?: (message: string) => void) {
   const [openingId, setOpeningId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [viewer, setViewer] = useState<ViewerState | null>(null);
@@ -138,6 +199,14 @@ export function useOpenFile() {
 
       setOpeningId(null); // the system UI is up; stop the "Downloading…" state
 
+      if (mode === "save" && Platform.OS === "android") {
+        stage = "save";
+        const where = await saveToFolder(downloaded);
+        onSaved?.(`Saved to ${where}`);
+        return;
+      }
+      // iPhone Save: the share sheet leads with Save Image / Save to Files.
+
       const kind = viewerKind(mimeType, file.name);
       if (Platform.OS === "ios" && mode === "preview" && kind) {
         stage = "viewer";
@@ -171,6 +240,7 @@ export function useOpenFile() {
         UTI: mimeType === "application/pdf" ? "com.adobe.pdf" : undefined,
       });
     } catch (err) {
+      if (err instanceof SaveCancelled) return; // closed the folder picker
       const details = describeOpenError(err);
       const message = details.message;
       const status = details.status;
@@ -198,7 +268,7 @@ export function useOpenFile() {
       // A half-finished download is useless; a complete copy stays cached.
       if (fresh) deleteFile(fresh);
     }
-  }, []);
+  }, [onSaved]);
 
   // Viewer: share the copy it already has, without downloading again.
   const shareFromViewer = useCallback(async () => {
@@ -224,8 +294,9 @@ export function useOpenFile() {
 
   const open = useCallback((file: FileRow) => run(file, "preview"), [run]);
   const share = useCallback((file: FileRow) => run(file, "share"), [run]);
+  const save = useCallback((file: FileRow) => run(file, "save"), [run]);
 
-  return { open, share, openingId, error, viewer, closeViewer, shareFromViewer, viewerFailed };
+  return { open, share, save, openingId, error, viewer, closeViewer, shareFromViewer, viewerFailed };
 }
 
 function deleteFile(file: File) {
