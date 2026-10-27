@@ -175,6 +175,7 @@ function popoverSize(window: BrowserWindow): { width: number; height: number } {
 function cancelResize(): void {
   if (resizeTimer) {
     clearInterval(resizeTimer);
+    clearTimeout(resizeTimer);
     resizeTimer = null;
   }
 }
@@ -193,6 +194,16 @@ function fitPopover(window: BrowserWindow, animate = false): void {
   const from = window.getBounds();
   if (!animate || !window.isVisible()) {
     window.setBounds(target, false);
+    return;
+  }
+  if (process.platform === "darwin") {
+    // macOS animates the frame natively, which is smoother than stepping
+    // setBounds from a timer. Settle on the latest height once it's done.
+    window.setBounds(target, true);
+    resizeTimer = setTimeout(() => {
+      resizeTimer = null;
+      if (!window.isDestroyed()) fitPopover(window);
+    }, RESIZE_MS + 60) as unknown as NodeJS.Timeout;
     return;
   }
   const start = Date.now();
@@ -354,6 +365,9 @@ function showIn(next: WindowMode): void {
     // pulled to the current Space and then pinned there.
     window.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true, skipTransformProcessType: true });
   }
+  // Size and place the popover before it appears, so it never shows at an
+    // old size and then jumps.
+  if (next === "popover") fitPopover(window);
   window.show();
   if (process.platform === "darwin") {
     // A menu-bar (dock-less) app doesn't become active on its own, so the window

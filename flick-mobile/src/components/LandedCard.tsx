@@ -1,9 +1,9 @@
 import { memo, useEffect, useState } from "react";
-import { ActivityIndicator, Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Image, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { tokens } from "../design/tokens";
 import { useV2, type V2 } from "../design/v2";
 import { FILE_LIFETIME_MS, expiresAt, formatBytes, formatExpiry } from "../lib/format";
-import { localThumbnail } from "../lib/thumbs";
+import { canShowFullImage, localFullImage, localThumbnail } from "../lib/thumbs";
 import type { FileRow } from "../lib/types";
 import { extension } from "./FileCard";
 import { EyeIcon, ShareUpIcon } from "./Icons";
@@ -31,18 +31,27 @@ export const LandedCard = memo(function LandedCard({ file, now, sender, opening,
   const v = useV2();
   const s = makeStyles(v);
   const [thumbUri, setThumbUri] = useState<string | null>(null);
+  // The thumbnail shows at once; the full photo replaces it when it's in, so
+  // the big preview is sharp.
+  const [fullUri, setFullUri] = useState<string | null>(null);
   useEffect(() => {
     let active = true;
     setThumbUri(null);
+    setFullUri(null);
     if (file.thumb_path) {
       void localThumbnail(file.id, file.thumb_path).then((uri) => {
         if (active) setThumbUri(uri);
       });
     }
+    if (canShowFullImage(file.mime_type, file.size, Platform.OS)) {
+      void localFullImage(file.id, file.storage_path).then((uri) => {
+        if (active && uri) setFullUri(uri);
+      });
+    }
     return () => {
       active = false;
     };
-  }, [file.id, file.thumb_path]);
+  }, [file.id, file.thumb_path, file.storage_path, file.mime_type, file.size]);
 
   const remaining = expiresAt(file) - now;
   const fuse = file.pinned ? 1 : Math.max(0, Math.min(1, remaining / FILE_LIFETIME_MS));
@@ -60,8 +69,8 @@ export const LandedCard = memo(function LandedCard({ file, now, sender, opening,
         onLongPress={(event) => onMenu(file, event.nativeEvent.pageY)}
         style={({ pressed }) => [s.preview, pressed && s.pressed]}
       >
-        {thumbUri ? (
-          <Image source={{ uri: thumbUri }} style={s.image} resizeMode="cover" accessibilityIgnoresInvertColors />
+        {fullUri || thumbUri ? (
+          <Image source={{ uri: (fullUri ?? thumbUri) as string }} style={s.image} resizeMode="cover" accessibilityIgnoresInvertColors />
         ) : (
           <Text style={s.ext}>{extension(file.name)}</Text>
         )}

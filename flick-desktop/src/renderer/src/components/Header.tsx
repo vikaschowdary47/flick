@@ -3,6 +3,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useState, type RefObject } from "react";
 import { DEVICE_NAME_MAX } from "../hooks/useDevice";
 import type { Usage } from "../limits";
+import { formatFileSize } from "../types";
 import type { Density } from "../density";
 import type { Session } from "@supabase/supabase-js";
 import { designTokens } from "../../../design/tokens";
@@ -213,7 +214,7 @@ export default function Header({
                   {usage && (
                     <span className="account-usage">
                       {usage.pinsUsed} of {usage.maxPins} pins,{" "}
-                      {Math.round(usage.storageUsedBytes / (1024 * 1024))} of{" "}
+                      {usage.storageUsedBytes > 0 ? formatFileSize(usage.storageUsedBytes) : "0 MB"} of{" "}
                       {usage.maxStorageMb} MB, {usage.devicesUsed} of{" "}
                       {usage.maxDevices} devices
                     </span>

@@ -3,6 +3,7 @@ import DeleteAccount from "./DeleteAccount";
 import { useEffect, useState } from "react";
 import { DEVICE_NAME_MAX } from "../hooks/useDevice";
 import type { Usage } from "../limits";
+import { formatFileSize } from "../types";
 
 interface SettingsPanelProps {
   email: string | null;
@@ -58,7 +59,8 @@ export default function SettingsPanel({
     }
     setNameMessage((await onRenameDevice(draftName)) ?? "Saved");
   }
-  const mb = (bytes: number) => Math.round(bytes / (1024 * 1024));
+  // Exact amount: rounding to whole MB showed small photos as 0 MB.
+  const used = (bytes: number) => (bytes > 0 ? formatFileSize(bytes) : "0 MB");
 
   return (
     <div className="settings-panel pv-form">
@@ -73,7 +75,7 @@ export default function SettingsPanel({
               label="Storage"
               used={usage.storageUsedBytes}
               max={usage.maxStorageMb * 1024 * 1024}
-              text={`${mb(usage.storageUsedBytes)} of ${usage.maxStorageMb} MB`}
+              text={`${used(usage.storageUsedBytes)} of ${usage.maxStorageMb} MB`}
             />
             <Meter label="Pins" used={usage.pinsUsed} max={usage.maxPins} text={`${usage.pinsUsed} of ${usage.maxPins}`} />
             <Meter label="Devices" used={usage.devicesUsed} max={usage.maxDevices} text={`${usage.devicesUsed} of ${usage.maxDevices}`} />

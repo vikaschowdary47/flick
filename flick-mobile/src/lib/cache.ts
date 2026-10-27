@@ -61,7 +61,7 @@ function entries(): Entry[] {
     add(fileDir, fileDir instanceof Directory ? fileDir.name : null);
   }
   for (const thumb of children(THUMB_DIR)) {
-    add(thumb, thumb instanceof File ? thumb.name.replace(/\.jpg$/, "") : null);
+    add(thumb, thumb instanceof File ? thumb.name.replace(/(\.full)?\.jpg$/, "") : null);
   }
   for (const name of [UPLOAD_DIR, ...PICKER_DIRS]) {
     for (const item of children(name)) add(item, null);

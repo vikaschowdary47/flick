@@ -88,8 +88,9 @@ export function SettingsSheet({ email, onDeleteAccount, visible, onClose, device
   const [editingName, setEditingName] = useState(false);
   const cycle = <T,>(list: { value: T; label: string }[], value: T): T => list[(list.findIndex((o) => o.value === value) + 1) % list.length].value;
   const labelOf = <T,>(list: { value: T; label: string }[], value: T) => list.find((o) => o.value === value)?.label ?? "";
-  const mb = usage ? Math.round(usage.storageUsedBytes / (1024 * 1024)) : 0;
-  const share = usage && usage.maxStorageMb > 0 ? Math.min(1, mb / usage.maxStorageMb) : 0;
+  // Exact amount ("2.1 MB", "340 KB"): rounding to whole MB showed small photos as 0 MB.
+  const used = usage ? (usage.storageUsedBytes > 0 ? formatBytes(usage.storageUsedBytes) : "0 MB") : "";
+  const share = usage && usage.maxStorageMb > 0 ? Math.min(1, usage.storageUsedBytes / (usage.maxStorageMb * 1024 * 1024)) : 0;
   const who = deviceName?.split(/['’]s /)[0] || (email ? email.split("@")[0] : "You");
   const initial = (who.trim()[0] ?? "Y").toUpperCase();
   const phoneWord = Platform.OS === "ios" ? "iPhone" : "phone";
@@ -131,7 +132,7 @@ export function SettingsSheet({ email, onDeleteAccount, visible, onClose, device
                   <View style={st.line} />
                   <View style={st.between}>
                     <Text style={st.k}>Storage</Text>
-                    <Text style={st.v}>{mb} of {usage.maxStorageMb} MB</Text>
+                    <Text style={st.v}>{used} of {usage.maxStorageMb} MB</Text>
                   </View>
                   <View style={st.meter}><View style={[st.meterFill, { width: `${Math.round(share * 100)}%` }]} /></View>
                 </View>
