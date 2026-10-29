@@ -1,0 +1,9 @@
+.platform-downloads { display: grid; gap: 14px; justify-items: center; }
+.pd-buttons { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.pd-button { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; min-height: 48px; padding: 8px 20px; border-radius: 999px; border: 1px solid var(--line, #d9d4c8); background: var(--card, #fff); color: var(--ink, #161513); font-weight: 600; text-decoration: none; }
+.pd-button small { font-weight: 400; font-size: 11px; color: var(--muted, #6b675e); }
+.pd-button.pd-primary { background: var(--ink, #161513); color: var(--cream, #f4f1ea); border-color: transparent; }
+.pd-button.pd-primary small { color: #bdb8ab; }
+.announce { position: relative; display: flex; justify-content: center; align-items: center; gap: 12px; padding: 10px 44px; background: #161513; color: #f4f1ea; font-size: 14px; text-align: center; }
+.announce a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+.announce button { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; border: 0; background: none; color: inherit; font-size: 22px; cursor: pointer; }

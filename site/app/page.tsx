@@ -8,6 +8,9 @@ import { DeviceDemo } from "../components/device-demo";
 import { FAQ } from "../components/faq";
 import { SiteFooter } from "../components/site-footer";
 import { WaitlistForm } from "../components/waitlist-form";
+import { PlatformDownloads } from "../components/platform-downloads";
+import { AnnouncementBar } from "../components/announcement-bar";
+import "./downloads.css";
 import { AuthCodeForwarder } from "../components/auth-code-forwarder";
 import { Reveal } from "../components/reveal";
 import { CountUp } from "../components/count-up";
@@ -48,6 +51,7 @@ function FeatureIcon({ name }: { name: string }) {
 export default function Home() {
   return (
     <main>
+      <AnnouncementBar />
       <StructuredData />
       <AuthCodeForwarder />
       <Reveal />
@@ -83,13 +87,7 @@ export default function Home() {
             24&nbsp;hours.
           </p>
           <WaitlistForm />
-          <div className="platforms">
-            <span>Coming soon to</span>
-            <b>iOS</b>
-            <b>Android</b>
-            <b>Mac</b>
-            <b>Windows</b>
-          </div>
+          <PlatformDownloads />
         </div>
         <div className="hero-stage wrap">
           <DeviceDemo />
