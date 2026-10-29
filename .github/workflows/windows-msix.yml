@@ -1,0 +1,51 @@
+name: Windows MSIX (Microsoft Store)
+
+# Manual or tag-triggered. Produces an UNSIGNED .msix for upload to Partner Center;
+# Microsoft signs it during Store ingestion, so no code-signing certificate is needed.
+on:
+  workflow_dispatch:
+  push:
+    tags: ['desktop-v*']
+
+permissions:
+  contents: read
+
+jobs:
+  msix:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: flick-desktop
+    env:
+      VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL || secrets.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY || secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+      VITE_FLICK_SHARE_BASE_URL: ${{ vars.VITE_FLICK_SHARE_BASE_URL }}
+      VITE_ENABLE_APPLE_SIGN_IN: ${{ vars.VITE_ENABLE_APPLE_SIGN_IN || 'false' }}
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: flick-desktop/package-lock.json
+      - name: Validate required configuration
+        shell: pwsh
+        run: |
+          $missing = @()
+          foreach ($n in 'VITE_SUPABASE_URL','VITE_SUPABASE_PUBLISHABLE_KEY') {
+            if (-not (Get-Item "env:$n" -ErrorAction SilentlyContinue).Value) { $missing += $n }
+          }
+          if ($missing) { throw "Set these repository variables first: $($missing -join ', ')" }
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run test:windows
+      - run: npm run package:msix
+      - name: Upload MSIX
+        uses: actions/upload-artifact@v4
+        with:
+          name: eqlShare-Windows-MSIX
+          path: flick-desktop/dist/msix/*.msix
+          if-no-files-found: error
+          retention-days: 30

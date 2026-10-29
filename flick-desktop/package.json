@@ -13,6 +13,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
     "package:mac": "npm run build && node scripts/package-mac.mjs",
+    "package:msix": "npm run build && electron-builder --config electron-builder.msix.json --win appx --x64 --publish never",
     "package:win": "npm run build && electron-builder --config electron-builder.win.json --win nsis --x64 --publish never",
     "icon:win": "npm run generate:icons",
     "generate:icons": "node scripts/generate-icons.mjs",

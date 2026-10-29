@@ -1,0 +1,73 @@
+{
+  "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
+  "appId": "com.eqlshare.desktop",
+  "productName": "eqlShare",
+  "asar": true,
+  "files": [
+    "out/**/*",
+    "package.json"
+  ],
+  "protocols": [
+    {
+      "name": "eqlShare Authentication",
+      "schemes": [
+        "eqlshare",
+        "flick"
+      ]
+    }
+  ],
+  "publish": null,
+  "extraResources": [
+    {
+      "from": "build/icon.ico",
+      "to": "icon.ico"
+    },
+    {
+      "from": "build/tray-template.png",
+      "to": "tray-template.png"
+    },
+    {
+      "from": "build/tray-template-dot.png",
+      "to": "tray-template-dot.png"
+    },
+    {
+      "from": "build/tray-windows-light.png",
+      "to": "tray-windows-light.png"
+    },
+    {
+      "from": "build/tray-windows-dark.png",
+      "to": "tray-windows-dark.png"
+    }
+  ],
+  "electronLanguages": [
+    "en-US"
+  ],
+  "compression": "maximum",
+  "directories": {
+    "output": "dist/msix",
+    "buildResources": "build"
+  },
+  "win": {
+    "target": [
+      {
+        "target": "appx",
+        "arch": [
+          "x64"
+        ]
+      }
+    ],
+    "icon": "build/icon.ico",
+    "executableName": "eqlShare"
+  },
+  "appx": {
+    "identityName": "vCoderLabs.eqlShare",
+    "publisher": "CN=03D39F41-4E1F-44F5-A5A7-A6E85A30E888",
+    "publisherDisplayName": "vCoderLabs",
+    "applicationId": "eqlShare",
+    "displayName": "eqlShare",
+    "artifactName": "eqlShare-${version}-x64.msix",
+    "languages": [
+      "en-US"
+    ]
+  }
+}
