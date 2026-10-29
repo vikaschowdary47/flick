@@ -36,22 +36,42 @@ export default function AdminPage() {
     void supabase.auth.getSession().then(({ data }) => { if (data.session) void enter(); else setPhase("email"); });
   }, [enter]);
 
+  async function requestCode() {
+    if (!supabase) return false;
+    // Same message whether or not the address is allowed, so this form reveals nothing.
+    // Only the rate-limit error is shown, because it says nothing about the address.
+    const { error } = await supabase.auth.signInWithOtp({ email: email.trim().toLowerCase(), options: { shouldCreateUser: false } });
+    if (error && (error.status === 429 || /seconds|rate limit/i.test(error.message))) {
+      setNotice("A code was already sent a moment ago. Use the newest email, or wait a minute and send a new one.");
+      return false;
+    }
+    setNotice("If that address has access, a 6-digit code is on its way. Only the newest code works.");
+    return true;
+  }
+
   async function sendCode(event: FormEvent) {
     event.preventDefault();
-    if (!supabase) return;
     setNotice("");
-    // Same message whether or not the address is allowed, so this form reveals nothing.
-    await supabase.auth.signInWithOtp({ email: email.trim().toLowerCase(), options: { shouldCreateUser: false } });
+    await requestCode();
     setPhase("code");
-    setNotice("If that address has access, a 6-digit code is on its way.");
+  }
+
+  async function resend() {
+    setNotice("");
+    setCode("");
+    await requestCode();
   }
 
   async function verify(event: FormEvent) {
     event.preventDefault();
     if (!supabase) return;
     setNotice("");
-    const { error } = await supabase.auth.verifyOtp({ email: email.trim().toLowerCase(), token: code.trim(), type: "email" });
-    if (error) { setNotice("That code did not work. Try again."); return; }
+    const token = code.replace(/\D/g, "");
+    const { error } = await supabase.auth.verifyOtp({ email: email.trim().toLowerCase(), token, type: "email" });
+    if (error) {
+      setNotice("That code is wrong, expired, or was replaced by a newer one. Use the code from the newest email, or send a new code.");
+      return;
+    }
     setPhase("loading");
     await enter();
   }
@@ -80,9 +100,15 @@ export default function AdminPage() {
           {phase === "email" ? (
             <label>Email<input type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></label>
           ) : (
-            <label>6-digit code<input inputMode="numeric" autoComplete="one-time-code" required pattern="[0-9]{6,8}" value={code} onChange={(e) => setCode(e.target.value)} /></label>
+            <label>6-digit code<input inputMode="numeric" autoComplete="one-time-code" required pattern="[0-9 ]{6,12}" value={code} onChange={(e) => setCode(e.target.value)} /></label>
           )}
           <button type="submit" className="adm-primary">{phase === "email" ? "Send code" : "Verify"}</button>
+          {phase === "code" && (
+            <div className="adm-row">
+              <button type="button" onClick={() => void resend()}>Send a new code</button>
+              <button type="button" onClick={() => { setPhase("email"); setCode(""); setNotice(""); }}>Change email</button>
+            </div>
+          )}
           {notice && <p className="adm-msg" role="status">{notice}</p>}
         </form>
       </main>
