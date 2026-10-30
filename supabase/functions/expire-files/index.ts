@@ -115,7 +115,39 @@ Deno.serve(async (request) => {
     if (rows.length < BATCH_SIZE) break;
   }
 
-  const result = { cutoff, deletedRows, deletedObjects, errors };
+  // Guests: files whose guest drop has expired or been revoked, and files a
+  // guest uploaded but never shared. Same order as above: objects first.
+  let deletedGuestFiles = 0;
+  for (let batch = 0; batch < MAX_BATCHES && errors.length === 0; batch++) {
+    const { data: rows, error: guestError } = await supabase
+      .rpc("flick_expired_guest_files", { p_limit: BATCH_SIZE })
+      .returns<ExpiredRow[]>();
+    if (guestError) {
+      errors.push(`guest select: ${guestError.message}`);
+      break;
+    }
+    if (!rows || rows.length === 0) break;
+
+    const { error: guestStorageError } = await supabase.storage
+      .from(BUCKET)
+      .remove(rows.flatMap((row) => (row.thumb_path ? [row.storage_path, row.thumb_path] : [row.storage_path])));
+    if (guestStorageError) {
+      errors.push(`guest storage: ${guestStorageError.message}`);
+      break;
+    }
+    const { error: guestDeleteError, count } = await supabase
+      .from("files")
+      .delete({ count: "exact" })
+      .in("id", rows.map((row) => row.id));
+    if (guestDeleteError) {
+      errors.push(`guest delete rows: ${guestDeleteError.message}`);
+      break;
+    }
+    deletedGuestFiles += count ?? 0;
+    if (rows.length < BATCH_SIZE) break;
+  }
+
+  const result = { cutoff, deletedRows, deletedObjects, deletedGuestFiles, errors };
   console.log("expire-files", result);
   return json(result, errors.length > 0 ? 500 : 200);
 });
