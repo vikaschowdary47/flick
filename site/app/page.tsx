@@ -11,9 +11,15 @@ import { WaitlistForm } from "../components/waitlist-form";
 import { PlatformDownloads } from "../components/platform-downloads";
 import { AnnouncementBar } from "../components/announcement-bar";
 import "./downloads.css";
+import "./guest-share.css";
+import { GuestShareCard, GuestVsSignedIn } from "../components/guest-share-card";
 import { AuthCodeForwarder } from "../components/auth-code-forwarder";
 import { Reveal } from "../components/reveal";
 import { CountUp } from "../components/count-up";
+
+// Preview switch: set NEXT_PUBLIC_GUEST_SHARE=true to show the new "send without
+// signing in" card. Off by default, so the live site stays the waitlist page.
+const GUEST_SHARE = process.env.NEXT_PUBLIC_GUEST_SHARE === "true";
 
 // Simple line icons (were text glyphs, which render differently per system).
 const ICON_PATHS: Record<string, string> = {
@@ -86,7 +92,7 @@ export default function Home() {
             Mac or PC, ready to drag into anything. It deletes itself after
             24&nbsp;hours.
           </p>
-          <WaitlistForm />
+          {GUEST_SHARE ? <GuestShareCard /> : <WaitlistForm />}
           <PlatformDownloads />
         </div>
         <div className="hero-stage wrap">
@@ -158,6 +164,7 @@ export default function Home() {
           </div>
         </div>
       </section>
+      {GUEST_SHARE && <GuestVsSignedIn />}
       <section className="features-section">
         <div className="wrap">
           <div className="section-label">Why eqlShare</div>
